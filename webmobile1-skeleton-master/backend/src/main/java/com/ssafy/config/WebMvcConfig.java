@@ -33,8 +33,11 @@ public class WebMvcConfig implements WebMvcConfigurer {
         registry.addResourceHandler("/resources/**")
                 .addResourceLocations("/WEB-INF/resources/");
 
+        // Swagger UI 및 webjars 리소스 핸들러
+        registry.addResourceHandler("/swagger-ui/**")
+                .addResourceLocations("classpath:/META-INF/resources/webjars/swagger-ui/");
         registry.addResourceHandler("/webjars/**")
-                .addResourceLocations("/webjars/").resourceChain(false);
+                .addResourceLocations("classpath:/META-INF/resources/webjars/");
 
         /*
          * Front-end에서 참조하는 URL을 /dist로 매핑

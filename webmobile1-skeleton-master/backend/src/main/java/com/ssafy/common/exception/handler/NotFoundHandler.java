@@ -47,9 +47,6 @@ public class NotFoundHandler {
 		   url.startsWith("/resources/") ||
 		   url.startsWith("/dist/") ||
 		   url.startsWith("/upload/") ||
-		   url.startsWith("/swagger") ||
-		   url.startsWith("/actuator") ||
-		   url.startsWith("/webjars/") ||
 		   url.equals("/favicon.ico")) {
 			return ResponseEntity.notFound().build();
 		}

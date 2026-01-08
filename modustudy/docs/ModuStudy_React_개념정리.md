@@ -1,5 +1,5 @@
 최초 작성자 : 윤상훈(0108)
-최종 수정자 : 윤상훈(0108) 변경 사유 : 
+최종 수정자 : 윤상훈(0108) 변경 사유 : 타입스크립트 인터페이스 설명 추가
 
 # WebMobile1 Skeleton - React 개념 정리 및 흐름
 
@@ -215,11 +215,12 @@ function add(a: number, b: number) {
 
 ```typescript
 // 인터페이스 정의
+// 기본적으로 필수 + 수정가능 
 interface User {
   id: number;
   name: string;
   email: string;
-  age?: number;        // ? = 선택적 속성 (있어도 되고 없어도 됨)
+  age?: number;        // ? = 선택적 속성 (있어도 되고 없어도 됨).  ? 안붙은 속성은 필수
   readonly createdAt: Date;  // readonly = 수정 불가
 }
 

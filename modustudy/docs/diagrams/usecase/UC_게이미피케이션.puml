@@ -1,0 +1,71 @@
+@startuml UC_게이미피케이션
+!theme plain
+left to right direction
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+
+title 게이미피케이션 유스케이스
+
+actor "사용자" as user
+actor "시스템" as system <<시스템>>
+
+rectangle "잔디 시스템" {
+    usecase "잔디 그래프 조회\n(연간/월간)" as UC1
+    usecase "활동 기록" as UC2
+    usecase "활동 상세 조회" as UC3
+}
+
+rectangle "레벨/스트릭" {
+    usecase "내 레벨 조회" as UC10
+    usecase "스트릭 조회" as UC11
+    usecase "레벨업" as UC12
+}
+
+rectangle "뱃지/업적" {
+    usecase "뱃지 목록 조회" as UC20
+    usecase "획득 뱃지 조회" as UC21
+    usecase "뱃지 획득" as UC22
+    usecase "업적 달성" as UC23
+}
+
+rectangle "랭킹" {
+    usecase "팀 내 랭킹 조회" as UC30
+}
+
+' 사용자
+user --> UC1
+user --> UC3
+user --> UC10
+user --> UC11
+user --> UC20
+user --> UC21
+user --> UC30
+
+' 시스템 자동
+system --> UC2
+system --> UC12
+system --> UC22
+system --> UC23
+
+' 관계
+UC2 ..> UC1 : <<include>>
+
+note right of UC1
+  GitHub 스타일 잔디
+  활동 O/X 표시
+end note
+
+note right of UC2
+  스터디 출석 또는
+  퀴즈 대회 참여 시
+  자동으로 잔디 기록
+end note
+
+note bottom of UC22
+  작심삼일 뱃지:
+  스터디 3회 연속 불참 시 부여
+  3일 로그인 시 해제
+  (불참 시 카운트 리셋)
+end note
+
+@enduml

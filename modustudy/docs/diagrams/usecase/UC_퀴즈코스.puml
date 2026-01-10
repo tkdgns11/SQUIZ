@@ -1,0 +1,72 @@
+@startuml UC_퀴즈코스
+!theme plain
+left to right direction
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+
+title 퀴즈 코스 시스템 유스케이스
+
+actor "비로그인 사용자" as guest
+actor "로그인 사용자" as user
+
+rectangle "퀴즈 코스 탐색" {
+    usecase "코스 목록 조회" as UC1
+    usecase "코스 상세 조회" as UC2
+}
+
+rectangle "퀴즈 코스 학습" {
+    usecase "섹션 목록 조회\n(진행 상황 포함)" as UC10
+    usecase "섹션 문제 조회" as UC11
+    usecase "섹션 답안 제출" as UC12
+    usecase "제출 결과 확인" as UC13
+    usecase "해설 확인" as UC14
+    usecase "다음 섹션 해금" as UC15
+    usecase "코스 완료\n(뱃지 획득)" as UC16
+}
+
+rectangle "내 학습 현황" {
+    usecase "전체 진행 현황 조회" as UC20
+    usecase "특정 코스 진행 상세" as UC21
+    usecase "진행중 코스 조회" as UC22
+    usecase "완료한 코스 조회" as UC23
+}
+
+' 비로그인 사용자
+guest --> UC1
+guest --> UC2
+
+' 로그인 사용자
+user --> UC1
+user --> UC2
+user --> UC10
+user --> UC11
+user --> UC12
+user --> UC13
+user --> UC14
+user --> UC20
+user --> UC21
+user --> UC22
+user --> UC23
+
+' 관계
+UC12 ..> UC13 : <<include>>
+UC13 ..> UC14 : <<include>>
+UC13 ..> UC15 : <<extend>>\n70% 이상 정답 시
+UC15 ..> UC16 : <<extend>>\n마지막 섹션 통과 시
+
+note right of UC11
+  이전 섹션 통과 후
+  다음 섹션 해금
+end note
+
+note right of UC16
+  코스별 뱃지 획득
+  예: Java 마스터, Python 마스터
+end note
+
+note right of UC12
+  섹션별 제한 없이
+  반복 도전 가능
+end note
+
+@enduml

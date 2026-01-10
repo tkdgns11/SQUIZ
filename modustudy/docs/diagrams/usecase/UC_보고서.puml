@@ -1,0 +1,67 @@
+@startuml UC_보고서
+!theme plain
+left to right direction
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+
+title SSAFY 보고서 유스케이스
+
+actor "스터디장" as leader
+actor "AI 시스템" as ai <<시스템>>
+
+rectangle "보고서 관리" {
+    usecase "보고서 대시보드 조회" as UC1
+    usecase "신청서 생성" as UC2
+    usecase "결과보고서 생성" as UC3
+    usecase "보고서 미리보기" as UC4
+    usecase "보고서 수정" as UC5
+    usecase "보고서 이력 조회" as UC6
+}
+
+rectangle "활동사진" {
+    usecase "활동사진 갤러리 조회" as UC10
+    usecase "보고서용 사진 선택" as UC11
+}
+
+rectangle "자동 생성" {
+    usecase "스터디 정보 자동 입력" as UC20
+    usecase "활동 내역 자동 집계" as UC21
+    usecase "출석 현황 자동 집계" as UC22
+}
+
+' 스터디장
+leader --> UC1
+leader --> UC2
+leader --> UC3
+leader --> UC4
+leader --> UC5
+leader --> UC6
+leader --> UC10
+leader --> UC11
+
+' AI 시스템
+ai --> UC20
+ai --> UC21
+ai --> UC22
+
+' 관계
+UC2 ..> UC20 : <<include>>
+UC3 ..> UC21 : <<include>>
+UC3 ..> UC22 : <<include>>
+
+note right of UC2
+  스터디 신청서
+  자동 생성
+end note
+
+note right of UC3
+  월별 결과보고서
+  활동 내역 자동 집계
+end note
+
+note right of UC11
+  미팅 중 캡처된 사진 중
+  보고서에 첨부할 사진 선택
+end note
+
+@enduml

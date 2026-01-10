@@ -1,0 +1,69 @@
+@startuml Flow_회고
+!theme plain
+skinparam backgroundColor #FEFEFE
+
+title 회고 화면 흐름
+
+[*] --> 회고목록
+
+state 회고목록 {
+    [*] --> 회고세션리스트
+    회고세션리스트 : 회고 세션 목록
+    회고세션리스트 : 날짜/회차별 정렬
+}
+
+회고목록 --> 회고생성 : + 회고 작성 (스터디장)
+
+state 회고생성 {
+    [*] --> 회고정보입력
+    회고정보입력 : 제목
+    회고정보입력 : 연결 세션 선택
+    회고정보입력 : 회고 유형 (KPT/자유)
+    회고정보입력 --> 회고생성완료 : 생성
+}
+
+회고목록 --> 회고상세 : 회고 선택
+
+state 회고상세 {
+    [*] --> 회고내용
+    회고내용 : 멤버별 KPT 항목
+    회고내용 : Keep/Problem/Try
+}
+
+회고상세 --> 회고작성 : 내 회고 작성
+
+state 회고작성 {
+    [*] --> KPT입력
+
+    state KPT입력 {
+        [*] --> Keep입력
+        Keep입력 : 잘한 점, 유지할 점
+        Keep입력 --> Problem입력 : 다음
+        Problem입력 : 문제점, 개선할 점
+        Problem입력 --> Try입력 : 다음
+        Try입력 : 시도할 점, 액션 아이템
+    }
+
+    KPT입력 --> 작성완료 : 저장
+}
+
+회고상세 --> 회고분석 : AI 분석 (선택)
+
+state 회고분석 {
+    [*] --> AI패턴분석
+    AI패턴분석 : 반복되는 문제점
+    AI패턴분석 : 개선 추천
+    AI패턴분석 --> 피드백 : 👍👎
+}
+
+note right of 회고작성
+  KPT 회고 방식
+  Keep / Problem / Try
+end note
+
+note right of 회고분석
+  AI 분석은 선택사항
+  강제 아님
+end note
+
+@enduml

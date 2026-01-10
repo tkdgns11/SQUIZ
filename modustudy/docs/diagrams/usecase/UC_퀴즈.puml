@@ -1,0 +1,78 @@
+@startuml UC_퀴즈
+!theme plain
+left to right direction
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+
+title 퀴즈 시스템 유스케이스
+
+actor "비로그인 사용자" as guest
+actor "로그인 사용자" as user
+actor "관리자" as admin
+
+rectangle "퀴즈 대회" {
+    usecase "대회 목록 조회" as UC1
+    usecase "대회 참여" as UC2
+    usecase "닉네임 입력\n(비로그인)" as UC3
+    usecase "실시간 퀴즈 풀이" as UC4
+    usecase "대회 결과 조회" as UC5
+    usecase "역대 대회 순위 조회" as UC6
+    usecase "틀린 문제/해설 확인" as UC7
+    usecase "문제별 정답률 확인" as UC8
+    usecase "내 대회 기록 조회" as UC9
+}
+
+rectangle "퀴즈 대회 관리" {
+    usecase "대회 생성" as UC20
+    usecase "문제 등록" as UC21
+    usecase "대회 시작" as UC22
+    usecase "대회 종료" as UC23
+}
+
+rectangle "팀 내 복습 퀴즈" {
+    usecase "복습 퀴즈 목록 조회" as UC30
+    usecase "복습 퀴즈 풀이" as UC31
+    usecase "오답 노트 조회" as UC32
+    usecase "오답 복습" as UC33
+}
+
+' 비로그인 사용자
+guest --> UC1
+guest --> UC2
+guest --> UC4
+guest --> UC5
+
+' 로그인 사용자
+user --> UC1
+user --> UC2
+user --> UC4
+user --> UC5
+user --> UC6
+user --> UC7
+user --> UC8
+user --> UC9
+user --> UC30
+user --> UC31
+user --> UC32
+user --> UC33
+
+' 관리자
+admin --> UC20
+admin --> UC21
+admin --> UC22
+admin --> UC23
+
+' 관계
+UC2 ..> UC3 : <<extend>>\n비로그인 시
+
+note right of UC4
+  WebSocket 실시간 통신
+  문제별 제한시간 적용
+end note
+
+note right of UC33
+  틀린 문제 우선 출제
+  반복 학습
+end note
+
+@enduml

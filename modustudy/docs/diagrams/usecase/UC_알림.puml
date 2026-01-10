@@ -1,0 +1,62 @@
+@startuml UC_알림
+!theme plain
+left to right direction
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+
+title 알림 시스템 유스케이스
+
+actor "사용자" as user
+actor "시스템" as system <<시스템>>
+
+rectangle "알림 수신" {
+    usecase "푸시 알림 수신\n(모바일)" as UC1
+    usecase "인앱 알림 수신" as UC2
+    usecase "알림 클릭 → 화면 이동" as UC3
+}
+
+rectangle "알림 관리" {
+    usecase "알림 목록 조회" as UC10
+    usecase "알림 읽음 처리" as UC11
+    usecase "알림 설정" as UC12
+}
+
+rectangle "알림 발송" {
+    usecase "일정 알림 발송\n(1시간 전, 10분 전)" as UC20
+    usecase "출석 체크 시작 알림" as UC21
+    usecase "채팅 알림" as UC22
+    usecase "스터디 업데이트 알림" as UC23
+    usecase "시스템 추방 예고 알림" as UC24
+}
+
+' 사용자
+user --> UC1
+user --> UC2
+user --> UC3
+user --> UC10
+user --> UC11
+user --> UC12
+
+' 시스템
+system --> UC20
+system --> UC21
+system --> UC22
+system --> UC23
+system --> UC24
+
+note right of UC12
+  알림 타입별
+  on/off 설정 가능
+end note
+
+note right of UC24
+  출석률 50% 이하 시
+  시스템 자동 추방 예고
+end note
+
+note right of UC1
+  FCM 푸시 알림
+  모바일 전용
+end note
+
+@enduml

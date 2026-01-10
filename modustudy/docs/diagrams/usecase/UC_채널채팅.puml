@@ -1,0 +1,63 @@
+@startuml UC_채널채팅
+!theme plain
+left to right direction
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+
+title 채널/채팅 시스템 유스케이스
+
+actor "스터디원" as member
+actor "스터디장" as leader
+
+rectangle "채널 관리" {
+    usecase "채널 목록 조회" as UC1
+    usecase "텍스트 채널 생성" as UC2
+    usecase "음성 채널 생성" as UC3
+    usecase "채널 설정 수정" as UC4
+    usecase "채널 삭제" as UC5
+}
+
+rectangle "텍스트 채팅" {
+    usecase "메시지 조회" as UC10
+    usecase "메시지 전송" as UC11
+    usecase "이미지 전송" as UC12
+    usecase "파일 전송" as UC13
+}
+
+rectangle "음성 채널" {
+    usecase "음성 채널 입장" as UC20
+    usecase "음성 채널 퇴장" as UC21
+    usecase "마이크 on/off" as UC22
+    usecase "카메라 on/off" as UC23
+    usecase "참여자 마이크 제어" as UC24
+}
+
+' 스터디원
+member --> UC1
+member --> UC10
+member --> UC11
+member --> UC12
+member --> UC13
+member --> UC20
+member --> UC21
+member --> UC22
+member --> UC23
+
+' 스터디장
+leader --> UC2
+leader --> UC3
+leader --> UC4
+leader --> UC5
+leader --> UC24
+
+note right of UC24
+  스터디장이 스터디원의
+  마이크를 뮤트 가능
+end note
+
+note right of UC5
+  팀원이 있어도
+  채널 삭제 가능 (경고 표시)
+end note
+
+@enduml

@@ -1,0 +1,63 @@
+@startuml UC_출석
+!theme plain
+left to right direction
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+
+title 출석 시스템 유스케이스
+
+actor "스터디원" as member
+actor "스터디장" as leader
+
+rectangle "출석 시스템" {
+    usecase "BLE 비콘 시작" as UC1
+    usecase "BLE 비콘 감지로 출석" as UC2
+    usecase "출석 상태 수동 변경" as UC3
+    usecase "실시간 출석 현황 조회" as UC4
+    usecase "셀프 출석" as UC5
+    usecase "출석 캘린더 조회" as UC6
+    usecase "결석 소명 작성" as UC7
+    usecase "소명 승인/거절" as UC8
+    usecase "세션 메모 작성" as UC9
+    usecase "세션 메모 조회" as UC10
+}
+
+' 스터디원 유스케이스
+member --> UC2
+member --> UC4
+member --> UC5
+member --> UC6
+member --> UC7
+member --> UC9
+member --> UC10
+
+' 스터디장 유스케이스
+leader --> UC1
+leader --> UC3
+leader --> UC4
+leader --> UC6
+leader --> UC8
+leader --> UC9
+leader --> UC10
+
+' 관계
+UC2 ..> UC1 : <<include>>
+UC5 ..> UC1 : <<extend>>\n스터디장 미접속 15분 후
+
+note right of UC2
+  스터디장이 BLE 비콘 시작 후
+  스터디원 앱이 비콘 감지하면 출석 완료
+end note
+
+note right of UC3
+  BLE 인식 오류 시
+  스터디장이 수동으로 출석 처리
+end note
+
+note right of UC9
+  오프라인 스터디 종료 후
+  참석자들이 한 줄 메모 작성
+  AI가 스터디 내용 파악에 활용
+end note
+
+@enduml

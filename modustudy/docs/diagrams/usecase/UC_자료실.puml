@@ -1,0 +1,57 @@
+@startuml UC_자료실
+!theme plain
+left to right direction
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+
+title 자료실/커리큘럼 유스케이스
+
+actor "스터디원" as member
+actor "스터디장" as leader
+
+rectangle "자료실" {
+    usecase "자료 목록 조회" as UC1
+    usecase "자료 상세 조회" as UC2
+    usecase "자료 업로드" as UC3
+    usecase "사진 촬영 업로드" as UC4
+    usecase "자료 댓글 작성" as UC5
+    usecase "자료 삭제" as UC6
+}
+
+rectangle "커리큘럼" {
+    usecase "커리큘럼 조회" as UC10
+    usecase "커리큘럼 생성/수정" as UC11
+    usecase "진도 체크" as UC12
+    usecase "진도 현황 조회" as UC13
+}
+
+' 스터디원
+member --> UC1
+member --> UC2
+member --> UC3
+member --> UC4
+member --> UC5
+member --> UC10
+member --> UC12
+member --> UC13
+
+' 스터디장
+leader --> UC6
+leader --> UC11
+
+note right of UC3
+  링크/파일/이미지/동영상
+  업로드 가능
+end note
+
+note right of UC4
+  모바일에서 카메라로
+  바로 촬영하여 업로드
+end note
+
+note right of UC13
+  멤버별 주차별
+  진도 현황 대시보드
+end note
+
+@enduml

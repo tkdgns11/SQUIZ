@@ -21,11 +21,11 @@ rectangle "레벨/스트릭" {
     usecase "레벨업" as UC12
 }
 
-rectangle "뱃지/업적" {
+rectangle "뱃지/패널티" {
     usecase "뱃지 목록 조회" as UC20
     usecase "획득 뱃지 조회" as UC21
     usecase "뱃지 획득" as UC22
-    usecase "업적 달성" as UC23
+    usecase "패널티 부여/해소" as UC23
 }
 
 rectangle "랭킹" {
@@ -61,10 +61,10 @@ note right of UC2
   자동으로 잔디 기록
 end note
 
-note bottom of UC22
-  작심삼일 뱃지:
+note bottom of UC23
+  작심삼일 패널티:
   스터디 3회 연속 불참 시 부여
-  3일 로그인 시 해제
+  3일 로그인 시 해소
   (불참 시 카운트 리셋)
 end note
 

@@ -22,6 +22,7 @@
 | GET | `/recommendations` | AI 스터디 추천 | O |
 | POST | `/{studyId}/invite-link` | 초대 링크 생성 | O |
 | GET | `/join/{inviteCode}` | 초대 링크로 스터디 조회 | O |
+| GET | `/regions` | 지역 목록 조회 | X |
 
 ---
 
@@ -41,8 +42,12 @@ GET /api/v1/studies?page=0&size=20&topic=알고리즘&format=문제풀이&studyT
 | topic | string | X | 주제 필터 |
 | format | string | X | 형식 필터 |
 | studyType | string | X | PLANNED/LIGHTNING |
+| meetingType | string | X | ONLINE/OFFLINE/HYBRID |
 | status | string | X | RECRUITING/IN_PROGRESS |
 | keyword | string | X | 검색어 |
+| regionId | int | X | 지역 ID (오프라인 스터디 필터) |
+| scheduleDays | string | X | 요일 필터 (쉼표 구분: MON,WED,FRI) |
+| scheduleTime | string | X | 시간대 필터 (MORNING/AFTERNOON/EVENING/NIGHT) |
 | targetOrgType | string | X | 대상 소속 타입 (SSAFY/NBC/WTC 등) |
 | sort | string | X | 정렬 기준 |
 
@@ -58,14 +63,22 @@ GET /api/v1/studies?page=0&size=20&topic=알고리즘&format=문제풀이&studyT
         "topic": "알고리즘",
         "format": "문제풀이",
         "studyType": "PLANNED",
+        "meetingType": "OFFLINE",
         "status": "RECRUITING",
         "maxMembers": 6,
         "currentMembers": 4,
+        "region": {
+          "id": 1,
+          "name": "서울"
+        },
+        "locationDetail": "강남역 스터디카페",
+        "scheduleSummary": "매주 월/수/금 19:00-21:00",
         "leader": {
           "id": 1,
           "nickname": "홍길동",
           "profileImage": "https://...",
-          "rating": 4.5
+          "leaderRating": 4.5,
+          "leaderReviewCount": 12
         },
         "startDate": "2025-01-15",
         "endDate": "2025-03-15",
@@ -103,11 +116,20 @@ Authorization: Bearer {accessToken}  // 선택
     "topic": "알고리즘",
     "format": "문제풀이",
     "studyType": "PLANNED",
+    "meetingType": "OFFLINE",
     "status": "RECRUITING",
     "maxMembers": 6,
     "currentMembers": 4,
     "isPublic": true,
     "penaltyPolicy": "NORMAL",
+    "region": {
+      "id": 1,
+      "name": "서울"
+    },
+    "locationDetail": "강남역 스터디카페",
+    "scheduleSummary": "매주 월/수/금 19:00-21:00",
+    "scheduleDays": ["MON", "WED", "FRI"],
+    "scheduleTime": "19:00-21:00",
     "startDate": "2025-01-15",
     "endDate": "2025-03-15",
     "totalSessions": 8,
@@ -119,8 +141,8 @@ Authorization: Bearer {accessToken}  // 선택
       "id": 1,
       "nickname": "홍길동",
       "profileImage": "https://...",
-      "rating": 4.5,
-      "reviewCount": 10
+      "leaderRating": 4.5,
+      "leaderReviewCount": 10
     },
     "members": [
       {
@@ -165,9 +187,14 @@ Content-Type: application/json
   "topic": "알고리즘",
   "format": "문제풀이",
   "studyType": "PLANNED",
+  "meetingType": "OFFLINE",
   "maxMembers": 6,
   "isPublic": true,
   "penaltyPolicy": "NORMAL",
+  "regionId": 1,
+  "locationDetail": "강남역 스터디카페",
+  "scheduleDays": ["MON", "WED", "FRI"],
+  "scheduleTime": "19:00-21:00",
   "startDate": "2025-01-15",
   "endDate": "2025-03-15",
   "totalSessions": 8,
@@ -364,6 +391,29 @@ Authorization: Bearer {accessToken}
     "inviteUrl": "https://modustudy.com/join/ABC123XYZ",
     "expiresAt": "2025-01-17T00:00:00Z"
   }
+}
+```
+
+---
+
+### 10. 지역 목록 조회
+
+**Request**
+```
+GET /api/v1/studies/regions
+```
+
+**Response**
+```json
+{
+  "success": true,
+  "data": [
+    {"id": 1, "code": "SEOUL", "name": "서울", "sortOrder": 1},
+    {"id": 2, "code": "GYEONGGI", "name": "경기", "sortOrder": 2},
+    {"id": 3, "code": "DAEJEON", "name": "대전", "sortOrder": 3},
+    {"id": 4, "code": "GWANGJU", "name": "광주", "sortOrder": 4},
+    {"id": 5, "code": "BUSAN", "name": "부산", "sortOrder": 5}
+  ]
 }
 ```
 

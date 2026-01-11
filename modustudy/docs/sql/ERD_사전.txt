@@ -9,7 +9,12 @@ user_social_account       소셜계정연동
 login_history             로그인이력
 user_schedule             사용자일정
 user_organization         사용자소속인증
+friendship                친구관계
+direct_message            DM(1:1메시지)
+region                    지역
 study                     스터디
+study_template            스터디모집글템플릿
+study_comment             스터디댓글
 study_member              스터디멤버
 study_session             스터디세션
 study_bookmark            스터디찜
@@ -40,10 +45,10 @@ user_section_attempt      섹션시도기록
 daily_contribution        일일활동(잔디)
 contribution_detail       활동상세
 user_stats                사용자통계
-achievement               업적
-user_achievement          사용자업적
-badge                     뱃지
+badge                     뱃지(영구/긍정적)
 user_badge                사용자뱃지
+penalty                   패널티(일시/부정적)
+user_penalty              사용자패널티
 material                  학습자료
 material_comment          자료댓글
 curriculum                커리큘럼
@@ -83,6 +88,11 @@ password                  비밀번호
 profile_image             프로필이미지
 role                      역할
 last_login_at             마지막로그인일시
+is_online                 접속상태
+last_seen_at              마지막접속시간
+is_searchable             검색허용여부
+leader_rating             스터디장평점
+leader_review_count       스터디장평가수
 provider                  소셜제공자
 provider_user_id          소셜사용자ID
 login_at                  로그인일시
@@ -96,10 +106,25 @@ org_type                  소속타입
 org_data                  소속상세정보
 verified_at               인증일시
 last_checked_at           마지막확인일시
+requester_id              요청자ID
+addressee_id              수신자ID
+sender_id                 발신자ID
+receiver_id               수신자ID
+is_read                   읽음여부
+is_deleted_by_sender      발신자삭제여부
+is_deleted_by_receiver    수신자삭제여부
+code                      코드
+sort_order                정렬순서
 leader_id                 스터디장ID
 topic                     주제
 format                    형식
 study_type                스터디유형
+meeting_type              진행방식
+region_id                 지역ID (FK)
+location_detail           상세장소
+schedule_summary          일정요약
+schedule_days             스케줄요일
+schedule_time             스케줄시간
 max_members               최대인원
 is_public                 공개여부
 penalty_policy            패널티정책
@@ -110,6 +135,7 @@ recruit_start_date        모집시작일
 recruit_end_date          모집종료일
 target_org_type           대상소속타입
 target_org_criteria       대상조건
+parent_id                 부모댓글ID
 joined_at                 가입일시
 left_at                   탈퇴일시
 is_probation              수습기간여부
@@ -129,7 +155,6 @@ comment                   코멘트
 type                      타입
 voice_room_type           음성방타입
 is_default                기본채널여부
-sort_order                정렬순서
 channel_id                채널ID
 message_type              메시지타입
 file_url                  파일URL
@@ -179,7 +204,6 @@ user_answer               사용자답안
 review_count              복습횟수
 last_reviewed_at          마지막복습일시
 is_mastered               완전숙지여부
-code                      코드
 icon                      아이콘
 badge_code                뱃지코드
 total_sections            총섹션수
@@ -189,7 +213,6 @@ section_id                섹션ID
 pass_score                통과점수(%)
 current_section           현재섹션
 completed_sections        완료섹션수
-started_at                시작일시
 is_passed                 통과여부
 attempted_at              시도일시
 contribution_date         활동일자
@@ -212,10 +235,9 @@ total_retrospectives      회고작성수
 category                  분류
 condition_type            조건타입
 condition_value           조건값
-achievement_id            업적ID
+penalty_id                패널티ID
 earned_at                 획득일시
 badge_id                  뱃지ID
-badge_type                뱃지유형
 grant_condition           부여조건
 removal_condition         해제조건
 removal_required          해제필요횟수
@@ -235,7 +257,6 @@ retrospective_id          회고ID
 retrospective_type        회고유형
 notification_type         알림유형
 reference_type            참조타입
-is_read                   읽음여부
 is_enabled                활성화여부
 token                     FCM토큰
 device_type               기기타입
@@ -245,6 +266,15 @@ feature_type              기능유형
 feedback                  피드백
 report_date               리포트일자
 daily_report_id           데일리리포트ID
+extension_count           모집연장횟수
+textbook                  사용교재/자료
+goal                      스터디목표
+difficulty                난이도
+prerequisites             사전지식
+process_detail            진행방식상세
+is_temporary              임시채널여부
+template_type             템플릿유형
+is_system                 시스템템플릿여부
 
 【 값 (ENUM) 】
 --------------------------------------------------------------------------------
@@ -276,15 +306,36 @@ NBC                       내일배움캠프
 WTC                       우아한테크코스
 UNIVERSITY                대학교
 
+--- friendship.status (친구상태) ---
+PENDING                   대기중
+ACCEPTED                  수락됨
+REJECTED                  거절됨
+BLOCKED                   차단됨
+
 --- study_type (스터디유형) ---
 PLANNED                   계획형스터디
 LIGHTNING                 번개스터디
 
+--- meeting_type (진행방식) ---
+ONLINE                    온라인
+OFFLINE                   오프라인
+HYBRID                    혼합
+
 --- study.status (스터디상태) ---
+DRAFT                     임시저장
+SCHEDULED                 모집예정
 RECRUITING                모집중
+RECRUIT_CLOSED            모집완료(시작대기)
+PENDING                   확정대기(인원부족)
 IN_PROGRESS               진행중
 COMPLETED                 완료
 CANCELLED                 취소
+
+--- difficulty (난이도) ---
+BEGINNER                  입문
+ELEMENTARY                초급
+INTERMEDIATE              중급
+ADVANCED                  고급
 
 --- penalty_policy (패널티정책) ---
 STRICT                    엄격
@@ -364,18 +415,15 @@ DISABLED                  비활성
 STUDY_ATTENDANCE          스터디출석
 QUIZ_CONTEST              퀴즈대회참여
 
---- achievement.category (업적분류) ---
+--- badge.category (뱃지분류) ---
 ACTIVITY                  활동
 STREAK                    연속
 STUDY                     스터디
 ATTENDANCE                출석
 PARTICIPATION             참여
 QUIZ                      퀴즈
+MASTER                    마스터
 SPECIAL                   특별
-
---- badge_type (뱃지유형) ---
-TEMPORARY                 임시뱃지
-PERMANENT                 영구뱃지
 
 --- material_type (자료유형) ---
 LINK                      링크
@@ -417,7 +465,16 @@ SUBMITTED                 제출됨
 POSITIVE                  긍정
 NEGATIVE                  부정
 
+--- template_type (템플릿유형) ---
+ALGORITHM                 알고리즘
+CS                        CS기초
+INTERVIEW                 면접준비
+PROJECT                   프로젝트
+CERTIFICATE               자격증
+READING                   독서
+
 --- daily_item.category (데일리분류) ---
 YESTERDAY                 어제한일
 TODAY                     오늘할일
 BLOCKER                   블로커
+

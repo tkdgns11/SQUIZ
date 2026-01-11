@@ -13,8 +13,8 @@
 | GET | `/contributions` | 잔디 그래프 조회 | O |
 | GET | `/contributions/{date}` | 특정 날짜 활동 상세 | O |
 | GET | `/stats` | 내 활동 통계 | O |
-| GET | `/achievements` | 업적 목록 | O |
-| GET | `/badges` | 뱃지 목록 | O |
+| GET | `/badges` | 뱃지 목록 (긍정/영구) | O |
+| GET | `/penalties` | 패널티 목록 (부정/일시) | O |
 | GET | `/studies/{studyId}/ranking` | 팀 내 랭킹 | O |
 
 ---
@@ -160,11 +160,13 @@ Authorization: Bearer {accessToken}
 
 ---
 
-### 4. 업적 목록
+### 4. 뱃지 목록 (긍정/영구)
+
+> 한번 획득하면 영구 유지되는 긍정적 보상
 
 **Request**
 ```
-GET /api/v1/gamification/achievements
+GET /api/v1/gamification/badges
 Authorization: Bearer {accessToken}
 ```
 
@@ -177,7 +179,7 @@ Authorization: Bearer {accessToken}
       {
         "category": "ACTIVITY",
         "categoryName": "활동",
-        "achievements": [
+        "badges": [
           {
             "id": 1,
             "code": "FIRST_ACTIVITY",
@@ -207,7 +209,7 @@ Authorization: Bearer {accessToken}
       {
         "category": "STREAK",
         "categoryName": "스트릭",
-        "achievements": [
+        "badges": [
           {
             "id": 3,
             "code": "STREAK_7",
@@ -220,7 +222,7 @@ Authorization: Bearer {accessToken}
         ]
       }
     ],
-    "totalAchievements": 20,
+    "totalBadges": 20,
     "earnedCount": 5
   }
 }
@@ -228,11 +230,13 @@ Authorization: Bearer {accessToken}
 
 ---
 
-### 5. 뱃지 목록
+### 5. 패널티 목록 (부정/일시)
+
+> 일시적으로 부여되며, 조건 충족 시 해소 가능
 
 **Request**
 ```
-GET /api/v1/gamification/badges
+GET /api/v1/gamification/penalties
 Authorization: Bearer {accessToken}
 ```
 
@@ -241,41 +245,51 @@ Authorization: Bearer {accessToken}
 {
   "success": true,
   "data": {
-    "earnedBadges": [
+    "activePenalties": [
       {
         "id": 1,
-        "badgeCode": "PERFECT_ATTENDANCE",
-        "name": "개근왕",
-        "description": "스터디 개근 달성",
-        "icon": "👑",
-        "badgeType": "PERMANENT",
-        "grantedAt": "2025-01-15T00:00:00Z",
+        "penaltyCode": "THREE_DAY_QUIT",
+        "name": "작심삼일",
+        "description": "스터디 3회 연속 불참",
+        "icon": "😅",
+        "grantedAt": "2025-01-10T00:00:00Z",
         "studyId": 1,
-        "studyName": "알고리즘 스터디"
+        "studyName": "알고리즘 스터디",
+        "isActive": true,
+        "removalCondition": "3일 연속 출석 시 해소",
+        "removalProgress": 1,
+        "removalRequired": 3
       },
       {
         "id": 2,
-        "badgeCode": "THREE_DAY_QUIT",
-        "name": "작심삼일",
-        "description": "스터디 3회 연속 불참 시 부여, 3일 로그인 시 해제",
-        "icon": "😅",
-        "badgeType": "TEMPORARY",
-        "grantedAt": "2025-01-10T00:00:00Z",
+        "penaltyCode": "GHOST_MEMBER",
+        "name": "유령회원",
+        "description": "7일 이상 미접속",
+        "icon": "👻",
+        "grantedAt": "2025-01-08T00:00:00Z",
+        "studyId": null,
+        "studyName": null,
         "isActive": true,
-        "removalProgress": 1,
+        "removalCondition": "3일 연속 로그인 시 해소",
+        "removalProgress": 0,
         "removalRequired": 3
       }
     ],
-    "availableBadges": [
+    "removedPenalties": [
       {
-        "badgeCode": "QUIZ_KING",
-        "name": "퀴즈왕",
-        "description": "퀴즈 대회 TOP3 달성",
-        "icon": "🧠",
-        "badgeType": "PERMANENT",
-        "condition": "퀴즈 대회 TOP3 1회 이상 시 영구 부여"
+        "id": 3,
+        "penaltyCode": "LATE_KING",
+        "name": "지각왕",
+        "description": "3회 연속 지각",
+        "icon": "⏰",
+        "grantedAt": "2025-01-05T00:00:00Z",
+        "removedAt": "2025-01-12T00:00:00Z",
+        "studyId": 1,
+        "studyName": "알고리즘 스터디"
       }
-    ]
+    ],
+    "totalActive": 2,
+    "totalRemoved": 1
   }
 }
 ```

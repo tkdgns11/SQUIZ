@@ -19,6 +19,8 @@
 | DELETE | `/{memberId}` | 멤버 추방 (스터디장) | O |
 | DELETE | `/leave` | 스터디 탈퇴 | O |
 | POST | `/{memberId}/review` | 스터디장 평가 | O |
+| GET | `/expulsion-risk` | 자동 추방 위험 멤버 조회 (스터디장) | O |
+| GET | `/my/expulsion-status` | 내 추방 위험 상태 조회 | O |
 
 ---
 
@@ -308,6 +310,86 @@ Content-Type: application/json
 {
   "success": true,
   "message": "평가가 등록되었습니다."
+}
+```
+
+---
+
+### 10. 자동 추방 위험 멤버 조회 (스터디장)
+
+남은 세션 모두 출석해도 50% 이하 출석률이 되는 멤버 목록
+
+**Request**
+```
+GET /api/v1/studies/{studyId}/members/expulsion-risk
+Authorization: Bearer {accessToken}
+```
+
+**Response**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "memberId": 3,
+      "userId": 5,
+      "nickname": "김탈퇴",
+      "profileImage": "https://...",
+      "currentAttendance": 2,
+      "totalSessions": 8,
+      "remainingSessions": 4,
+      "currentRate": 33.3,
+      "maxPossibleRate": 50.0,
+      "willBeExpelled": true,
+      "expulsionDate": "2025-02-01",
+      "warningNotifiedAt": "2025-01-29T09:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+### 11. 내 추방 위험 상태 조회
+
+**Request**
+```
+GET /api/v1/studies/{studyId}/members/my/expulsion-status
+Authorization: Bearer {accessToken}
+```
+
+**Response - 위험 없음**
+```json
+{
+  "success": true,
+  "data": {
+    "atRisk": false,
+    "currentAttendance": 5,
+    "totalSessions": 8,
+    "remainingSessions": 2,
+    "currentRate": 83.3,
+    "maxPossibleRate": 100.0,
+    "minRequiredAttendance": 0
+  }
+}
+```
+
+**Response - 추방 위험**
+```json
+{
+  "success": true,
+  "data": {
+    "atRisk": true,
+    "currentAttendance": 1,
+    "totalSessions": 8,
+    "remainingSessions": 3,
+    "currentRate": 20.0,
+    "maxPossibleRate": 50.0,
+    "willBeExpelled": true,
+    "expulsionDate": "2025-02-01",
+    "daysUntilExpulsion": 3,
+    "warningMessage": "남은 세션을 모두 출석해도 출석률 50% 이하로 자동 추방 예정입니다."
+  }
 }
 ```
 

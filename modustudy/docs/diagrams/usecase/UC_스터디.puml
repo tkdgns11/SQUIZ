@@ -9,6 +9,7 @@ title 스터디 관리 유스케이스
 actor "일반 사용자" as user
 actor "스터디원" as member
 actor "스터디장" as leader
+actor "시스템" as system
 
 rectangle "스터디 탐색" {
     usecase "스터디 검색/필터" as UC1
@@ -18,6 +19,8 @@ rectangle "스터디 탐색" {
     usecase "가입 신청" as UC5
     usecase "내 신청 현황 조회" as UC6
     usecase "AI 스터디 추천" as UC7
+    usecase "댓글/대댓글 작성" as UC8
+    usecase "댓글 조회" as UC9
 }
 
 rectangle "스터디 관리" {
@@ -28,6 +31,9 @@ rectangle "스터디 관리" {
     usecase "멤버 관리" as UC14
     usecase "회차 관리" as UC15
     usecase "스터디 종료" as UC16
+    usecase "추방 위험 멤버 조회" as UC17
+    usecase "자동 추방" as UC18
+    usecase "추방 예고 알림" as UC19
 }
 
 rectangle "스터디 참여" {
@@ -45,6 +51,8 @@ user --> UC4
 user --> UC5
 user --> UC6
 user --> UC7
+user --> UC8
+user --> UC9
 user --> UC10
 
 ' 스터디원
@@ -60,6 +68,11 @@ leader --> UC13
 leader --> UC14
 leader --> UC15
 leader --> UC16
+leader --> UC17
+
+' 시스템 (자동화)
+system --> UC18
+system --> UC19
 
 ' 관계
 UC5 ..> UC2 : <<include>>
@@ -74,6 +87,16 @@ end note
 note bottom of UC22
   수습기간(1~2회차) 외
   탈퇴 시 패널티 적용
+end note
+
+note right of UC18
+  남은 기간 모두 출석해도
+  50% 이하면 자동 추방
+end note
+
+note bottom of UC19
+  추방 예정일 3일 전
+  경고 알림 발송
 end note
 
 @enduml

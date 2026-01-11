@@ -16,6 +16,11 @@ CREATE TABLE `user` (
     `profile_image` VARCHAR(500),
     `role` ENUM('USER', 'ADMIN') DEFAULT 'USER',
     `is_active` BOOLEAN DEFAULT TRUE,
+    `is_online` BOOLEAN DEFAULT FALSE,            -- 접속 상태
+    `last_seen_at` TIMESTAMP,                     -- 마지막 접속 시간
+    `is_searchable` BOOLEAN DEFAULT TRUE,         -- 친구 검색 허용 여부
+    `leader_rating` FLOAT DEFAULT 0.0,            -- 스터디장 평점 (캐싱)
+    `leader_review_count` INT DEFAULT 0,          -- 스터디장 평가 수 (캐싱)
     `last_login_at` TIMESTAMP,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -69,8 +74,59 @@ CREATE TABLE `user_organization` (
 );
 
 -- =============================================
+-- 1-1. 친구/DM
+-- =============================================
+
+-- 친구 관계
+CREATE TABLE `friendship` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `requester_id` BIGINT NOT NULL,              -- 친구 요청자
+    `addressee_id` BIGINT NOT NULL,              -- 친구 요청 대상
+    `status` ENUM('PENDING', 'ACCEPTED', 'REJECTED', 'BLOCKED') DEFAULT 'PENDING',
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (`requester_id`) REFERENCES `user`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`addressee_id`) REFERENCES `user`(`id`) ON DELETE CASCADE,
+    UNIQUE KEY `uk_friendship` (`requester_id`, `addressee_id`)
+);
+
+-- DM (1:1 메시지)
+CREATE TABLE `direct_message` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `sender_id` BIGINT NOT NULL,
+    `receiver_id` BIGINT NOT NULL,
+    `content` TEXT NOT NULL,
+    `message_type` ENUM('TEXT', 'IMAGE', 'FILE') DEFAULT 'TEXT',
+    `file_url` VARCHAR(500),
+    `is_read` BOOLEAN DEFAULT FALSE,
+    `is_deleted_by_sender` BOOLEAN DEFAULT FALSE,
+    `is_deleted_by_receiver` BOOLEAN DEFAULT FALSE,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`sender_id`) REFERENCES `user`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`receiver_id`) REFERENCES `user`(`id`) ON DELETE CASCADE
+);
+
+-- =============================================
 -- 2. 스터디
 -- =============================================
+
+-- 지역 테이블
+CREATE TABLE `region` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `code` VARCHAR(20) NOT NULL UNIQUE,          -- SEOUL, BUSAN 등
+    `name` VARCHAR(50) NOT NULL,                 -- 서울, 부산 등
+    `sort_order` INT DEFAULT 0,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 지역 초기 데이터
+-- INSERT INTO region (code, name, sort_order) VALUES
+-- ('SEOUL', '서울', 1), ('BUSAN', '부산', 2), ('DAEGU', '대구', 3),
+-- ('INCHEON', '인천', 4), ('GWANGJU', '광주', 5), ('DAEJEON', '대전', 6),
+-- ('ULSAN', '울산', 7), ('SEJONG', '세종', 8), ('GYEONGGI', '경기', 9),
+-- ('GANGWON', '강원', 10), ('CHUNGBUK', '충북', 11), ('CHUNGNAM', '충남', 12),
+-- ('JEONBUK', '전북', 13), ('JEONNAM', '전남', 14), ('GYEONGBUK', '경북', 15),
+-- ('GYEONGNAM', '경남', 16), ('JEJU', '제주', 17);
 
 CREATE TABLE `study` (
     `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -80,20 +136,71 @@ CREATE TABLE `study` (
     `topic` VARCHAR(50) NOT NULL,                -- 알고리즘/CS/자격증/프로젝트 등
     `format` VARCHAR(50),                        -- 문제풀이/독서/강의수강/프로젝트
     `study_type` ENUM('PLANNED', 'LIGHTNING') NOT NULL,  -- 계획/번개
+    `meeting_type` ENUM('ONLINE', 'OFFLINE', 'HYBRID') DEFAULT 'ONLINE',  -- 진행 방식
+    `region_id` BIGINT,                          -- 오프라인/혼합 시 지역
+    `location_detail` VARCHAR(200),              -- 상세 장소 (ex: 강남역 근처)
+    `schedule_summary` VARCHAR(100),             -- 일정 요약 (ex: 매주 월/수 19:00)
+    `schedule_days` VARCHAR(50),                 -- 요일 (ex: MON,WED)
+    `schedule_time` TIME,                        -- 시작 시간
     `max_members` INT DEFAULT 10,
     `is_public` BOOLEAN DEFAULT TRUE,            -- 공개/비공개
-    `status` ENUM('RECRUITING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED') DEFAULT 'RECRUITING',
+    `status` ENUM('DRAFT', 'SCHEDULED', 'RECRUITING', 'RECRUIT_CLOSED', 'PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED') DEFAULT 'DRAFT',
     `penalty_policy` ENUM('STRICT', 'NORMAL', 'LENIENT', 'RATIO', 'NONE') DEFAULT 'NORMAL',
     `start_date` DATE,
     `end_date` DATE,
     `total_sessions` INT,                        -- 총 회차
     `recruit_start_date` DATE,
     `recruit_end_date` DATE,
+    `extension_count` INT DEFAULT 0,             -- 모집 연장 횟수 (최대 1회)
+    `textbook` VARCHAR(500),                     -- 사용 교재/자료
+    `goal` VARCHAR(500),                         -- 스터디 목표
+    `difficulty` ENUM('BEGINNER', 'ELEMENTARY', 'INTERMEDIATE', 'ADVANCED') DEFAULT 'INTERMEDIATE',  -- 난이도
+    `prerequisites` TEXT,                        -- 사전 지식
+    `process_detail` TEXT,                       -- 진행 방식 상세
     `target_org_type` VARCHAR(50),               -- 대상 소속 타입 (SSAFY, NBC, WTC 등, NULL이면 누구나)
     `target_org_criteria` JSON,                  -- 대상 조건 ({"generation": 14} 등, NULL이면 해당 소속 전체)
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (`leader_id`) REFERENCES `user`(`id`)
+    FOREIGN KEY (`leader_id`) REFERENCES `user`(`id`),
+    FOREIGN KEY (`region_id`) REFERENCES `region`(`id`)
+);
+
+-- 스터디 모집글 템플릿 (사용자 저장용)
+CREATE TABLE `study_template` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `user_id` BIGINT,                            -- NULL이면 시스템 템플릿
+    `name` VARCHAR(100) NOT NULL,                -- 템플릿 이름
+    `is_system` BOOLEAN DEFAULT FALSE,           -- 시스템 기본 템플릿 여부
+    `template_type` VARCHAR(50),                 -- ALGORITHM, CS, INTERVIEW, PROJECT, CERTIFICATE, READING
+    `topic` VARCHAR(50),
+    `format` VARCHAR(50),
+    `meeting_type` ENUM('ONLINE', 'OFFLINE', 'HYBRID'),
+    `description` TEXT,
+    `textbook` VARCHAR(500),
+    `goal` VARCHAR(500),
+    `difficulty` ENUM('BEGINNER', 'ELEMENTARY', 'INTERMEDIATE', 'ADVANCED'),
+    `prerequisites` TEXT,
+    `process_detail` TEXT,
+    `penalty_policy` ENUM('STRICT', 'NORMAL', 'LENIENT', 'RATIO', 'NONE'),
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON DELETE CASCADE
+);
+
+-- 스터디 모집글 댓글
+CREATE TABLE `study_comment` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `study_id` BIGINT NOT NULL,
+    `user_id` BIGINT NOT NULL,
+    `parent_id` BIGINT,                          -- 대댓글인 경우 부모 댓글 ID
+    `content` TEXT NOT NULL,
+    `image_url` VARCHAR(500),                    -- 댓글 첨부 이미지 URL
+    `is_deleted` BOOLEAN DEFAULT FALSE,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (`study_id`) REFERENCES `study`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`user_id`) REFERENCES `user`(`id`),
+    FOREIGN KEY (`parent_id`) REFERENCES `study_comment`(`id`) ON DELETE CASCADE
 );
 
 CREATE TABLE `study_member` (
@@ -178,6 +285,7 @@ CREATE TABLE `channel` (
     `voice_room_type` ENUM('DISCUSSION', 'MEETING'),  -- 음성방 타입 (상시토론/미팅)
     `description` VARCHAR(500),
     `is_default` BOOLEAN DEFAULT FALSE,          -- 기본 채널 여부
+    `is_temporary` BOOLEAN DEFAULT FALSE,        -- 임시 채널 여부 (인원 부족 시 논의용, 텍스트만)
     `sort_order` INT DEFAULT 0,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`study_id`) REFERENCES `study`(`id`) ON DELETE CASCADE
@@ -516,55 +624,56 @@ CREATE TABLE `user_stats` (
     FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON DELETE CASCADE
 );
 
-CREATE TABLE `achievement` (
+-- 뱃지 정의 (영구, 긍정적 - 한번 획득하면 유지)
+CREATE TABLE `badge` (
     `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
-    `code` VARCHAR(50) NOT NULL UNIQUE,
-    `name` VARCHAR(100) NOT NULL,
+    `code` VARCHAR(50) NOT NULL UNIQUE,          -- FIRST_ACTIVITY, STREAK_7 등
+    `name` VARCHAR(100) NOT NULL,                -- 첫 발걸음, 일주일 연속 등
     `description` VARCHAR(200) NOT NULL,
     `icon` VARCHAR(10),
-    `category` ENUM('ACTIVITY', 'STREAK', 'STUDY', 'ATTENDANCE', 'PARTICIPATION', 'QUIZ', 'SPECIAL') NOT NULL,
+    `category` ENUM('ACTIVITY', 'STREAK', 'STUDY', 'ATTENDANCE', 'PARTICIPATION', 'QUIZ', 'MASTER', 'SPECIAL') NOT NULL,
     `condition_type` VARCHAR(50) NOT NULL,
     `condition_value` INT NOT NULL,
     `sort_order` INT DEFAULT 0,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE `user_achievement` (
-    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
-    `user_id` BIGINT NOT NULL,
-    `achievement_id` BIGINT NOT NULL,
-    `earned_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON DELETE CASCADE,
-    FOREIGN KEY (`achievement_id`) REFERENCES `achievement`(`id`),
-    UNIQUE KEY `uk_user_achievement` (`user_id`, `achievement_id`)
-);
-
--- 뱃지 정의 (마스터)
-CREATE TABLE `badge` (
-    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
-    `code` VARCHAR(50) NOT NULL UNIQUE,          -- THREE_DAY_QUIT, PERFECT_ATTENDANCE, QUIZ_KING
-    `name` VARCHAR(100) NOT NULL,                -- 작심삼일, 개근왕, 퀴즈왕
-    `description` VARCHAR(200) NOT NULL,
-    `icon` VARCHAR(10),
-    `badge_type` ENUM('TEMPORARY', 'PERMANENT') NOT NULL,
-    `grant_condition` VARCHAR(200),              -- 부여 조건 설명
-    `removal_condition` VARCHAR(200),            -- 해제 조건 설명 (TEMPORARY만)
-    `removal_required` INT,                      -- 해제에 필요한 횟수 (TEMPORARY만)
-    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- 사용자 뱃지
+-- 사용자 뱃지 (획득 기록)
 CREATE TABLE `user_badge` (
     `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
     `user_id` BIGINT NOT NULL,
     `badge_id` BIGINT NOT NULL,
-    `study_id` BIGINT,                           -- 개근왕 등 스터디별 뱃지인 경우
+    `earned_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`badge_id`) REFERENCES `badge`(`id`),
+    UNIQUE KEY `uk_user_badge` (`user_id`, `badge_id`)
+);
+
+-- 패널티 정의 (일시적, 부정적 - 해소 가능)
+CREATE TABLE `penalty` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `code` VARCHAR(50) NOT NULL UNIQUE,          -- THREE_DAY_QUIT, GHOST 등
+    `name` VARCHAR(100) NOT NULL,                -- 작심삼일, 유령회원 등
+    `description` VARCHAR(200) NOT NULL,
+    `icon` VARCHAR(10),
+    `grant_condition` VARCHAR(200),              -- 부여 조건 설명
+    `removal_condition` VARCHAR(200),            -- 해소 조건 설명
+    `removal_required` INT,                      -- 해소에 필요한 횟수
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 사용자 패널티 (일시적, 해소 가능)
+CREATE TABLE `user_penalty` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `user_id` BIGINT NOT NULL,
+    `penalty_id` BIGINT NOT NULL,
+    `study_id` BIGINT,                           -- 스터디별 패널티인 경우
     `is_active` BOOLEAN DEFAULT TRUE,
-    `removal_progress` INT DEFAULT 0,            -- 해제 진행률 (TEMPORARY: 로그인 횟수 등)
+    `removal_progress` INT DEFAULT 0,            -- 해소 진행률 (출석 횟수 등)
     `granted_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `removed_at` TIMESTAMP,
     FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON DELETE CASCADE,
-    FOREIGN KEY (`badge_id`) REFERENCES `badge`(`id`),
+    FOREIGN KEY (`penalty_id`) REFERENCES `penalty`(`id`),
     FOREIGN KEY (`study_id`) REFERENCES `study`(`id`) ON DELETE SET NULL
 );
 

@@ -1,5 +1,7 @@
 최초 작성자 : 윤상훈 (0108)
-최종 수정자 : 윤상훈 (0108) 변경사유 : 
+수정 이력 :
+- 윤상훈 (0108) : 최초 작성
+- 조문희 (0112) : 테스트 코드 예시 추가
 
 # WebMobile1 Skeleton - Spring Boot 개념 정리 및 흐름
 
@@ -1541,6 +1543,28 @@ public class JpaConfig {
 | `UserLoginPostRes.java` | 로그인 응답 (토큰 포함) |
 | `UserRes.java` | 사용자 정보 응답 |
 | `BaseResponseBody.java` | 공통 응답 형식 |
+
+---
+
+### 11. 테스트 작성
+```java
+@SpringBootTest
+@AutoConfigureMockMvc
+class UserControllerTest {
+    
+    @Autowired
+    private MockMvc mockMvc;
+    
+    @Test
+    void 로그인_성공() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/login")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"id\":\"test\",\"password\":\"1234\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.accessToken").exists());
+    }
+}
+```
 
 ---
 

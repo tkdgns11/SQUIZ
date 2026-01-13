@@ -1,0 +1,11 @@
+# === IDE (Project-wide) ===
+.idea/
+*.iml
+.vscode/
+
+# === OS ===
+.DS_Store
+Thumbs.db
+
+# === Logs ===
+*.log

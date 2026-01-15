@@ -853,3 +853,174 @@ CREATE TABLE `daily_item` (
     FOREIGN KEY (`daily_report_id`) REFERENCES `daily_report`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`user_id`) REFERENCES `user`(`id`)
 );
+
+-- =============================================
+-- 14. 자유게시판
+-- =============================================
+
+CREATE TABLE `board_post` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `user_id` BIGINT NOT NULL,
+    `category` ENUM('PROJECT', 'COMPETITION', 'JOB', 'FREE') NOT NULL,  -- 프로젝트/공모전/채용/자유
+    `title` VARCHAR(200) NOT NULL,
+    `content` TEXT NOT NULL,
+    `view_count` INT DEFAULT 0,
+    `like_count` INT DEFAULT 0,
+    `comment_count` INT DEFAULT 0,
+    `is_deleted` BOOLEAN DEFAULT FALSE,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (`user_id`) REFERENCES `user`(`id`)
+);
+
+CREATE TABLE `board_comment` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `post_id` BIGINT NOT NULL,
+    `user_id` BIGINT NOT NULL,
+    `parent_id` BIGINT,                          -- 대댓글인 경우 부모 댓글 ID
+    `content` TEXT NOT NULL,
+    `is_deleted` BOOLEAN DEFAULT FALSE,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (`post_id`) REFERENCES `board_post`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`user_id`) REFERENCES `user`(`id`),
+    FOREIGN KEY (`parent_id`) REFERENCES `board_comment`(`id`) ON DELETE CASCADE
+);
+
+CREATE TABLE `board_like` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `post_id` BIGINT NOT NULL,
+    `user_id` BIGINT NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`post_id`) REFERENCES `board_post`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON DELETE CASCADE,
+    UNIQUE KEY `uk_post_user` (`post_id`, `user_id`)
+);
+
+-- =============================================
+-- 15. 팀원모집
+-- =============================================
+
+CREATE TABLE `team_recruit` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `user_id` BIGINT NOT NULL,                   -- 작성자
+    `category` ENUM('HACKATHON', 'PROJECT', 'COMPETITION') NOT NULL,  -- 해커톤/프로젝트/공모전
+    `title` VARCHAR(200) NOT NULL,
+    `content` TEXT NOT NULL,
+    `required_roles` JSON,                       -- 필요 역할 (["백엔드", "프론트엔드", "디자이너"])
+    `tech_stack` JSON,                           -- 기술 스택 (["Java", "React", "Spring"])
+    `max_members` INT DEFAULT 5,
+    `current_members` INT DEFAULT 1,
+    `deadline` DATE,                             -- 모집 마감일
+    `start_date` DATE,                           -- 프로젝트 시작 예정일
+    `duration` VARCHAR(100),                     -- 예상 기간 (ex: 2개월)
+    `meeting_type` ENUM('ONLINE', 'OFFLINE', 'HYBRID') DEFAULT 'ONLINE',
+    `region_id` BIGINT,                          -- 오프라인/혼합 시 지역
+    `status` ENUM('RECRUITING', 'CLOSED', 'COMPLETED') DEFAULT 'RECRUITING',
+    `view_count` INT DEFAULT 0,
+    `is_deleted` BOOLEAN DEFAULT FALSE,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (`user_id`) REFERENCES `user`(`id`),
+    FOREIGN KEY (`region_id`) REFERENCES `region`(`id`)
+);
+
+CREATE TABLE `team_application` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `recruit_id` BIGINT NOT NULL,
+    `user_id` BIGINT NOT NULL,
+    `applied_role` VARCHAR(50),                  -- 지원 역할
+    `message` TEXT,                              -- 지원 메시지
+    `portfolio_url` VARCHAR(500),                -- 포트폴리오 URL
+    `status` ENUM('PENDING', 'ACCEPTED', 'REJECTED') DEFAULT 'PENDING',
+    `rejected_reason` VARCHAR(500),
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `processed_at` TIMESTAMP,
+    FOREIGN KEY (`recruit_id`) REFERENCES `team_recruit`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`user_id`) REFERENCES `user`(`id`)
+);
+
+-- =============================================
+-- 16. 꼬멘틀 (IT 용어 추측 게임)
+-- =============================================
+
+CREATE TABLE `comendle_word` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `word` VARCHAR(100) NOT NULL UNIQUE,         -- IT 용어
+    `hint` VARCHAR(500),                         -- 힌트
+    `category` VARCHAR(50),                      -- 분류 (프로그래밍/네트워크/DB 등)
+    `difficulty` ENUM('EASY', 'MEDIUM', 'HARD') DEFAULT 'MEDIUM',
+    `is_active` BOOLEAN DEFAULT TRUE,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE `comendle_daily` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `word_id` BIGINT NOT NULL,
+    `game_date` DATE NOT NULL UNIQUE,            -- 오늘의 단어 날짜
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`word_id`) REFERENCES `comendle_word`(`id`)
+);
+
+CREATE TABLE `comendle_attempt` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `daily_id` BIGINT NOT NULL,
+    `user_id` BIGINT,                            -- NULL이면 비로그인
+    `session_id` VARCHAR(100),                   -- 비로그인 사용자 세션
+    `is_solved` BOOLEAN DEFAULT FALSE,
+    `guess_count` INT DEFAULT 0,
+    `solved_at` TIMESTAMP,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`daily_id`) REFERENCES `comendle_daily`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`user_id`) REFERENCES `user`(`id`)
+);
+
+CREATE TABLE `comendle_guess` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `attempt_id` BIGINT NOT NULL,
+    `guess_number` INT NOT NULL,                 -- 시도 순번
+    `guessed_word` VARCHAR(100) NOT NULL,
+    `similarity` DECIMAL(5,2),                   -- 유사도 점수 (0~100)
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`attempt_id`) REFERENCES `comendle_attempt`(`id`) ON DELETE CASCADE
+);
+
+CREATE TABLE `comendle_streak` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `user_id` BIGINT NOT NULL UNIQUE,
+    `current_streak` INT DEFAULT 0,
+    `max_streak` INT DEFAULT 0,
+    `total_solved` INT DEFAULT 0,
+    `total_played` INT DEFAULT 0,
+    `last_played_date` DATE,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON DELETE CASCADE
+);
+
+-- =============================================
+-- 17. IT 뉴스
+-- =============================================
+
+CREATE TABLE `it_news` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `title` VARCHAR(300) NOT NULL,
+    `summary` TEXT,
+    `source_url` VARCHAR(500) NOT NULL,
+    `source_name` VARCHAR(100),                  -- 출처 (velog, tistory, medium 등)
+    `thumbnail_url` VARCHAR(500),
+    `category` VARCHAR(50),                      -- 분류 (AI/백엔드/프론트엔드/DevOps 등)
+    `published_at` TIMESTAMP,
+    `view_count` INT DEFAULT 0,
+    `is_active` BOOLEAN DEFAULT TRUE,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE `news_bookmark` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `user_id` BIGINT NOT NULL,
+    `news_id` BIGINT NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`news_id`) REFERENCES `it_news`(`id`) ON DELETE CASCADE,
+    UNIQUE KEY `uk_user_news` (`user_id`, `news_id`)
+);

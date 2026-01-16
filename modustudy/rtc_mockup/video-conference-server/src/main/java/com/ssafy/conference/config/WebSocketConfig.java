@@ -6,6 +6,7 @@ import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+import java.util.Arrays;
 
 @Configuration
 @EnableWebSocketMessageBroker
@@ -15,8 +16,15 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
   @Override
   public void registerStompEndpoints(StompEndpointRegistry registry) {
+    String[] origins = allowedOrigins.split("\\s*,\\s*");
+    if (Arrays.asList(origins).contains("*")) {
+      registry.addEndpoint("/ws")
+          .setAllowedOriginPatterns(origins)
+          .withSockJS();
+      return;
+    }
     registry.addEndpoint("/ws")
-        .setAllowedOrigins(allowedOrigins)
+        .setAllowedOrigins(origins)
         .withSockJS();
   }
 

@@ -1,11 +1,24 @@
-const http = require('http');
+const https = require('https');
 const express = require('express');
 const { Server } = require('socket.io');
 const mediasoup = require('mediasoup');
 const config = require('./config');
+const fs = require('fs');
 
 const app = express();
-const server = http.createServer(app);
+if (!fs.existsSync(config.sslKeyPath) || !fs.existsSync(config.sslCertPath)) {
+  // eslint-disable-next-line no-console
+  console.error('Missing SSL files for SFU server', {
+    key: config.sslKeyPath,
+    cert: config.sslCertPath
+  });
+  process.exit(1);
+}
+
+const server = https.createServer({
+  key: fs.readFileSync(config.sslKeyPath),
+  cert: fs.readFileSync(config.sslCertPath)
+}, app);
 const io = new Server(server, {
   cors: {
     origin: '*',
@@ -83,8 +96,12 @@ io.on('connection', (socket) => {
   socket.on('createWebRtcTransport', async ({ roomId }, callback) => {
     try {
       const room = await getOrCreateRoom(roomId);
+      const listenIps = [{ ip: config.listenIp }];
+      if (config.announcedIp) {
+        listenIps[0].announcedIp = config.announcedIp;
+      }
       const transport = await room.router.createWebRtcTransport({
-        listenIps: [{ ip: config.listenIp, announcedIp: config.announcedIp }],
+        listenIps,
         enableUdp: true,
         enableTcp: true,
         preferUdp: true,

@@ -82,30 +82,56 @@ webmobile1-skeleton-master/
 │           ├── entity/                      # JPA 엔티티
 │           └── repository/                  # JPA 리포지토리
 │
-└── frontend/
-    ├── package.json
-    ├── vite.config.ts
-    └── src/
-        ├── App.tsx                          # 라우팅 설정
-        ├── main.tsx                         # 엔트리 포인트
-        ├── store/
-        │   ├── authStore.ts                 # 인증 상태 (Zustand)
-        │   └── menuStore.ts                 # 메뉴 상태
-        └── views/
-            ├── main/
-            │   ├── MainLayout.tsx           # 레이아웃
-            │   └── components/
-            │       ├── MainHeader.tsx       # 헤더 (로그인/로그아웃)
-            │       ├── MainSidebar.tsx      # 사이드바
-            │       ├── MainFooter.tsx       # 푸터
-            │       ├── LoginDialog.tsx      # 로그인 다이얼로그
-            │       └── RegisterDialog.tsx   # 회원가입 다이얼로그
-            ├── home/
-            │   └── Home.tsx                 # 홈 페이지 (더미)
-            ├── history/
-            │   └── History.tsx              # 히스토리 페이지 (더미)
-            └── conferences/
-                └── ConferenceDetail.tsx     # 상세 페이지 (더미)
+frontend/
+├── public/                 # 정적 자원
+└── src/
+    ├── main.tsx            # 엔트리 포인트
+    ├── App.tsx             # 전역 설정 (QueryClient, Theme, 전역 가드)
+    │
+    ├── api/                # [Service Layer] API 통신 관련
+    │   ├── axios.ts        # Axios 인스턴스 (Interceptor, 토큰 주입)
+    │   └── endpoints/      # 도메인별 API 함수 (authApi, studyApi, aiApi 등)
+    │
+    ├── assets/             # 스타일 및 미디어
+    │   ├── images/
+    │   ├── icons/
+    │   └── styles/         # Tailwind CSS 또는 Global SCSS
+    │
+    ├── shared/             # [Shared Layer] 전역 공통 모듈
+    │   ├── components/     # UI Kit (Button, Modal, Input, Spinner 등)
+    │   ├── hooks/          # useAuth, useSocket, useIntersectionObserver
+    │   ├── utils/          # date-formatter, storage-util
+    │   └── types/          # 전역 공목 타입 (User, APIResponse 등)
+    │
+    ├── layouts/            # [Layout Layer] 페이지 레이아웃
+    │   ├── MainLayout.tsx  # 헤더 + 사이드바 포함 기본 레이아웃
+    │   ├── AuthLayout.tsx  # 로그인/회원가입 전용 심플 레이아웃
+    │   └── WorkspaceLayout.tsx # 화상회의/채팅 전용 와이드 레이아웃
+    │
+    ├── features/           # [Feature Layer] 도메인별 응집화 (핵심!)
+    │   ├── auth/           # 로그인, 회원가입, 랜딩페이지
+    │   ├── dashboard/      # 홈 대시보드, 잔디 그래프, 통계 위젯
+    │   ├── study/          # 스터디 탐색, 목록, 상세, 생성
+    │   ├── workspace/      # 실시간 채팅, 채널 관리, 파일함
+    │   ├── meeting/        # WebRTC 화상 회의, 미팅 기록, AI 요약 탭
+    │   ├── quiz/           # 실시간 퀴즈 대회, 꼬멘틀, 오답 노트
+    │   ├── daily-retro/    # 데일리 리포트 작성, KPT 회고 분석
+    │   ├── attendance/     # BLE 출석 현황, 소명 관리
+    │   ├── recruitment/    # 팀원 모집 게시판, 지원자 관리
+    │   ├── profile/        # 내 프로필, 알림 설정, 연동 관리
+    │   └── admin/          # 서비스 통계, 신고 처리, 공지사항 관리
+    │
+    ├── routes/             # [Routing Layer] 경로 설정
+    │   ├── index.tsx       # 메인 라우터 (Lazy Loading 적용)
+    │   ├── PublicRoute.tsx # 비로그인 사용자 전용
+    │   └── PrivateRoute.tsx # 로그인 필수 가드
+    │
+    ├── store/              # [State Layer] 전역 상태 (Zustand)
+    │   ├── authStore.ts    # 사용자 인증 및 토큰 정보
+    │   ├── workspaceStore.ts # 현재 활성화된 채널/팀 정보
+    │   └── uiStore.ts      # 모달, 사이드바 토글 상태
+    │
+    └── types/              # 도메인별 상세 타입 정의 (.d.ts)
 ```
 
 ## 5. API 명세

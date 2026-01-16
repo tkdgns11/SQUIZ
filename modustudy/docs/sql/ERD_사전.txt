@@ -29,10 +29,18 @@ meeting_summary           미팅요약
 meeting_photo             미팅사진
 attendance                출석
 session_memo              세션메모
+quiz_category             퀴즈카테고리
+quiz_question_pool        퀴즈문제풀
+quiz_question_pool_option 퀴즈문제보기
+quiz_contest_state        퀴즈대회상태
+quiz_contest_chat         퀴즈대회채팅
 quiz_contest              퀴즈대회
 quiz_question             퀴즈문제
 quiz_participant          퀴즈참가자
 quiz_answer               퀴즈답변
+quiz_practice_stats       퀴즈코스통계
+quiz_practice_record      퀴즈코스기록
+quiz_practice_answer      퀴즈코스답안
 study_quiz                스터디퀴즈
 study_quiz_question       스터디퀴즈문제
 study_quiz_attempt        스터디퀴즈시도
@@ -127,6 +135,7 @@ is_deleted_by_sender      발신자삭제여부
 is_deleted_by_receiver    수신자삭제여부
 code                      코드
 sort_order                정렬순서
+depth                     깊이(계층)
 leader_id                 스터디장ID
 topic                     주제
 format                    형식
@@ -191,6 +200,7 @@ excuse_reason             소명사유
 excuse_status             소명상태
 created_by                생성자ID
 time_limit_seconds        문제당제한시간(초)
+contest_type              대회유형
 contest_id                대회ID
 question_number           문제번호
 question_text             문제내용
@@ -199,6 +209,25 @@ options                   객관식보기
 correct_answer            정답
 explanation               해설
 points                    배점
+category_id               카테고리ID
+question_pool_id          문제풀ID
+option_label              보기라벨
+option_text               보기내용
+tags                      태그
+usage_count               사용횟수
+correct_rate              정답률(%)
+current_question_pool_id  현재문제풀ID
+current_question_started_at 현재문제시작일시
+is_showing_results        결과표시여부
+phase                     진행단계
+total_attempted           총시도수
+total_correct             총정답수
+best_score                최고점수
+last_attempted_at         마지막시도일시
+time_spent_seconds        소요시간(초)
+practice_record_id        연습기록ID
+time_taken_seconds        답변소요시간(초)
+last_answer_time          마지막답변시간
 participant_id            참가자ID
 total_score               총점
 correct_count             정답수
@@ -412,12 +441,23 @@ ENDED                     종료
 
 --- question_type (문제유형) ---
 MULTIPLE_CHOICE           객관식
+MULTIPLE_CHOICE_MULTIPLE  객관식(다중선택)
 SHORT_ANSWER              단답형
 
 --- source_type (생성소스) ---
 MEETING                   미팅에서생성
 MATERIAL                  자료에서생성
 MANUAL                    수동생성
+
+--- quiz_contest_state.phase (대회진행단계) ---
+WAITING                   대기
+QUESTION                  문제출제
+RESULT                    결과
+ENDED                     종료
+
+--- quiz_contest.contest_type (대회유형) ---
+PUBLIC                    공개대회
+STUDY                     스터디대회
 
 --- study_quiz.status (퀴즈상태) ---
 ACTIVE                    활성
@@ -543,4 +583,3 @@ source_url                원본URL
 source_name               출처명
 thumbnail_url             썸네일URL
 published_at              발행일시
-

@@ -1,1 +1,10 @@
-// 대시보드 홈 (프론트엔드 전용)
+import React from 'react';
+
+export const Dashboard = () => {
+    return (
+        <div style={{ padding: '2rem' }}>
+            <h1>Dashboard</h1>
+            <p>Welcome to ModuStudy!</p>
+        </div>
+    );
+};

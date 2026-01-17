@@ -1,0 +1,13 @@
+[Unit]
+Description=Mediasoup SFU Server
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/sfu-server
+EnvironmentFile=/home/ubuntu/sfu-server/.env
+ExecStart=/usr/bin/node src/index.js
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

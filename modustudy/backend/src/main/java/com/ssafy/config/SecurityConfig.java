@@ -28,6 +28,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Swagger
                 .requestMatchers("/swagger-ui/**", "/api-docs/**", "/swagger-resources/**").permitAll()
+                .requestMatchers("/ws/**").permitAll()
                 // 인증 없이 접근 가능
                 .requestMatchers("/api/v1/auth/**").permitAll()
                 .requestMatchers("/api/v1/users").permitAll()

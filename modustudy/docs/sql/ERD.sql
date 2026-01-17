@@ -684,7 +684,6 @@ CREATE TABLE `quiz_course` (
     `code` VARCHAR(50) NOT NULL UNIQUE,          -- JAVA, PYTHON, CS_BASIC 등
     `name` VARCHAR(100) NOT NULL,                -- Java 마스터, Python 기초 등
     `description` TEXT,
-    `icon` VARCHAR(10),                          -- ☕, 🐍 등
     `badge_code` VARCHAR(50),                    -- 완료 시 부여할 뱃지 코드
     `total_sections` INT DEFAULT 0,
     `is_active` BOOLEAN DEFAULT TRUE,

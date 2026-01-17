@@ -40,7 +40,6 @@ GET /api/v1/quiz-courses
         "code": "JAVA",
         "name": "Java 마스터",
         "description": "Java 기초부터 고급까지",
-        "icon": "☕",
         "totalSections": 5,
         "badgeCode": "JAVA_MASTER",
         "badgeName": "Java 마스터"
@@ -50,7 +49,6 @@ GET /api/v1/quiz-courses
         "code": "PYTHON",
         "name": "Python 기초",
         "description": "Python 입문자를 위한 코스",
-        "icon": "🐍",
         "totalSections": 4,
         "badgeCode": "PYTHON_MASTER",
         "badgeName": "Python 마스터"
@@ -60,7 +58,6 @@ GET /api/v1/quiz-courses
         "code": "CS_BASIC",
         "name": "CS 기초",
         "description": "컴퓨터 과학 기초 개념",
-        "icon": "💻",
         "totalSections": 6,
         "badgeCode": "CS_MASTER",
         "badgeName": "CS 마스터"
@@ -88,12 +85,10 @@ GET /api/v1/quiz-courses/{courseId}
     "code": "JAVA",
     "name": "Java 마스터",
     "description": "Java 기초부터 고급까지 단계별 학습",
-    "icon": "☕",
     "totalSections": 5,
     "badge": {
       "code": "JAVA_MASTER",
       "name": "Java 마스터",
-      "icon": "☕",
       "description": "Java 코스 완료"
     },
     "sections": [

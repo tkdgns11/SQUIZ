@@ -3,7 +3,7 @@
 ## 기본 정보
 - Base URL: `/api/v1/study/{studyId}/sessions`
 - 인증: JWT 필요
-
+ 
 ---
 
 ## 엔드포인트 목록

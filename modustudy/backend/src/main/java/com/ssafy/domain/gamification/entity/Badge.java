@@ -21,4 +21,41 @@ public class Badge extends BaseEntity {
      */
     @Column(nullable = false, length = 100)
     private String name;
+
+    /**
+     * 배지 설명.
+     */
+    @Column(nullable = false, length = 200)
+    private String description;
+
+    /**
+     * 배지 아이콘 (이모지 등).
+     */
+    @Column(length = 10)
+    private String icon;
+
+    /**
+     * 배지 카테고리.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private BadgeCategory category;
+
+    /**
+     * 배지 획득 조건 타입.
+     */
+    @Column(name = "condition_type", nullable = false, length = 50)
+    private String conditionType;
+
+    /**
+     * 배지 획득 조건 값.
+     */
+    @Column(name = "condition_value", nullable = false)
+    private Integer conditionValue;
+
+    /**
+     * 목록 정렬 우선순위.
+     */
+    @Column(name = "sort_order")
+    private Integer sortOrder = 0;
 }

@@ -1,7 +1,7 @@
 # 스터디 멤버 API (Study Member)
 
 ## 기본 정보
-- Base URL: `/api/v1/studies/{studyId}/members`
+- Base URL: `/api/v1/study/{studyId}/members`
 - 인증: JWT 필요
 
 ---
@@ -30,7 +30,7 @@
 
 **Request**
 ```
-GET /api/v1/studies/{studyId}/members
+GET /api/v1/study/{studyId}/members
 Authorization: Bearer {accessToken}
 ```
 
@@ -79,7 +79,7 @@ Authorization: Bearer {accessToken}
 
 **Request**
 ```
-POST /api/v1/studies/{studyId}/members/apply
+POST /api/v1/study/{studyId}/members/apply
 Authorization: Bearer {accessToken}
 Content-Type: application/json
 ```
@@ -107,7 +107,7 @@ Content-Type: application/json
 
 **Request**
 ```
-GET /api/v1/studies/{studyId}/members/applications?status=PENDING
+GET /api/v1/study/{studyId}/members/applications?status=PENDING
 Authorization: Bearer {accessToken}
 ```
 
@@ -145,7 +145,7 @@ Authorization: Bearer {accessToken}
 
 **Request**
 ```
-GET /api/v1/studies/members/applications/my
+GET /api/v1/study/members/applications/my
 Authorization: Bearer {accessToken}
 ```
 
@@ -185,7 +185,7 @@ Authorization: Bearer {accessToken}
 
 **Request**
 ```
-PUT /api/v1/studies/{studyId}/members/applications/{applicationId}
+PUT /api/v1/study/{studyId}/members/applications/{applicationId}
 Authorization: Bearer {accessToken}
 Content-Type: application/json
 ```
@@ -218,7 +218,7 @@ Content-Type: application/json
 
 **Request**
 ```
-PUT /api/v1/studies/{studyId}/members/{memberId}/role
+PUT /api/v1/study/{studyId}/members/{memberId}/role
 Authorization: Bearer {accessToken}
 Content-Type: application/json
 ```
@@ -242,7 +242,7 @@ Content-Type: application/json
 
 **Request**
 ```
-DELETE /api/v1/studies/{studyId}/members/{memberId}
+DELETE /api/v1/study/{studyId}/members/{memberId}
 Authorization: Bearer {accessToken}
 ```
 
@@ -260,7 +260,7 @@ Authorization: Bearer {accessToken}
 
 **Request**
 ```
-DELETE /api/v1/studies/{studyId}/members/leave
+DELETE /api/v1/study/{studyId}/members/leave
 Authorization: Bearer {accessToken}
 ```
 
@@ -294,7 +294,7 @@ Authorization: Bearer {accessToken}
 
 **Request**
 ```
-POST /api/v1/studies/{studyId}/members/{leaderId}/review
+POST /api/v1/study/{studyId}/members/{leaderId}/review
 Authorization: Bearer {accessToken}
 Content-Type: application/json
 ```
@@ -321,7 +321,7 @@ Content-Type: application/json
 
 **Request**
 ```
-GET /api/v1/studies/{studyId}/members/expulsion-risk
+GET /api/v1/study/{studyId}/members/expulsion-risk
 Authorization: Bearer {accessToken}
 ```
 
@@ -354,7 +354,7 @@ Authorization: Bearer {accessToken}
 
 **Request**
 ```
-GET /api/v1/studies/{studyId}/members/my/expulsion-status
+GET /api/v1/study/{studyId}/members/my/expulsion-status
 Authorization: Bearer {accessToken}
 ```
 

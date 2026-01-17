@@ -1,7 +1,7 @@
 # 스터디 세션 API (Study Session)
 
 ## 기본 정보
-- Base URL: `/api/v1/studies/{studyId}/sessions`
+- Base URL: `/api/v1/study/{studyId}/sessions`
 - 인증: JWT 필요
 
 ---
@@ -25,7 +25,7 @@
 
 **Request**
 ```
-GET /api/v1/studies/{studyId}/sessions
+GET /api/v1/study/{studyId}/sessions
 Authorization: Bearer {accessToken}
 ```
 
@@ -76,7 +76,7 @@ Authorization: Bearer {accessToken}
 
 **Request**
 ```
-GET /api/v1/studies/{studyId}/sessions/{sessionId}
+GET /api/v1/study/{studyId}/sessions/{sessionId}
 Authorization: Bearer {accessToken}
 ```
 
@@ -131,7 +131,7 @@ Authorization: Bearer {accessToken}
 
 **Request**
 ```
-POST /api/v1/studies/{studyId}/sessions
+POST /api/v1/study/{studyId}/sessions
 Authorization: Bearer {accessToken}
 Content-Type: application/json
 ```
@@ -166,7 +166,7 @@ Content-Type: application/json
 
 **Request**
 ```
-PUT /api/v1/studies/{studyId}/sessions/{sessionId}
+PUT /api/v1/study/{studyId}/sessions/{sessionId}
 Authorization: Bearer {accessToken}
 Content-Type: application/json
 ```
@@ -192,7 +192,7 @@ Content-Type: application/json
 
 **Request**
 ```
-DELETE /api/v1/studies/{studyId}/sessions/{sessionId}
+DELETE /api/v1/study/{studyId}/sessions/{sessionId}
 Authorization: Bearer {accessToken}
 ```
 
@@ -210,7 +210,7 @@ Authorization: Bearer {accessToken}
 
 **Request**
 ```
-PUT /api/v1/studies/{studyId}/sessions/{sessionId}/status
+PUT /api/v1/study/{studyId}/sessions/{sessionId}/status
 Authorization: Bearer {accessToken}
 Content-Type: application/json
 ```

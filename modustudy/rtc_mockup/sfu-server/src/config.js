@@ -1,7 +1,13 @@
+const path = require('path');
+
 const config = {
   port: Number(process.env.PORT || 4000),
   listenIp: process.env.LISTEN_IP || '0.0.0.0',
-  announcedIp: process.env.ANNOUNCED_IP || '127.0.0.1',
+  announcedIp: process.env.ANNOUNCED_IP || process.env.SFU_ANNOUNCED_IP || '',
+  sslKeyPath: process.env.SFU_SSL_KEY_PATH
+    || path.resolve(__dirname, '..', '..', 'video-conference-client', '192.168.100.90-key.pem'),
+  sslCertPath: process.env.SFU_SSL_CERT_PATH
+    || path.resolve(__dirname, '..', '..', 'video-conference-client', '192.168.100.90.pem'),
   rtcMinPort: Number(process.env.RTC_MIN_PORT || 20000),
   rtcMaxPort: Number(process.env.RTC_MAX_PORT || 20100),
   mediaCodecs: [

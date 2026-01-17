@@ -9,6 +9,5 @@ Thumbs.db
 
 # === Logs ===
 *.log
-
-
+/.metadata/
 *.env

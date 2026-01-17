@@ -73,6 +73,33 @@ CREATE TABLE `user_organization` (
     FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON DELETE CASCADE
 );
 
+-- 사용자 프로필
+CREATE TABLE `profile` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `user_id` BIGINT NOT NULL UNIQUE,
+    `profile_image_url` VARCHAR(500),
+    `profile_image_source` ENUM('KAKAO', 'GOOGLE', 'NAVER', 'UPLOAD') DEFAULT 'UPLOAD',
+    `bio` TEXT,
+    `social_links` JSON,
+    `tech` JSON,
+    `favorite` JSON,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON DELETE CASCADE
+);
+
+-- 리프레시 토큰
+CREATE TABLE `refresh_token` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `user_id` BIGINT NOT NULL,
+    `token` VARCHAR(500) NOT NULL,
+    `expires_at` TIMESTAMP NOT NULL,
+    `is_revoked` BOOLEAN DEFAULT FALSE,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON DELETE CASCADE,
+    UNIQUE KEY `uk_refresh_token` (`token`)
+);
+
 -- =============================================
 -- 1-1. 친구/DM
 -- =============================================
@@ -407,22 +434,154 @@ CREATE TABLE `session_memo` (
 -- 6. 퀴즈
 -- =============================================
 
+-- 퀴즈 카테고리 (계층 구조)
+CREATE TABLE `quiz_category` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `parent_id` BIGINT,                          -- 최상위면 NULL, 하위면 부모 ID
+    `code` VARCHAR(50) NOT NULL UNIQUE,          -- DEV_IT, FRONTEND, REACT 등
+    `name` VARCHAR(100) NOT NULL,
+    `description` TEXT,
+    `depth` INT NOT NULL DEFAULT 0,              -- 0: 최상위, 1: 대분류, 2: 중분류
+    `sort_order` INT DEFAULT 0,
+    `is_active` BOOLEAN DEFAULT TRUE,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`parent_id`) REFERENCES `quiz_category`(`id`) ON DELETE CASCADE,
+    INDEX `idx_parent_depth` (`parent_id`, `depth`, `sort_order`)
+);
+
+-- 퀴즈 문제 풀 (공용 문제 저장소)
+CREATE TABLE `quiz_question_pool` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `category_id` BIGINT NOT NULL,
+    `question_text` TEXT NOT NULL,
+    `question_type` ENUM('MULTIPLE_CHOICE', 'MULTIPLE_CHOICE_MULTIPLE', 'SHORT_ANSWER') DEFAULT 'MULTIPLE_CHOICE',
+    `correct_answer` JSON NOT NULL,              -- 정답 보기 번호 배열 (예: ["A"], ["A","B"])
+    `explanation` TEXT,
+    `difficulty` ENUM('EASY', 'MEDIUM', 'HARD') DEFAULT 'MEDIUM',
+    `tags` JSON,
+    `usage_count` INT DEFAULT 0,
+    `correct_rate` DECIMAL(5,2),
+    `created_by` BIGINT NOT NULL,
+    `is_active` BOOLEAN DEFAULT TRUE,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (`category_id`) REFERENCES `quiz_category`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`created_by`) REFERENCES `user`(`id`),
+    INDEX `idx_category_difficulty` (`category_id`, `difficulty`, `is_active`)
+);
+
+-- 퀴즈 문제 보기 (객관식 선택지)
+CREATE TABLE `quiz_question_pool_option` (
+    `question_pool_id` BIGINT NOT NULL,
+    `option_label` VARCHAR(10) NOT NULL,         -- A, B, C, D ...
+    `option_text` VARCHAR(500) NOT NULL,
+    `is_correct` BOOLEAN DEFAULT FALSE,
+    `sort_order` INT DEFAULT 0,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`question_pool_id`, `option_label`),
+    FOREIGN KEY (`question_pool_id`) REFERENCES `quiz_question_pool`(`id`) ON DELETE CASCADE,
+    UNIQUE KEY `uk_question_option_label` (`question_pool_id`, `option_label`),
+    INDEX `idx_question_option_order` (`question_pool_id`, `sort_order`)
+);
+
+-- 퀴즈 대회 상태 (실시간 진행 상태)
+CREATE TABLE `quiz_contest_state` (
+    `contest_id` BIGINT NOT NULL,
+    `current_question_pool_id` BIGINT,
+    `current_question_started_at` TIMESTAMP,
+    `is_showing_results` BOOLEAN DEFAULT FALSE,
+    `phase` ENUM('WAITING', 'QUESTION', 'RESULT', 'ENDED') DEFAULT 'WAITING',
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`contest_id`),
+    FOREIGN KEY (`contest_id`) REFERENCES `quiz_contest`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`current_question_pool_id`) REFERENCES `quiz_question_pool`(`id`),
+    UNIQUE KEY `uk_contest` (`contest_id`)
+);
+
+-- 퀴즈 대회 채팅
+CREATE TABLE `quiz_contest_chat` (
+    `id` BIGINT AUTO_INCREMENT,
+    `contest_id` BIGINT NOT NULL,
+    `user_id` BIGINT,
+    `participant_id` BIGINT NOT NULL,
+    `message` VARCHAR(500) NOT NULL,
+    `message_type` ENUM('TEXT', 'SYSTEM') NOT NULL DEFAULT 'TEXT',
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`, `contest_id`),
+    FOREIGN KEY (`contest_id`) REFERENCES `quiz_contest`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON DELETE SET NULL,
+    FOREIGN KEY (`participant_id`) REFERENCES `quiz_participant`(`id`) ON DELETE CASCADE,
+    INDEX `idx_contest_created` (`contest_id`, `created_at`)
+);
+
+-- 퀴즈 코스 통계 (사용자별 카테고리 학습 현황)
+CREATE TABLE `quiz_practice_stats` (
+    `user_id` BIGINT NOT NULL,
+    `category_id` BIGINT NOT NULL,
+    `total_attempted` INT DEFAULT 0,
+    `total_correct` INT DEFAULT 0,
+    `best_score` INT DEFAULT 0,
+    `last_attempted_at` TIMESTAMP,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`user_id`, `category_id`),
+    FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`category_id`) REFERENCES `quiz_category`(`id`) ON DELETE CASCADE,
+    UNIQUE KEY `uk_user_category` (`user_id`, `category_id`)
+);
+
+-- 퀴즈 코스 기록 (연습 세션별 상세 기록)
+CREATE TABLE `quiz_practice_record` (
+    `id` BIGINT AUTO_INCREMENT,
+    `user_id` BIGINT NOT NULL,
+    `category_id` BIGINT NOT NULL,
+    `total_questions` INT NOT NULL,
+    `correct_count` INT NOT NULL,
+    `score` INT NOT NULL,
+    `time_spent_seconds` INT,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`, `user_id`),
+    FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`category_id`) REFERENCES `quiz_category`(`id`) ON DELETE CASCADE,
+    UNIQUE KEY `uk_practice_record_id` (`id`),
+    INDEX `idx_user_created` (`user_id`, `created_at`)
+);
+
+-- 퀴즈 코스 답안 (연습에서 푼 문제별 기록)
+CREATE TABLE `quiz_practice_answer` (
+    `practice_record_id` BIGINT NOT NULL,
+    `question_pool_id` BIGINT NOT NULL,
+    `user_answer` JSON,                           -- 사용자 선택 보기 번호 배열 (예: ["A"], ["A","C"])
+    `is_correct` BOOLEAN NOT NULL,
+    `time_taken_seconds` INT,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`practice_record_id`, `question_pool_id`),
+    FOREIGN KEY (`practice_record_id`) REFERENCES `quiz_practice_record`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`question_pool_id`) REFERENCES `quiz_question_pool`(`id`)
+);
+
 CREATE TABLE `quiz_contest` (
     `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
     `title` VARCHAR(200) NOT NULL,
     `description` TEXT,
+    `category_id` BIGINT,                        -- 대회 카테고리 (선택)
+    `contest_type` ENUM('PUBLIC', 'STUDY') DEFAULT 'PUBLIC',
+    `study_id` BIGINT,                           -- STUDY 타입일 경우 스터디 ID
     `created_by` BIGINT NOT NULL,                -- 관리자
     `status` ENUM('DRAFT', 'SCHEDULED', 'IN_PROGRESS', 'ENDED') DEFAULT 'DRAFT',
     `scheduled_at` TIMESTAMP,
     `started_at` TIMESTAMP,
     `ended_at` TIMESTAMP,
     `time_limit_seconds` INT DEFAULT 30,         -- 문제당 제한 시간
-    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`category_id`) REFERENCES `quiz_category`(`id`),
+    FOREIGN KEY (`study_id`) REFERENCES `study`(`id`)
 );
 
 CREATE TABLE `quiz_question` (
-    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `id` BIGINT AUTO_INCREMENT,
     `contest_id` BIGINT NOT NULL,
+    `question_pool_id` BIGINT,                   -- 문제 풀 참조 (통계용)
     `question_number` INT NOT NULL,
     `question_text` TEXT NOT NULL,
     `question_type` ENUM('MULTIPLE_CHOICE', 'SHORT_ANSWER') DEFAULT 'MULTIPLE_CHOICE',
@@ -431,30 +590,39 @@ CREATE TABLE `quiz_question` (
     `explanation` TEXT,                          -- 해설
     `points` INT DEFAULT 10,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (`contest_id`) REFERENCES `quiz_contest`(`id`) ON DELETE CASCADE
+    PRIMARY KEY (`id`, `contest_id`),
+    FOREIGN KEY (`contest_id`) REFERENCES `quiz_contest`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`question_pool_id`) REFERENCES `quiz_question_pool`(`id`),
+    UNIQUE KEY `uk_quiz_question_id` (`id`)
 );
 
 CREATE TABLE `quiz_participant` (
-    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `id` BIGINT AUTO_INCREMENT,
     `contest_id` BIGINT NOT NULL,
     `user_id` BIGINT,                            -- NULL이면 비로그인
     `nickname` VARCHAR(50) NOT NULL,             -- 표시 닉네임
     `total_score` INT DEFAULT 0,
     `correct_count` INT DEFAULT 0,
     `rank` INT,
+    `last_answer_time` TIMESTAMP,                -- 동점자 처리용
     `joined_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`, `contest_id`),
     FOREIGN KEY (`contest_id`) REFERENCES `quiz_contest`(`id`) ON DELETE CASCADE,
-    FOREIGN KEY (`user_id`) REFERENCES `user`(`id`)
+    FOREIGN KEY (`user_id`) REFERENCES `user`(`id`),
+    UNIQUE KEY `uk_quiz_participant_id` (`id`),
+    INDEX `idx_contest_score` (`contest_id`, `total_score`, `last_answer_time`),
+    INDEX `idx_participant_user` (`user_id`, `joined_at`)
 );
 
 CREATE TABLE `quiz_answer` (
-    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
     `participant_id` BIGINT NOT NULL,
     `question_id` BIGINT NOT NULL,
-    `answer` VARCHAR(500),
+    `user_answer` JSON,                           -- 사용자 선택 보기 번호 배열 (예: ["A"], ["A","C"])
     `is_correct` BOOLEAN,
     `score` INT DEFAULT 0,
+    `time_taken_seconds` INT,                    -- 답변 소요 시간
     `answered_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`participant_id`, `question_id`),
     FOREIGN KEY (`participant_id`) REFERENCES `quiz_participant`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`question_id`) REFERENCES `quiz_question`(`id`) ON DELETE CASCADE
 );
@@ -525,7 +693,7 @@ CREATE TABLE `quiz_course` (
 );
 
 CREATE TABLE `quiz_course_section` (
-    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `id` BIGINT AUTO_INCREMENT,
     `course_id` BIGINT NOT NULL,
     `section_number` INT NOT NULL,               -- 순서
     `name` VARCHAR(100) NOT NULL,                -- 기본 문법, 객체지향 등
@@ -533,12 +701,14 @@ CREATE TABLE `quiz_course_section` (
     `total_questions` INT DEFAULT 0,
     `pass_score` INT DEFAULT 70,                 -- 통과 점수 (%)
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`, `course_id`),
     FOREIGN KEY (`course_id`) REFERENCES `quiz_course`(`id`) ON DELETE CASCADE,
+    UNIQUE KEY `uk_quiz_course_section_id` (`id`),
     UNIQUE KEY `uk_course_section` (`course_id`, `section_number`)
 );
 
 CREATE TABLE `quiz_course_question` (
-    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `id` BIGINT AUTO_INCREMENT,
     `section_id` BIGINT NOT NULL,
     `question_number` INT NOT NULL,
     `question_text` TEXT NOT NULL,
@@ -547,12 +717,12 @@ CREATE TABLE `quiz_course_question` (
     `correct_answer` VARCHAR(500) NOT NULL,
     `explanation` TEXT,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`, `section_id`),
     FOREIGN KEY (`section_id`) REFERENCES `quiz_course_section`(`id`) ON DELETE CASCADE
 );
 
 -- 사용자별 코스 진행 상황
 CREATE TABLE `user_course_progress` (
-    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
     `user_id` BIGINT NOT NULL,
     `course_id` BIGINT NOT NULL,
     `current_section` INT DEFAULT 1,             -- 현재 진행 중인 섹션
@@ -561,6 +731,7 @@ CREATE TABLE `user_course_progress` (
     `completed_at` TIMESTAMP,
     `started_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`user_id`, `course_id`),
     FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`course_id`) REFERENCES `quiz_course`(`id`) ON DELETE CASCADE,
     UNIQUE KEY `uk_user_course` (`user_id`, `course_id`)
@@ -568,7 +739,7 @@ CREATE TABLE `user_course_progress` (
 
 -- 사용자별 섹션 시도 기록
 CREATE TABLE `user_section_attempt` (
-    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `id` BIGINT AUTO_INCREMENT,
     `user_id` BIGINT NOT NULL,
     `section_id` BIGINT NOT NULL,
     `score` INT DEFAULT 0,                       -- 점수 (%)
@@ -576,6 +747,7 @@ CREATE TABLE `user_section_attempt` (
     `total_questions` INT DEFAULT 0,
     `is_passed` BOOLEAN DEFAULT FALSE,           -- 통과 여부
     `attempted_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`, `section_id`),
     FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`section_id`) REFERENCES `quiz_course_section`(`id`) ON DELETE CASCADE
 );
@@ -624,6 +796,65 @@ CREATE TABLE `user_stats` (
     FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON DELETE CASCADE
 );
 
+CREATE TABLE `level_config` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `level` INT NOT NULL UNIQUE,
+    `level_name` VARCHAR(50) NOT NULL,
+    `required_exp` INT NOT NULL,
+    `level_icon_url` VARCHAR(500),
+    `level_color` VARCHAR(20),
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE `reward_policy` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `action_type` ENUM('SIGNUP', 'DAILY_LOGIN', 'STUDY_CREATE', 'STUDY_JOIN', 'STUDY_COMPLETE', 'QUIZ_SOLVE', 'QUIZ_CREATE', 'REVIEW_WRITE', 'COMMENT_WRITE', 'ATTENDANCE') NOT NULL,
+    `exp_amount` INT NOT NULL,
+    `point_amount` INT NOT NULL,
+    `description` VARCHAR(200),
+    `is_active` BOOLEAN DEFAULT TRUE,
+    `daily_limit` INT,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE `exp_transaction` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `user_id` BIGINT NOT NULL,
+    `exp_amount` INT NOT NULL,
+    `exp_type` ENUM('SIGNUP', 'DAILY_LOGIN', 'STUDY_CREATE', 'STUDY_JOIN', 'STUDY_COMPLETE', 'QUIZ_SOLVE', 'QUIZ_CREATE', 'REVIEW_WRITE', 'COMMENT_WRITE', 'ATTENDANCE', 'LEVEL_UP', 'EVENT', 'ADMIN_GRANT', 'PENALTY') NOT NULL,
+    `reference_type` ENUM('STUDY', 'QUIZ', 'REVIEW', 'COMMENT', 'ATTENDANCE', 'NONE') DEFAULT 'NONE',
+    `reference_id` BIGINT,
+    `description` VARCHAR(200),
+    `balance_after` INT NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON DELETE CASCADE
+);
+
+CREATE TABLE `point_transaction` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `user_id` BIGINT NOT NULL,
+    `point_amount` INT NOT NULL,
+    `transaction_type` ENUM('EARN', 'SPEND') NOT NULL,
+    `point_type` ENUM('SIGNUP', 'DAILY_LOGIN', 'STUDY_CREATE', 'STUDY_JOIN', 'STUDY_COMPLETE', 'QUIZ_SOLVE', 'QUIZ_CREATE', 'REVIEW_WRITE', 'COMMENT_WRITE', 'ATTENDANCE', 'LEVEL_UP', 'EVENT', 'ADMIN_GRANT', 'HINT_USE', 'ITEM_PURCHASE') NOT NULL,
+    `reference_type` ENUM('STUDY', 'QUIZ', 'REVIEW', 'COMMENT', 'ATTENDANCE', 'HINT', 'ITEM', 'NONE') DEFAULT 'NONE',
+    `reference_id` BIGINT,
+    `description` VARCHAR(200),
+    `balance_after` INT NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON DELETE CASCADE
+);
+
+CREATE TABLE `hint_cost` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `hint_type` VARCHAR(50) NOT NULL,
+    `cost_points` INT NOT NULL,
+    `description` VARCHAR(200),
+    `is_active` BOOLEAN DEFAULT TRUE,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
 -- 뱃지 정의 (영구, 긍정적 - 한번 획득하면 유지)
 CREATE TABLE `badge` (
     `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -643,10 +874,15 @@ CREATE TABLE `user_badge` (
     `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
     `user_id` BIGINT NOT NULL,
     `badge_id` BIGINT NOT NULL,
+    `badge_type` ENUM('ACTIVITY', 'STREAK', 'STUDY', 'QUIZ_KING', 'SPECIAL'),
+    `reference_type` ENUM('CONTEST', 'STUDY', 'GENERAL'),
+    `reference_id` BIGINT,
+    `rank` INT,                                  -- 퀴즈왕 순위 (1, 2, 3)
     `earned_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`badge_id`) REFERENCES `badge`(`id`),
-    UNIQUE KEY `uk_user_badge` (`user_id`, `badge_id`)
+    UNIQUE KEY `uk_user_badge` (`user_id`, `badge_id`),
+    INDEX `idx_user_badge_type` (`user_id`, `badge_type`, `reference_type`)
 );
 
 -- 패널티 정의 (일시적, 부정적 - 해소 가능)

@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(for domain in user friend dm study chat meeting attendance quiz gamification material retrospect notification report daily board recruitment comendle news ai)",
+      "Bash(do mkdir -p src/main/java/com/ssafy/domain/$domain/{entity,repository,service,controller,dto/request,dto/response})",
+      "Bash(done)",
+      "Bash(tree:*)"
+    ]
+  }
+}

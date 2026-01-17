@@ -4,5 +4,4 @@ import com.ssafy.domain.quiz.entity.QuizCourse;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface QuizCourseRepository extends JpaRepository<QuizCourse, Long> {
-
 }

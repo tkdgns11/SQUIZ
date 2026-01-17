@@ -1,15 +1,12 @@
 package com.ssafy.domain.quiz.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import com.ssafy.common.entity.BaseEntity;
+import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
 @Table(name = "quiz_question")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class QuizQuestion {
-
+public class QuizQuestion extends BaseEntity {
 }

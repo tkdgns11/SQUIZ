@@ -17,5 +17,9 @@ spring:
 app:
   cors:
     allowed-origins: "*"
+  recorder:
+    base-url: "http://localhost:9100"
+  processing:
+    mock: true
   sfu:
     base-url: "wss://localhost:4000"

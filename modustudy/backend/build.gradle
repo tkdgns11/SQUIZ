@@ -44,6 +44,9 @@ dependencies {
     // Swagger (springdoc-openapi)
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
 
+    // Jackson (JSON 컬럼 처리)
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+
     // Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'

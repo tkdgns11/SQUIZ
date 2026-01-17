@@ -62,7 +62,7 @@ public class QuizCourseService {
                         course.getDescription(),
                         course.getTotalSections(),
                         course.getBadgeCode(),
-                        badgeNameByCode.get(course.getBadgeCode())
+                        course.getBadgeCode() == null ? null : badgeNameByCode.get(course.getBadgeCode())
                 ))
                 .toList();
 

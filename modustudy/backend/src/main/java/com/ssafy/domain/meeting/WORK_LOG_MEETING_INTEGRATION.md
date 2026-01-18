@@ -199,6 +199,7 @@ Response
         "sessionNumber": 1,
         "title": null
       },
+      "meetingType": "WEEKLY",
       "startedAt": "2025-01-15T19:00:00",
       "endedAt": "2025-01-15T20:30:00",
       "durationSeconds": 5400,
@@ -228,7 +229,10 @@ Content-Type: application/json
 {
   "title": "2회차 스터디",
   "sessionId": 2,
-  "channelId": 3
+  "channelId": 3,
+  "meetingType": "DAILY",
+  "autoShareSummary": true,
+  "shareChannelId": 12
 }
 ```
 
@@ -241,7 +245,11 @@ Response
     "id": 2,
     "title": "2회차 스터디",
     "roomToken": "meeting-2",
-    "status": "IN_PROGRESS"
+    "status": "IN_PROGRESS",
+    "meetingType": "DAILY",
+    "recordingStatus": "RECORDING",
+    "sttStatus": "PENDING",
+    "summaryStatus": "PENDING"
   }
 }
 ```
@@ -302,12 +310,14 @@ Response
     "summary": "이번 미팅에서는 DP와 BFS를 정리했다.",
     "actionItems": [
       {
+        "id": 11,
         "content": "백준 1000번 문제 풀기",
-        "assignee": null
+        "assigneeId": null,
+        "status": "TODO"
       }
     ],
     "keywords": ["DP", "BFS"],
-    "status": "COMPLETED",
+    "status": "DONE",
     "createdAt": "2025-01-15T20:35:00"
   }
 }
@@ -325,6 +335,8 @@ Content-Type: application/json
   "userId": 1,
   "content": "오늘은 DP 개념을 정리합시다.",
   "timestampSeconds": 120,
+  "startMs": 120000,
+  "endMs": 121500,
   "isFinal": true
 }
 ```
@@ -342,6 +354,8 @@ Response
     },
     "content": "오늘은 DP 개념을 정리합시다.",
     "timestampSeconds": 120,
+    "startMs": 120000,
+    "endMs": 121500,
     "createdAt": "2025-01-15T19:02:00"
   }
 }
@@ -376,7 +390,7 @@ Response
 Send
 ```
 SEND /app/studies/1/meetings/2/stt
-{"userId":1,"content":"실시간 STT 메시지","timestampSeconds":135,"isFinal":false}
+{"userId":1,"content":"실시간 STT 메시지","timestampSeconds":135,"startMs":135000,"endMs":136200,"isFinal":false}
 ```
 
 Broadcast
@@ -389,7 +403,324 @@ SUBSCRIBE /topic/studies/1/meetings/2/stt
     "nickname": null,
     "content": "실시간 STT 메시지",
     "isFinal": false,
-    "timestampSeconds": 135
+    "timestampSeconds": 135,
+    "startMs": 135000,
+    "endMs": 136200
   }
 }
+```
+
+## 10) 미팅 기능 확장 (2025-03-08)
+
+### ERD 확장 반영
+- `meeting`: 유형/녹음/STT/요약 상태 + 요약 자동공유 옵션 추가
+- `meeting_recording`: 녹음 메타데이터 저장
+- `meeting_participant_summary`: 참가자별 요약 저장
+- `meeting_action_item`: 액션 아이템 저장
+- `meeting_transcript`: start/end ms 저장
+
+### 상태값 변경
+- `SummaryStatus`: `COMPLETED` → `DONE`
+- `RecordingStatus`: `WAITING`, `RECORDING`, `READY`, `FAILED`
+- `SttStatus`: `PENDING`, `PROCESSING`, `DONE`, `FAILED`
+- `MeetingType`: `DAILY`, `WEEKLY`, `FREE`, `OTHER`
+- `ActionItemStatus`: `TODO`, `DONE`
+
+### 신규/확장 API
+- 미팅 목록 필터: `GET /api/v1/studies/{studyId}/meetings?meetingType=&startDate=&endDate=`
+- 녹음 조회/저장:
+  - `GET /api/v1/studies/{studyId}/meetings/{meetingId}/recording`
+  - `PUT /api/v1/studies/{studyId}/meetings/{meetingId}/recording`
+- 참가자 요약:
+  - `GET /api/v1/studies/{studyId}/meetings/{meetingId}/participant-summaries`
+  - `PUT /api/v1/studies/{studyId}/meetings/{meetingId}/participant-summaries`
+- 액션 아이템:
+  - `GET /api/v1/studies/{studyId}/meetings/{meetingId}/action-items`
+  - `POST /api/v1/studies/{studyId}/meetings/{meetingId}/action-items`
+  - `PUT /api/v1/studies/{studyId}/meetings/{meetingId}/action-items/{actionItemId}`
+- 내보내기:
+  - `GET /api/v1/studies/{studyId}/meetings/{meetingId}/export?format=MARKDOWN|PDF`
+
+### OpenPDF 적용
+- 의존성: `com.github.librepdf:openpdf:1.3.39`
+- PDF 렌더링: Markdown 기반 요약 내용을 PDF로 출력
+- 폰트 설정: `application.properties`에 `meeting.pdf.font-path` 추가
+  - 예: `meeting.pdf.font-path=C:/Windows/Fonts/malgun.ttf`
+
+### 주요 변경 파일
+- 엔티티/Enum:
+  - `backend/src/main/java/com/ssafy/domain/meeting/entity/Meeting.java`
+  - `backend/src/main/java/com/ssafy/domain/meeting/entity/MeetingRecording.java`
+  - `backend/src/main/java/com/ssafy/domain/meeting/entity/MeetingParticipantSummary.java`
+  - `backend/src/main/java/com/ssafy/domain/meeting/entity/MeetingActionItem.java`
+  - `backend/src/main/java/com/ssafy/domain/meeting/entity/MeetingTranscript.java`
+  - `backend/src/main/java/com/ssafy/domain/meeting/entity/MeetingType.java`
+  - `backend/src/main/java/com/ssafy/domain/meeting/entity/RecordingStatus.java`
+  - `backend/src/main/java/com/ssafy/domain/meeting/entity/SttStatus.java`
+  - `backend/src/main/java/com/ssafy/domain/meeting/entity/ActionItemStatus.java`
+  - `backend/src/main/java/com/ssafy/domain/meeting/entity/SummaryStatus.java`
+- Repository:
+  - `backend/src/main/java/com/ssafy/domain/meeting/repository/MeetingRepository.java`
+  - `backend/src/main/java/com/ssafy/domain/meeting/repository/MeetingRecordingRepository.java`
+  - `backend/src/main/java/com/ssafy/domain/meeting/repository/MeetingParticipantSummaryRepository.java`
+  - `backend/src/main/java/com/ssafy/domain/meeting/repository/MeetingActionItemRepository.java`
+  - `backend/src/main/java/com/ssafy/domain/meeting/repository/MeetingTranscriptRepository.java`
+- Service/Controller:
+  - `backend/src/main/java/com/ssafy/domain/meeting/service/MeetingService.java`
+  - `backend/src/main/java/com/ssafy/domain/meeting/controller/MeetingController.java`
+  - `backend/src/main/java/com/ssafy/domain/meeting/controller/MeetingSttController.java`
+- 설정:
+  - `backend/build.gradle`
+  - `backend/src/main/resources/application.properties`
+
+### 참고 문서
+- `OpenPDF_GUIDE.md`
+
+## 11) 확장 API 요청/응답 예시
+
+### 11-1) 미팅 녹음 메타 저장
+Request
+```http
+PUT /api/v1/studies/1/meetings/2/recording
+Authorization: Bearer {accessToken}
+Content-Type: application/json
+```
+```json
+{
+  "recordingUrl": "s3://modustudy/meetings/2/audio.wav",
+  "format": "wav",
+  "durationSeconds": 5400,
+  "startedAt": "2025-01-15T19:00:00",
+  "endedAt": "2025-01-15T20:30:00",
+  "fileSize": 12345678,
+  "status": "READY"
+}
+```
+
+Response
+```json
+{
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "id": 1,
+    "recordingUrl": "s3://modustudy/meetings/2/audio.wav",
+    "format": "wav",
+    "durationSeconds": 5400,
+    "startedAt": "2025-01-15T19:00:00",
+    "endedAt": "2025-01-15T20:30:00",
+    "fileSize": 12345678,
+    "status": "READY",
+    "createdAt": "2025-01-15T20:31:00"
+  }
+}
+```
+
+### 11-1-1) 미팅 녹음 조회
+Request
+```http
+GET /api/v1/studies/1/meetings/2/recording
+Authorization: Bearer {accessToken}
+```
+
+Response
+```json
+{
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "id": 1,
+    "recordingUrl": "s3://modustudy/meetings/2/audio.wav",
+    "format": "wav",
+    "durationSeconds": 5400,
+    "startedAt": "2025-01-15T19:00:00",
+    "endedAt": "2025-01-15T20:30:00",
+    "fileSize": 12345678,
+    "status": "READY",
+    "createdAt": "2025-01-15T20:31:00"
+  }
+}
+```
+
+### 11-2) 참가자 요약 저장
+Request
+```http
+PUT /api/v1/studies/1/meetings/2/participant-summaries
+Authorization: Bearer {accessToken}
+Content-Type: application/json
+```
+```json
+[
+  {
+    "userId": 1,
+    "summary": "DP 개념 정리와 예제 풀이를 진행함."
+  },
+  {
+    "userId": 2,
+    "summary": "BFS 실습 코드 리뷰를 맡음."
+  }
+]
+```
+
+Response
+```json
+{
+  "status": 200,
+  "message": "Success",
+  "data": [
+    {
+      "id": 1,
+      "userId": 1,
+      "summary": "DP 개념 정리와 예제 풀이를 진행함.",
+      "createdAt": "2025-01-15T20:40:00"
+    },
+    {
+      "id": 2,
+      "userId": 2,
+      "summary": "BFS 실습 코드 리뷰를 맡음.",
+      "createdAt": "2025-01-15T20:40:00"
+    }
+  ]
+}
+```
+
+### 11-2-1) 참가자 요약 조회
+Request
+```http
+GET /api/v1/studies/1/meetings/2/participant-summaries
+Authorization: Bearer {accessToken}
+```
+
+Response
+```json
+{
+  "status": 200,
+  "message": "Success",
+  "data": [
+    {
+      "id": 1,
+      "userId": 1,
+      "summary": "DP 개념 정리와 예제 풀이를 진행함.",
+      "createdAt": "2025-01-15T20:40:00"
+    },
+    {
+      "id": 2,
+      "userId": 2,
+      "summary": "BFS 실습 코드 리뷰를 맡음.",
+      "createdAt": "2025-01-15T20:40:00"
+    }
+  ]
+}
+```
+
+### 11-3) 액션 아이템 생성
+Request
+```http
+POST /api/v1/studies/1/meetings/2/action-items
+Authorization: Bearer {accessToken}
+Content-Type: application/json
+```
+```json
+{
+  "content": "백준 1000번 문제 풀기",
+  "assigneeId": 1,
+  "status": "TODO"
+}
+```
+
+Response
+```json
+{
+  "status": 201,
+  "message": "Created",
+  "data": {
+    "id": 11,
+    "content": "백준 1000번 문제 풀기",
+    "assigneeId": 1,
+    "status": "TODO"
+  }
+}
+```
+
+### 11-3-1) 액션 아이템 조회
+Request
+```http
+GET /api/v1/studies/1/meetings/2/action-items
+Authorization: Bearer {accessToken}
+```
+
+Response
+```json
+{
+  "status": 200,
+  "message": "Success",
+  "data": [
+    {
+      "id": 11,
+      "content": "백준 1000번 문제 풀기",
+      "assigneeId": 1,
+      "status": "TODO"
+    },
+    {
+      "id": 12,
+      "content": "회의록 정리하기",
+      "assigneeId": 2,
+      "status": "DONE"
+    }
+  ]
+}
+```
+
+### 11-4) 액션 아이템 수정
+Request
+```http
+PUT /api/v1/studies/1/meetings/2/action-items/11
+Authorization: Bearer {accessToken}
+Content-Type: application/json
+```
+```json
+{
+  "assigneeId": 2,
+  "status": "DONE"
+}
+```
+
+Response
+```json
+{
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "id": 11,
+    "content": "백준 1000번 문제 풀기",
+    "assigneeId": 2,
+    "status": "DONE"
+  }
+}
+```
+
+### 11-5) 미팅 내보내기 (Markdown)
+Request
+```http
+GET /api/v1/studies/1/meetings/2/export?format=MARKDOWN
+Authorization: Bearer {accessToken}
+```
+
+Response (파일 다운로드)
+```
+Content-Type: text/markdown
+Content-Disposition: attachment; filename=meeting-2.md
+```
+
+### 11-6) 미팅 내보내기 (PDF)
+Request
+```http
+GET /api/v1/studies/1/meetings/2/export?format=PDF
+Authorization: Bearer {accessToken}
+```
+
+Response (파일 다운로드)
+```
+Content-Type: application/pdf
+Content-Disposition: attachment; filename=meeting-2.pdf
 ```

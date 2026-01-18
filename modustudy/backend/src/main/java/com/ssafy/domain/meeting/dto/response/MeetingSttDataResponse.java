@@ -5,6 +5,8 @@ public record MeetingSttDataResponse(
         String nickname,
         String content,
         Boolean isFinal,
-        Integer timestampSeconds
+        Integer timestampSeconds,
+        Integer startMs,
+        Integer endMs
 ) {
 }

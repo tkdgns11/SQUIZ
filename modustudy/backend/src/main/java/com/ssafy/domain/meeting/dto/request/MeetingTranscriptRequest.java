@@ -7,6 +7,8 @@ public record MeetingTranscriptRequest(
         @NotNull Long userId,
         @NotBlank String content,
         @NotNull Integer timestampSeconds,
+        Integer startMs,
+        Integer endMs,
         Boolean isFinal
 ) {
 }

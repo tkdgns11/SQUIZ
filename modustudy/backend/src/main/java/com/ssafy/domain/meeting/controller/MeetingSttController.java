@@ -33,7 +33,9 @@ public class MeetingSttController {
                 saved.user().nickname(),
                 saved.content(),
                 request.isFinal(),
-                saved.timestampSeconds()
+                saved.timestampSeconds(),
+                saved.startMs(),
+                saved.endMs()
         );
         MeetingSttMessageResponse message = new MeetingSttMessageResponse("STT", data);
         messagingTemplate.convertAndSend(

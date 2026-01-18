@@ -24,18 +24,12 @@ public class MeetingSummary extends BaseEntity {
     @Column(name = "keywords")
     private String keywordsJson;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "summary_status", nullable = false)
-    private SummaryStatus summaryStatus;
-
     @Builder
-    private MeetingSummary(Long meetingId, String summary, String actionItemsJson, String keywordsJson,
-                           SummaryStatus summaryStatus) {
+    private MeetingSummary(Long meetingId, String summary, String actionItemsJson, String keywordsJson) {
         this.meetingId = meetingId;
         this.summary = summary;
         this.actionItemsJson = actionItemsJson;
         this.keywordsJson = keywordsJson;
-        this.summaryStatus = summaryStatus;
     }
 
     public static MeetingSummary createEmpty(Long meetingId) {
@@ -43,7 +37,6 @@ public class MeetingSummary extends BaseEntity {
                 .meetingId(meetingId)
                 .actionItemsJson("[]")
                 .keywordsJson("[]")
-                .summaryStatus(SummaryStatus.PENDING)
                 .build();
     }
 
@@ -59,7 +52,4 @@ public class MeetingSummary extends BaseEntity {
         this.keywordsJson = keywordsJson;
     }
 
-    public void updateSummaryStatus(SummaryStatus summaryStatus) {
-        this.summaryStatus = summaryStatus;
-    }
 }

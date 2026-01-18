@@ -22,11 +22,20 @@ public class MeetingTranscript extends BaseEntity {
     @Column(name = "timestamp_seconds", nullable = false)
     private Integer timestampSeconds;
 
+    @Column(name = "start_ms")
+    private Integer startMs;
+
+    @Column(name = "end_ms")
+    private Integer endMs;
+
     @Builder
-    private MeetingTranscript(Long meetingId, Long userId, String content, Integer timestampSeconds) {
+    private MeetingTranscript(Long meetingId, Long userId, String content, Integer timestampSeconds,
+                              Integer startMs, Integer endMs) {
         this.meetingId = meetingId;
         this.userId = userId;
         this.content = content;
         this.timestampSeconds = timestampSeconds;
+        this.startMs = startMs;
+        this.endMs = endMs;
     }
 }

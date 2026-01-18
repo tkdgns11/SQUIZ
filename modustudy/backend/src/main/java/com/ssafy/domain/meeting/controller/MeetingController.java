@@ -3,12 +3,16 @@ package com.ssafy.domain.meeting.controller;
 import com.ssafy.common.auth.SsafyUserDetails;
 import com.ssafy.common.response.ApiResponse;
 import com.ssafy.common.response.PageResponse;
+import com.ssafy.domain.meeting.dto.request.MeetingActionItemRequest;
 import com.ssafy.domain.meeting.dto.request.MeetingKeywordUpdateRequest;
 import com.ssafy.domain.meeting.dto.request.MeetingMuteRequest;
+import com.ssafy.domain.meeting.dto.request.MeetingParticipantSummaryRequest;
+import com.ssafy.domain.meeting.dto.request.MeetingRecordingRequest;
 import com.ssafy.domain.meeting.dto.request.MeetingRequest;
 import com.ssafy.domain.meeting.dto.request.MeetingSummaryUpdateRequest;
 import com.ssafy.domain.meeting.dto.request.MeetingTranscriptRequest;
 import com.ssafy.domain.meeting.dto.response.*;
+import com.ssafy.domain.meeting.entity.MeetingType;
 import com.ssafy.domain.meeting.service.MeetingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -16,12 +20,15 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -36,9 +43,12 @@ public class MeetingController {
     @Operation(summary = "미팅 목록", description = "스터디 미팅 기록 목록을 페이지 단위로 조회한다.")
     public ResponseEntity<PageResponse<MeetingListItemResponse>> list(
             @PathVariable Long studyId,
+            @RequestParam(required = false) MeetingType meetingType,
+            @RequestParam(required = false) LocalDate startDate,
+            @RequestParam(required = false) LocalDate endDate,
             Pageable pageable
     ) {
-        Page<MeetingListItemResponse> page = meetingService.listMeetings(studyId, pageable);
+        Page<MeetingListItemResponse> page = meetingService.listMeetings(studyId, meetingType, startDate, endDate, pageable);
         return ResponseEntity.ok(PageResponse.of(page));
     }
 
@@ -133,6 +143,25 @@ public class MeetingController {
                 .body(ApiResponse.created(meetingService.addTranscript(studyId, meetingId, request)));
     }
 
+    @GetMapping("/{meetingId}/recording")
+    @Operation(summary = "미팅 녹음 조회", description = "미팅 녹음 메타데이터를 조회한다.")
+    public ResponseEntity<ApiResponse<MeetingRecordingResponse>> getRecording(
+            @PathVariable Long studyId,
+            @PathVariable Long meetingId
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(meetingService.getRecording(studyId, meetingId)));
+    }
+
+    @PutMapping("/{meetingId}/recording")
+    @Operation(summary = "미팅 녹음 저장", description = "미팅 녹음 메타데이터를 저장한다.")
+    public ResponseEntity<ApiResponse<MeetingRecordingResponse>> upsertRecording(
+            @PathVariable Long studyId,
+            @PathVariable Long meetingId,
+            @RequestBody MeetingRecordingRequest request
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(meetingService.upsertRecording(studyId, meetingId, request)));
+    }
+
     @GetMapping("/{meetingId}/photos")
     @Operation(summary = "미팅 사진 목록", description = "미팅 스냅샷 목록을 조회한다.")
     public ResponseEntity<ApiResponse<List<MeetingPhotoResponse>>> photos(
@@ -174,6 +203,83 @@ public class MeetingController {
     ) {
         meetingService.updateParticipantMute(studyId, meetingId, userId, request.muted());
         return ResponseEntity.ok(ApiResponse.success("Participant updated"));
+    }
+
+    @GetMapping("/{meetingId}/participant-summaries")
+    @Operation(summary = "참가자 요약 조회", description = "미팅 참가자별 요약을 조회한다.")
+    public ResponseEntity<ApiResponse<List<MeetingParticipantSummaryResponse>>> participantSummaries(
+            @PathVariable Long studyId,
+            @PathVariable Long meetingId
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(meetingService.getParticipantSummaries(studyId, meetingId)));
+    }
+
+    @PutMapping("/{meetingId}/participant-summaries")
+    @Operation(summary = "참가자 요약 저장", description = "미팅 참가자별 요약을 저장한다.")
+    public ResponseEntity<ApiResponse<List<MeetingParticipantSummaryResponse>>> upsertParticipantSummaries(
+            @PathVariable Long studyId,
+            @PathVariable Long meetingId,
+            @RequestBody List<MeetingParticipantSummaryRequest> requests
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(
+                meetingService.upsertParticipantSummaries(studyId, meetingId, requests)));
+    }
+
+    @GetMapping("/{meetingId}/action-items")
+    @Operation(summary = "액션 아이템 목록", description = "미팅 액션 아이템을 조회한다.")
+    public ResponseEntity<ApiResponse<List<MeetingActionItemResponse>>> actionItems(
+            @PathVariable Long studyId,
+            @PathVariable Long meetingId
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(meetingService.getActionItems(studyId, meetingId)));
+    }
+
+    @PostMapping("/{meetingId}/action-items")
+    @Operation(summary = "액션 아이템 생성", description = "미팅 액션 아이템을 추가한다.")
+    public ResponseEntity<ApiResponse<MeetingActionItemResponse>> addActionItem(
+            @PathVariable Long studyId,
+            @PathVariable Long meetingId,
+            @RequestBody MeetingActionItemRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.created(meetingService.addActionItem(studyId, meetingId, request)));
+    }
+
+    @PutMapping("/{meetingId}/action-items/{actionItemId}")
+    @Operation(summary = "액션 아이템 수정", description = "담당자, 상태, 내용을 수정한다.")
+    public ResponseEntity<ApiResponse<MeetingActionItemResponse>> updateActionItem(
+            @PathVariable Long studyId,
+            @PathVariable Long meetingId,
+            @PathVariable Long actionItemId,
+            @RequestBody MeetingActionItemRequest request
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(
+                meetingService.updateActionItem(studyId, meetingId, actionItemId, request)));
+    }
+
+    @GetMapping("/{meetingId}/export")
+    @Operation(summary = "미팅 내보내기", description = "미팅 기록을 Markdown 또는 PDF로 내보낸다.")
+    public ResponseEntity<byte[]> export(
+            @PathVariable Long studyId,
+            @PathVariable Long meetingId,
+            @RequestParam(defaultValue = "MARKDOWN") String format
+    ) {
+        String normalized = format.toUpperCase();
+        if ("MARKDOWN".equals(normalized)) {
+            byte[] bytes = meetingService.exportMeetingMarkdown(studyId, meetingId).getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            return ResponseEntity.ok()
+                    .contentType(MediaType.valueOf("text/markdown"))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=meeting-" + meetingId + ".md")
+                    .body(bytes);
+        }
+        if ("PDF".equals(normalized)) {
+            byte[] bytes = meetingService.exportMeetingPdf(studyId, meetingId);
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=meeting-" + meetingId + ".pdf")
+                    .body(bytes);
+        }
+        throw new org.springframework.web.server.ResponseStatusException(HttpStatus.BAD_REQUEST, "UNSUPPORTED_EXPORT_FORMAT");
     }
 
     private Long requireUserId(Long userId) {

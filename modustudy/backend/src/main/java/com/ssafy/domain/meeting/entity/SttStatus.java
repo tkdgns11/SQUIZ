@@ -1,6 +1,6 @@
 package com.ssafy.domain.meeting.entity;
 
-public enum SummaryStatus {
+public enum SttStatus {
     PENDING,
     PROCESSING,
     DONE,

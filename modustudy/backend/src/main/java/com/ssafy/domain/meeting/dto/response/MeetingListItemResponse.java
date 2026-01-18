@@ -6,6 +6,7 @@ public record MeetingListItemResponse(
         Long id,
         String title,
         MeetingSessionResponse session,
+        String meetingType,
         LocalDateTime startedAt,
         LocalDateTime endedAt,
         Integer durationSeconds,

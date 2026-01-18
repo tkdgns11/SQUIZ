@@ -7,6 +7,8 @@ public record MeetingTranscriptItemResponse(
         MeetingUserResponse user,
         String content,
         Integer timestampSeconds,
+        Integer startMs,
+        Integer endMs,
         LocalDateTime createdAt
 ) {
 }

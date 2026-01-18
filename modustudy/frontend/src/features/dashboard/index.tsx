@@ -1,10 +1,19 @@
-import React from 'react';
+import { ActivitySection, StatsSection, FeedsSection } from './components';
+import './styles/Dashboard.css';
 
 export const Dashboard = () => {
     return (
-        <div style={{ padding: '2rem' }}>
-            <h1>Dashboard</h1>
-            <p>Welcome to ModuStudy!</p>
+        <div className="dashboard-container">
+            <div className="dashboard-header">
+                <h1>Dashboard</h1>
+                <p>Welcome to ModuStudy!</p>
+            </div>
+
+            <div className="dashboard-grid">
+                <ActivitySection />
+                <StatsSection />
+                <FeedsSection />
+            </div>
         </div>
     );
 };

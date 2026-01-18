@@ -1,0 +1,197 @@
+/* ============================================
+   Dashboard Container
+   ============================================ */
+.dashboard-container {
+    width: 100%;
+    min-height: 100vh;
+    padding: 2rem;
+    background: #f5f7fa;
+}
+
+.dashboard-header {
+    margin-bottom: 2rem;
+}
+
+.dashboard-header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1a202c;
+    margin-bottom: 0.5rem;
+}
+
+.dashboard-header p {
+    font-size: 1rem;
+    color: #718096;
+}
+
+/* ============================================
+   Dashboard Grid Layout (반응형)
+   ============================================ */
+.dashboard-grid {
+    display: grid;
+    gap: 1.5rem;
+    width: 100%;
+}
+
+/* Desktop Layout (1200px 이상) */
+@media (min-width: 1200px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr 1fr 1fr;
+        grid-template-rows: auto auto;
+        grid-template-areas:
+            "activity activity stats"
+            "feeds feeds feeds";
+    }
+
+    .activity-section {
+        grid-area: activity;
+    }
+
+    .stats-section {
+        grid-area: stats;
+    }
+
+    .feeds-section {
+        grid-area: feeds;
+    }
+}
+
+/* Tablet Layout (768px ~ 1199px) */
+@media (min-width: 768px) and (max-width: 1199px) {
+    .dashboard-grid {
+        grid-template-columns: 2fr 1fr;
+        grid-template-rows: auto auto;
+        grid-template-areas:
+            "activity stats"
+            "feeds feeds";
+    }
+
+    .activity-section {
+        grid-area: activity;
+    }
+
+    .stats-section {
+        grid-area: stats;
+    }
+
+    .feeds-section {
+        grid-area: feeds;
+    }
+}
+
+/* Mobile Layout (767px 이하) */
+@media (max-width: 767px) {
+    .dashboard-container {
+        padding: 1rem;
+    }
+
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+        gap: 1rem;
+    }
+
+    .dashboard-header h1 {
+        font-size: 1.5rem;
+    }
+}
+
+/* ============================================
+   Section Base Styles
+   ============================================ */
+.activity-section,
+.stats-section,
+.feeds-section {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.3s ease;
+}
+
+.activity-section:hover,
+.stats-section:hover,
+.feeds-section:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Section Headers - 뉴스/인기글 헤더와 통일감 유지 */
+.activity-section h2,
+.stats-section h2,
+.feeds-section h2 {
+    font-size: 1.5rem;
+    /* 글씨 크기 확대 */
+    font-weight: 800;
+    /* Extra Bold */
+    color: #1a202c;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0;
+    border-bottom: none;
+    /* 밑줄 제거 */
+    letter-spacing: -0.02em;
+}
+
+/* Section Content */
+.activity-section p,
+.stats-section p,
+.feeds-section p {
+    color: #4a5568;
+    line-height: 1.6;
+}
+
+/* ============================================
+   Activity Section (캘린더 영역)
+   ============================================ */
+.activity-section {
+    min-height: 400px;
+}
+
+/* ============================================
+   Stats Section (통계 영역)
+   ============================================ */
+.stats-section {
+    min-height: 400px;
+}
+
+/* ============================================
+   Feeds Section (뉴스/게시판 영역)
+   ============================================ */
+.feeds-section {
+    min-height: 300px;
+}
+
+/* ============================================
+   Responsive Typography
+   ============================================ */
+@media (max-width: 767px) {
+
+    .activity-section h2,
+    .stats-section h2,
+    .feeds-section h2 {
+        font-size: 1.125rem;
+    }
+
+    .activity-section,
+    .stats-section,
+    .feeds-section {
+        padding: 1rem;
+        min-height: auto;
+    }
+}
+
+/* ============================================
+   Utility Classes
+   ============================================ */
+.section-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    color: #a0aec0;
+}
+
+.section-empty {
+    text-align: center;
+    padding: 2rem;
+    color: #a0aec0;
+}

@@ -1,5 +1,5 @@
 // 헤더 + 사이드바 포함 기본 레이아웃
-import React from 'react';
+
 import { motion } from 'framer-motion';
 import { Sidebar } from './components/Sidebar';
 import { useUIStore } from '@/store/uiStore';

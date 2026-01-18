@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { StartPage } from '../features/start/StartPage';
 import { Dashboard } from '../features/dashboard';

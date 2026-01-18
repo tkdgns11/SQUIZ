@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 // .lottie 파일을 import하면 Vite가 자동으로 파일 경로(URL)를 반환해줍니다.
 import logoAnimation from '../../assets/logos/SQuiz_logo_2.lottie';

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useUIStore } from '@/store/uiStore';
 import { QuizIcon, StudyIcon, DashboardIcon, CalendarIcon } from '@/shared/components/icons/SidebarIcons';
@@ -71,7 +71,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
     showDot,
     dotColor = 'study-green',
 }) => {
-    const [isHovered, setIsHovered] = React.useState(false);
+    const [isHovered, setIsHovered] = useState(false);
 
     return (
         <motion.button

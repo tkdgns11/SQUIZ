@@ -1,6 +1,6 @@
-import React from 'react';
+// 전역 설정 (QueryClient, Theme, 전역 가드)
+
 import { AppRouter } from './routes';
-import './assets/styles/index.css';
 
 const App = () => {
     return (

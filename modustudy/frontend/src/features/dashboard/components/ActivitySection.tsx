@@ -67,8 +67,8 @@ export const ActivitySection = () => {
 
             <div className="calendar-container">
                 <div className="calendar-weekdays">
-                    {weekDays.map(day => (
-                        <div key={day} className="weekday">{day}</div>
+                    {weekDays.map((day, idx) => (
+                        <div key={day} className={`weekday ${idx === 0 ? 'is-sun' : idx === 6 ? 'is-sat' : ''}`}>{day}</div>
                     ))}
                 </div>
 
@@ -76,6 +76,7 @@ export const ActivitySection = () => {
                     {days.map((item, index) => {
                         const daySchedules = schedules.filter(s => s.date === item.fullDate);
                         const isToday = item.fullDate === '2026-01-18';
+                        const dayOfWeek = new Date(item.fullDate).getDay();
 
                         const displaySchedules = daySchedules.slice(0, 2);
                         const remainingCount = daySchedules.length - 2;
@@ -83,7 +84,7 @@ export const ActivitySection = () => {
                         return (
                             <div
                                 key={index}
-                                className={`calendar-day ${item.month !== 'current' ? 'other-month' : ''} ${isToday ? 'today' : ''}`}
+                                className={`calendar-day ${item.month !== 'current' ? 'other-month' : ''} ${isToday ? 'today' : ''} ${dayOfWeek === 0 ? 'is-sun' : dayOfWeek === 6 ? 'is-sat' : ''}`}
                             >
                                 <span className="day-number">{item.day}</span>
                                 <div className="day-schedules">

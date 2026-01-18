@@ -8,20 +8,22 @@ export const CalendarExpandWidget = () => {
     const navigate = useNavigate();
     const [isAdding, setIsAdding] = useState(false);
 
+    // 일정 추가 모달 전용 상태
+    const [modalDate, setModalDate] = useState<string>('');
+    const [modalTitle, setModalTitle] = useState('');
+    const [modalType, setModalType] = useState<'study' | 'project' | 'mentoring'>('study');
+
     // 전역 스토어 상태 연동
     const [plannerState, setPlannerState] = useState(scheduleStore.getState());
     const { schedules, goals, tags, memo } = plannerState;
 
-    const [newTitle, setNewTitle] = useState('');
     const [newGoal, setNewGoal] = useState('');
     const [tagInput, setTagInput] = useState('');
     const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [currentDate] = useState(new Date(2026, 0, 18));
 
     useEffect(() => {
-        // 전역 스토어 구독
         const unsubscribe = scheduleStore.subscribe((newState) => {
             setPlannerState(newState);
         });
@@ -30,10 +32,17 @@ export const CalendarExpandWidget = () => {
         };
     }, []);
 
-    const handleAddSchedule = () => {
-        if (!newTitle.trim()) return;
-        scheduleStore.addSchedule(newTitle);
-        setNewTitle('');
+    const handleOpenAddModal = (date?: string) => {
+        setModalDate(date || new Date().toISOString().split('T')[0]);
+        setModalTitle('');
+        setModalType('study');
+        setIsAdding(true);
+    };
+
+    const handleConfirmAddSchedule = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!modalTitle.trim()) return;
+        scheduleStore.addSchedule(modalTitle, modalType, modalDate);
         setIsAdding(false);
     };
 
@@ -86,7 +95,7 @@ export const CalendarExpandWidget = () => {
                 </div>
 
                 <div className="header-right action-group">
-                    <button className="planner-action-btn primary" onClick={() => setIsAdding(!isAdding)}>
+                    <button className="planner-action-btn primary" onClick={() => handleOpenAddModal()}>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                             <line x1="12" y1="5" x2="12" y2="19"></line>
                             <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -103,37 +112,39 @@ export const CalendarExpandWidget = () => {
             <main className="planner-content-grid">
                 {/* 왼쪽 2: 달력 */}
                 <section className="planner-calendar-area">
-                    {isAdding && (
-                        <div className="inline-add-form animate-slide-down">
-                            <input
-                                type="text"
-                                placeholder="어떤 일정을 추가할까요?"
-                                value={newTitle}
-                                onChange={(e) => setNewTitle(e.target.value)}
-                                autoFocus
-                                onKeyDown={(e) => e.key === 'Enter' && handleAddSchedule()}
-                            />
-                            <div className="form-actions">
-                                <button className="confirm-pill" onClick={handleAddSchedule}>저장</button>
-                            </div>
-                        </div>
-                    )}
                     <div className="expanded-calendar-wrapper">
                         <div className="calendar-weekdays">
-                            {weekDays.map(day => <div key={day} className="weekday large">{day}</div>)}
+                            {weekDays.map((day, idx) => (
+                                <div key={day} className={`weekday large ${idx === 0 ? 'is-sun' : idx === 6 ? 'is-sat' : ''}`}>
+                                    {day}
+                                </div>
+                            ))}
                         </div>
                         <div className="calendar-grid large">
                             {calendarDays.map((item, index) => {
                                 const daySchedules = schedules.filter(s => s.date === item.fullDate);
                                 const isToday = item.fullDate === '2026-01-18';
+                                const dayOfWeek = new Date(item.fullDate).getDay();
 
                                 return (
                                     <div
                                         key={index}
-                                        className={`calendar-day large ${item.month !== 'current' ? 'other-month' : ''} ${isToday ? 'today' : ''}`}
+                                        className={`calendar-day large ${item.month !== 'current' ? 'other-month' : ''} ${isToday ? 'today' : ''} ${dayOfWeek === 0 ? 'is-sun' : dayOfWeek === 6 ? 'is-sat' : ''}`}
                                         onClick={() => setSelectedDate(item.fullDate)}
                                     >
-                                        <span className="day-number">{item.day}</span>
+                                        <div className="day-header-box">
+                                            <span className="day-number">{item.day}</span>
+                                            {/* 날짜 위 플러스 버튼 (빠른 추가) */}
+                                            <button
+                                                className="quick-add-btn"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleOpenAddModal(item.fullDate);
+                                                }}
+                                            >
+                                                +
+                                            </button>
+                                        </div>
                                         <div className="day-schedules">
                                             {daySchedules.map(schedule => (
                                                 <div key={schedule.id} className={`schedule-item ${schedule.type} large`}>
@@ -148,9 +159,8 @@ export const CalendarExpandWidget = () => {
                     </div>
                 </section>
 
-                {/* 오른쪽 1: 학습 목표 및 메모 */}
                 <aside className="planner-sidebar-area">
-                    <div className="sidebar-widget dark-stone-texture">
+                    <div className="sidebar-widget goals-widget">
                         <div className="goals-header">
                             <h3>오늘의 학습 목표</h3>
                             <span className="goal-date">01.18 Sun</span>
@@ -200,7 +210,7 @@ export const CalendarExpandWidget = () => {
                         </div>
                     </div>
 
-                    <div className="sidebar-widget dark-stone-texture memo-area">
+                    <div className="sidebar-widget memo-widget">
                         <div className="memo-header">
                             <h3>학습 메모</h3>
                             <div className="tag-list">
@@ -228,8 +238,64 @@ export const CalendarExpandWidget = () => {
                 </aside>
             </main>
 
-            {/* 일자 클릭 모달 */}
-            {selectedDate && (
+            {/* 정식 일정 추가 모달 (Google 캘린더 스타일) */}
+            {isAdding && (
+                <div className="day-select-overlay" onClick={() => setIsAdding(false)}>
+                    <div className="schedule-modal animate-modal-pop" onClick={e => e.stopPropagation()}>
+                        <header className="modal-header-formal">
+                            <h2>새 일정 추가</h2>
+                            <button className="close-btn" onClick={() => setIsAdding(false)}>×</button>
+                        </header>
+
+                        <form className="schedule-formal-form" onSubmit={handleConfirmAddSchedule}>
+                            <div className="form-group">
+                                <label>일정 제목</label>
+                                <input
+                                    type="text"
+                                    className="formal-input"
+                                    placeholder="무엇을 할 계획인가요?"
+                                    value={modalTitle}
+                                    onChange={(e) => setModalTitle(e.target.value)}
+                                    autoFocus
+                                    required
+                                />
+                            </div>
+
+                            <div className="form-row">
+                                <div className="form-group flex-1">
+                                    <label>날짜</label>
+                                    <input
+                                        type="date"
+                                        className="formal-input"
+                                        value={modalDate}
+                                        onChange={(e) => setModalDate(e.target.value)}
+                                        required
+                                    />
+                                </div>
+                                <div className="form-group flex-1">
+                                    <label>유형</label>
+                                    <select
+                                        className="formal-select"
+                                        value={modalType}
+                                        onChange={(e) => setModalType(e.target.value as any)}
+                                    >
+                                        <option value="study">스터디</option>
+                                        <option value="project">프로젝트</option>
+                                        <option value="mentoring">멘토링</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <button type="submit" className="confirm-btn-formal primary">
+                                일정 저장하기
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* 일자 클릭 상세 모달 (기존 유지하되 '추가' 버튼 로직 수정) */}
+            {selectedDate && !isAdding && (
                 <div className="day-select-overlay" onClick={() => setSelectedDate(null)}>
                     <div className="day-select-modal animate-modal-pop" onClick={e => e.stopPropagation()}>
                         <header className="modal-header-compact">
@@ -256,7 +322,11 @@ export const CalendarExpandWidget = () => {
                                 </div>
                             )}
                         </div>
-                        <button className="modal-add-btn" onClick={() => { setSelectedDate(null); setIsAdding(true); }}>
+                        <button className="modal-add-btn" onClick={() => {
+                            const d = selectedDate;
+                            setSelectedDate(null);
+                            handleOpenAddModal(d);
+                        }}>
                             + 새 일정 추가하기
                         </button>
                     </div>

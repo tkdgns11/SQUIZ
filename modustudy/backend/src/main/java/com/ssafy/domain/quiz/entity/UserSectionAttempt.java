@@ -1,5 +1,6 @@
 package com.ssafy.domain.quiz.entity;
 
+import com.ssafy.common.entity.BaseEntity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
@@ -10,6 +11,6 @@ import lombok.NoArgsConstructor;
 @Table(name = "user_section_attempt")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class UserSectionAttempt {
+public class UserSectionAttempt extends BaseEntity {
 
 }

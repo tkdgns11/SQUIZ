@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { scheduleStore, Schedule, Goal, Tag } from '../services/scheduleStore';
+import { scheduleStore } from '../services/scheduleStore';
 import './CalendarExpandWidget.css';
 import './ActivitySection.css';
 

@@ -1,5 +1,3 @@
-import React from 'react';
-
 export const CommentlePage = () => {
     return (
         <div style={{ padding: '2rem', textAlign: 'center' }}>

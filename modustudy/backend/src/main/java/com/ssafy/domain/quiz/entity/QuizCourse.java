@@ -4,6 +4,9 @@ import com.ssafy.common.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "quiz_course")
 @Getter
@@ -54,4 +57,11 @@ public class QuizCourse extends BaseEntity {
      */
     @Column(name = "sort_order")
     private Integer sortOrder;
+
+    /**
+     * 코스에 속한 섹션 목록.
+     */
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("sectionNumber ASC")
+    private List<QuizCourseSection> sections = new ArrayList<>();
 }

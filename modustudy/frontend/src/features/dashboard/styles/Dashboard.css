@@ -9,7 +9,7 @@
 }
 
 .dashboard-header {
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
 }
 
 .dashboard-header h1 {
@@ -141,12 +141,17 @@
    ============================================ */
 .activity-section,
 .stats-section,
+.feeds-section {
+    background: white;
+}
+
+.activity-section,
+.stats-section,
 .quiz-daily,
 .quiz-comp,
 .feeds-section {
-    background: white;
     border-radius: 24px;
-    padding: 1.75rem;
+    padding: 1.5rem;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
     transition: all 0.3s ease;
     display: flex;
@@ -171,7 +176,7 @@
     font-weight: 800;
     /* Extra Bold */
     color: #1a202c;
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.75rem;
     padding-bottom: 0;
     border-bottom: none;
     /* 밑줄 제거 */
@@ -203,10 +208,13 @@
 
     .activity-section,
     .stats-section,
-    .quiz-daily,
-    .quiz-comp,
     .feeds-section {
         padding: 1.25rem;
         min-height: auto;
+    }
+
+    .quiz-daily,
+    .quiz-comp {
+        padding: 1.25rem;
     }
 }

@@ -1,6 +1,7 @@
-import { ActivitySection, StatsSection, FeedsSection, QuizWidget, QuizWidget2 } from './components';
+import { ActivitySection, StatsSection, FeedsSection, QuizWidget, QuizWidget2, CalendarExpandWidget } from './components';
 import './styles/Dashboard.css';
 
+export { CalendarExpandWidget };
 export const Dashboard = () => {
     return (
         <div className="dashboard-container">

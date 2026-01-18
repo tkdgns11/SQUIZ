@@ -5,3 +5,4 @@ export { NewsWidget } from './NewsWidget';
 export { TrendingWidget } from './TrendingWidget';
 export { QuizWidget } from './QuizWidget';
 export { QuizWidget2 } from './QuizWidget2';
+export { CalendarExpandWidget } from './CalendarExpandWidget';

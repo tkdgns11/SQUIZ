@@ -1,0 +1,511 @@
+/* ============================================
+   Planner Page - 전체 페이지 레이아웃 (2:1 비율)
+   전역 디자인 시스템 변수 적용 버전
+   ============================================ */
+
+.planner-page {
+    width: 100vw;
+    height: 100vh;
+    background: var(--color-background);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.planner-header {
+    padding: 1.25rem 3rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--color-background);
+    /* 흰색 대신 페이지 배경과 통일 */
+    border-bottom: none;
+    /* 심리스한 연결을 위해 테두리 제거 */
+}
+
+.planner-date-display {
+    display: flex;
+    flex-direction: column;
+    margin-left: 1.5rem;
+    line-height: 1.1;
+}
+
+.year-label {
+    font-size: var(--font-size-xs);
+    font-weight: 850;
+    color: var(--color-text-tertiary);
+    letter-spacing: 0.1em;
+    text-shadow: 0px 1px 0px rgba(255, 255, 255, 0.8);
+}
+
+.month-label {
+    font-size: var(--font-size-3xl);
+    font-weight: 900;
+    color: var(--color-text-primary);
+    letter-spacing: -0.04em;
+    text-shadow: 0px 1.5px 1.5px rgba(255, 255, 255, 1), 0px -1px 0.5px rgba(0, 0, 0, 0.15);
+}
+
+.back-btn-transparent {
+    background: transparent;
+    border: none;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    transition: var(--transition-smooth);
+    border-radius: var(--radius-lg);
+}
+
+.back-btn-transparent:hover {
+    color: var(--color-text-primary);
+    background: var(--color-background-secondary);
+}
+
+.back-btn-transparent svg {
+    width: 24px;
+    height: 24px;
+}
+
+.planner-content-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+    padding: 2rem 3rem;
+    overflow: hidden;
+}
+
+/* 왼쪽 캘린더 영역 */
+.planner-calendar-area {
+    background: var(--color-surface);
+    border-radius: var(--radius-2xl);
+    padding: var(--spacing-xl);
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.calendar-day.large {
+    min-height: 130px;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.calendar-day.large:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+    background: var(--color-surface-hover);
+}
+
+/* 버튼 스타일 표준화 */
+.action-group {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.planner-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    height: 44px;
+    padding: 0 20px;
+    border-radius: var(--radius-lg);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+    cursor: pointer;
+    transition: var(--transition-fast);
+    white-space: nowrap;
+    /* 글자 깨짐 방지 */
+}
+
+.planner-action-btn img,
+.planner-action-btn svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    /* 아이콘 크기 고정 */
+}
+
+.planner-action-btn.primary {
+    background: var(--color-primary);
+    color: var(--color-text-inverse);
+    border: none;
+}
+
+.planner-action-btn.primary:hover {
+    background: var(--color-primary-dark);
+}
+
+.planner-action-btn.secondary {
+    background: var(--color-background-secondary);
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
+}
+
+.planner-action-btn.secondary:hover {
+    background: var(--color-surface-hover);
+    border-color: var(--color-text-tertiary);
+}
+
+/* 우측 사이드바 위젯 (흑색 돌 질감) */
+.planner-sidebar-area {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.dark-stone-texture {
+    /* 기존 질감표현 제거 및 아주 얇은 그리드 패턴 적용 */
+    background-color: #1e293b;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 20px 20px;
+
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: var(--shadow-lg);
+    border-radius: var(--radius-2xl);
+    padding: 2.5rem;
+    color: var(--color-text-inverse);
+    position: relative;
+    overflow: hidden;
+}
+
+/* 그리드 상단에 아주 은은한 비네팅 효과만 추가 (입체감용) */
+.dark-stone-texture::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at center, transparent 0%, rgba(0, 0, 0, 0.15) 100%);
+    pointer-events: none;
+}
+
+.sidebar-widget h3 {
+    margin: 0;
+    font-size: var(--font-size-xl);
+    font-weight: 850;
+    color: var(--color-text-inverse);
+    letter-spacing: -0.02em;
+}
+
+/* 목표 입력 (다크 버전) */
+.goal-input-form-dark {
+    display: flex;
+    gap: 12px;
+    margin: 1.5rem 0;
+}
+
+.goal-input-form-dark input {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 14px 18px;
+    border-radius: var(--radius-lg);
+    color: var(--color-text-inverse);
+    font-weight: var(--font-weight-medium);
+    outline: none;
+}
+
+.goal-input-form-dark button {
+    width: 48px;
+    height: 48px;
+    background: var(--color-primary);
+    color: var(--color-text-inverse);
+    border: none;
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.goal-input-form-dark button:hover {
+    background: var(--color-primary-dark);
+}
+
+/* 다크 리스트 아이템 */
+.goals-list-dark {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 240px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.goal-item-dark {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 14px 18px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.goal-item-dark:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateX(4px);
+}
+
+.goal-checkbox-dark {
+    width: 22px;
+    height: 22px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.goal-item-dark.completed .goal-checkbox-dark {
+    background: var(--color-success);
+    border-color: var(--color-success);
+    box-shadow: 0 0 10px var(--color-success-alpha-30);
+}
+
+.goal-item-dark.completed .goal-text {
+    opacity: 0.5;
+    text-decoration: line-through;
+}
+
+/* 다크 진행바 */
+.goals-footer-dark {
+    margin-top: 2rem;
+}
+
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
+    margin-bottom: 8px;
+}
+
+.progress-bar-dark {
+    height: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-full);
+}
+
+.progress-fill-dark {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-secondary-light));
+    border-radius: var(--radius-full);
+    box-shadow: 0 0 10px var(--color-primary-alpha-30);
+}
+
+/* 메모 & 해시태그 */
+.memo-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.memo-header {
+    margin-bottom: 1.5rem;
+}
+
+.tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 1rem;
+}
+
+.tag-badge {
+    background: var(--color-primary-alpha-20);
+    color: var(--color-primary);
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.tag-badge button {
+    background: transparent;
+    border: none;
+    color: inherit;
+    font-weight: 900;
+    cursor: pointer;
+    font-size: var(--font-size-base);
+    line-height: 1;
+}
+
+.tag-input {
+    background: transparent;
+    border: 1px dashed rgba(255, 255, 255, 0.3);
+    border-radius: var(--radius-full);
+    padding: 2px 10px;
+    color: var(--color-text-inverse);
+    font-size: var(--font-size-xs);
+    width: 80px;
+    outline: none;
+}
+
+.memo-area textarea {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-xl);
+    padding: 1.5rem;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: var(--font-size-sm);
+    line-height: 1.6;
+    resize: none;
+    outline: none;
+}
+
+/* 일자 클릭 모달 */
+.day-select-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    z-index: var(--z-modal);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.day-select-modal {
+    width: 100%;
+    max-width: 450px;
+    background: var(--color-surface);
+    border-radius: var(--radius-2xl);
+    padding: 2.5rem;
+    box-shadow: var(--shadow-2xl);
+}
+
+.modal-header-compact {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2.5rem;
+}
+
+.modal-header-compact h2 {
+    font-size: var(--font-size-2xl);
+    font-weight: 850;
+    margin: 0;
+    color: var(--color-text-primary);
+}
+
+.modal-header-compact span {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-tertiary);
+    font-weight: var(--font-weight-bold);
+}
+
+.close-btn {
+    font-size: var(--font-size-3xl);
+    background: transparent;
+    border: none;
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+    line-height: 1;
+}
+
+.modal-schedule-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 2rem;
+}
+
+.modal-schedule-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 1rem;
+    background: var(--color-background-secondary);
+    border-radius: var(--radius-xl);
+    transition: var(--transition-fast);
+}
+
+.modal-schedule-item:hover {
+    background: var(--color-surface-hover);
+    transform: scale(1.02);
+}
+
+.type-indicator {
+    width: 6px;
+    height: 24px;
+    border-radius: var(--radius-full);
+    background: var(--color-primary);
+}
+
+.modal-schedule-item.study .type-indicator {
+    background: var(--color-secondary);
+}
+
+.modal-schedule-item.project .type-indicator {
+    background: var(--color-accent);
+}
+
+.item-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.item-title {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
+}
+
+.item-type {
+    font-size: var(--font-size-xs);
+    font-weight: 900;
+    color: var(--color-text-tertiary);
+}
+
+.modal-add-btn {
+    width: 100%;
+    height: 56px;
+    background: var(--color-text-primary);
+    color: var(--color-text-inverse);
+    border: none;
+    border-radius: var(--radius-xl);
+    font-weight: var(--font-weight-bold);
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.modal-add-btn:hover {
+    background: #000000;
+    transform: translateY(-2px);
+}
+
+@keyframes modal-pop {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.animate-modal-pop {
+    animation: modal-pop 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+}

@@ -11,3 +11,13 @@ Thumbs.db
 *.log
 /.metadata/
 *.env
+.env.*
+!.env.example
+
+# === Web ===
+node_modules/
+dist/
+build/
+out/
+.next/
+.turbo/

@@ -3,3 +3,13 @@
 *.iws
 *.iml
 *.ipr
+
+### Web ###
+**/node_modules/
+**/dist/
+**/build/
+**/.DS_Store
+**/*.log
+**/.env
+**/.env.*
+!**/.env.example

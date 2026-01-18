@@ -16,6 +16,8 @@ export const AppRouter = () => {
                         <h1>Home</h1>
                         <a href="/startpage">Go to Start Page</a>
                         <br />
+                        <a href="/dashboard">Go to Dashboard</a>
+                        <br />
                         <a href="/test-sidebar">Test Sidebar</a>
                     </div>
                 } />

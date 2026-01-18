@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* ============================================
    SQUIZ - Global Styles
    따뜻하고 부드러운 느낌의 디자인 시스템

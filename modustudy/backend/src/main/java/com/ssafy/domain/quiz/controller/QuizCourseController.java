@@ -1,10 +1,12 @@
 package com.ssafy.domain.quiz.controller;
 
 import com.ssafy.common.response.ApiResponse;
+import com.ssafy.domain.quiz.dto.response.QuizCourseDetailResponse;
 import com.ssafy.domain.quiz.dto.response.QuizCourseListResponse;
 import com.ssafy.domain.quiz.service.QuizCourseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -34,5 +36,18 @@ public class QuizCourseController {
     @GetMapping
     public ApiResponse<QuizCourseListResponse> getCourseList() {
         return ApiResponse.success(quizCourseService.getCourseList());
+    }
+
+    /**
+     * 코스 상세 조회.
+     *
+     * 인증 없이 접근 가능한 공개 상세이며, 활성화된 코스만 반환.
+     *
+     * @param courseId 코스 ID
+     * @return 코스 상세 응답
+     */
+    @GetMapping("/{courseId}")
+    public ApiResponse<QuizCourseDetailResponse> getCourseDetail(@PathVariable Long courseId) {
+        return ApiResponse.success(quizCourseService.getCourseDetail(courseId));
     }
 }

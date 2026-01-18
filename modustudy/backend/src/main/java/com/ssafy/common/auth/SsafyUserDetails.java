@@ -1,6 +1,6 @@
 package com.ssafy.common.auth;
 
-import com.ssafy.db.entity.User;
+import com.ssafy.domain.user.entity.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 

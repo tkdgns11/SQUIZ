@@ -60,4 +60,25 @@ public class JwtTokenUtil {
         }
         return false;
     }
+    /**
+     * Access Token 생성 (OAuth용 별칭)
+     */
+    public String createAccessToken(String userId) {
+        return getToken(userId);  // 기존 메서드 활용
+    }
+
+    /**
+     * Refresh Token 생성
+     */
+    public String createRefreshToken(String userId) {
+        Date now = new Date();
+        Date expiry = new Date(now.getTime() + (accessTokenValidity * 7));  // 7배 길게
+
+        return JWT.create()
+                .withSubject(userId)
+                .withIssuedAt(now)
+                .withExpiresAt(expiry)
+                .withClaim("type", "refresh")
+                .sign(Algorithm.HMAC512(secretKey.getBytes()));
+    }
 }

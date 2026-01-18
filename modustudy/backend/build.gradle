@@ -28,6 +28,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 
     // Database
     runtimeOnly 'com.mysql:mysql-connector-j'
@@ -43,6 +44,9 @@ dependencies {
 
     // Swagger (springdoc-openapi)
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
+
+    // .env 파일 지원
+    implementation 'me.paulschwarz:spring-dotenv:4.0.0'
 
     // Lombok
     compileOnly 'org.projectlombok:lombok'
@@ -67,6 +71,7 @@ sourceSets {
     main {
         java {
             srcDirs += [querydslDir]
+            exclude '**/*2.java'  // websocket관련 에러 때문에..
         }
     }
 }

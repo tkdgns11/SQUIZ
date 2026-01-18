@@ -1,5 +1,6 @@
 package com.ssafy.domain.quiz.entity;
 
+import com.ssafy.common.entity.BaseEntity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.IdClass;
@@ -12,6 +13,6 @@ import lombok.NoArgsConstructor;
 @Table(name = "quiz_question_pool_option")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class QuizQuestionPoolOption {
+public class QuizQuestionPoolOption extends BaseEntity {
 
 }

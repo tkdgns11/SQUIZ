@@ -1,8 +1,8 @@
 package com.ssafy.common.auth;
 
-import com.ssafy.api.service.UserService;
 import com.ssafy.common.util.JwtTokenUtil;
-import com.ssafy.db.entity.User;
+import com.ssafy.domain.user.entity.User;
+import com.ssafy.domain.user.service.UserService;  // ← import 수정!
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,6 +15,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Optional;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -33,9 +34,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (StringUtils.hasText(token) && jwtTokenUtil.validateToken(token)) {
             String userId = jwtTokenUtil.getUserId(token);
-            User user = userService.getUserByUserId(userId);
+            Optional<User> userOpt = userService.getUserById(Long.parseLong(userId));  // ← 수정!
 
-            if (user != null) {
+            if (userOpt.isPresent()) {
+                User user = userOpt.get();
                 SsafyUserDetails userDetails = new SsafyUserDetails(user);
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());

@@ -9,7 +9,6 @@
         ],
         "module": "ESNext",
         "skipLibCheck": true,
-        /* Bundler mode */
         "moduleResolution": "bundler",
         "allowImportingTsExtensions": true,
         "resolveJsonModule": true,
@@ -22,7 +21,6 @@
                 "src/*"
             ]
         },
-        /* Linting */
         "strict": true,
         "noUnusedLocals": true,
         "noUnusedParameters": true,

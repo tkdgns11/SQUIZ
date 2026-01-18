@@ -4,6 +4,7 @@ import com.ssafy.domain.gamification.entity.Badge;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 배지 조회 레포지토리.
@@ -18,4 +19,12 @@ public interface BadgeRepository extends JpaRepository<Badge, Long> {
      * @return 배지 엔티티 목록
      */
     List<Badge> findByCodeIn(Iterable<String> codes);
+
+    /**
+     * 배지 코드로 단일 배지를 조회한다.
+     *
+     * @param code 배지 코드
+     * @return 배지 엔티티
+     */
+    Optional<Badge> findByCode(String code);
 }

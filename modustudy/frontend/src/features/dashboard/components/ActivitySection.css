@@ -1,0 +1,191 @@
+/* ============================================
+   Activity Section - 미니멀 캘린더 디자인
+   ============================================ */
+
+.activity-section {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 헤더 래퍼 - 타이틀과 개수 표시 */
+.activity-header-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 1.5rem;
+}
+
+.activity-header-wrapper h2 {
+    margin-bottom: 0;
+    /* 기본 마진 제거 */
+}
+
+.monthly-count {
+    font-size: 0.875rem;
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+.monthly-count strong {
+    color: #4299e1;
+    font-weight: 800;
+    margin: 0 2px;
+}
+
+/* 캘린더 컨테이너 */
+.calendar-container {
+    padding: 1rem 0.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 캘린더 헤더 (월 표시) */
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.current-month {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.calendar-nav {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.nav-btn {
+    background: #f1f5f9;
+    border: none;
+    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #64748b;
+    transition: all 0.2s;
+}
+
+.nav-btn:hover {
+    background: #e2e8f0;
+    color: #1e293b;
+}
+
+/* 요일 표시줄 */
+.calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    margin-bottom: 0.5rem;
+}
+
+.weekday {
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #94a3b8;
+    padding: 0.5rem 0;
+    text-transform: uppercase;
+}
+
+/* 날짜 그리드 */
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    flex: 1;
+}
+
+.calendar-day {
+    min-height: 80px;
+    padding: 8px;
+    background: #f8fafc;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    transition: all 0.2s;
+}
+
+.calendar-day:hover {
+    background: #f1f5f9;
+}
+
+.calendar-day.other-month {
+    opacity: 0.3;
+}
+
+.calendar-day.today {
+    background: #fff;
+    border: 1px solid #4299e1;
+}
+
+.day-number {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 2px;
+}
+
+.calendar-day.today .day-number {
+    color: #4299e1;
+}
+
+/* 일정 (Schedule) 아이템 - 투명한 컴포넌트 스타일 */
+.schedule-item {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    /* 투명도가 들어간 파스텔톤 배경 */
+    background: rgba(66, 153, 225, 0.1);
+    color: #3182ce;
+    border-left: 3px solid #4299e1;
+}
+
+.schedule-item.study {
+    background: rgba(159, 122, 234, 0.1);
+    color: #6b46c1;
+    border-left-color: #9f7aea;
+}
+
+.schedule-item.project {
+    background: rgba(72, 187, 120, 0.1);
+    color: #2f855a;
+    border-left-color: #48bb78;
+}
+
+/* 일정 더보기 표시 */
+.more-schedules {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #94a3b8;
+    padding: 2px 4px;
+    margin-top: 2px;
+    text-align: center;
+    border-radius: 4px;
+    background: #f1f5f9;
+}
+
+/* 반응형 모바일 */
+@media (max-width: 767px) {
+    .calendar-day {
+        min-height: 50px;
+        padding: 4px;
+    }
+
+    .schedule-item {
+        font-size: 0.6rem;
+        padding: 2px 4px;
+    }
+}

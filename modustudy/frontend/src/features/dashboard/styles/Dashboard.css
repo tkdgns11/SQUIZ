@@ -14,9 +14,10 @@
 
 .dashboard-header h1 {
     font-size: 2rem;
-    font-weight: 700;
+    font-weight: 850;
     color: #1a202c;
     margin-bottom: 0.5rem;
+    letter-spacing: -0.02em;
 }
 
 .dashboard-header p {
@@ -36,10 +37,11 @@
 /* Desktop Layout (1200px 이상) */
 @media (min-width: 1200px) {
     .dashboard-grid {
-        grid-template-columns: 1fr 1fr 1fr;
-        grid-template-rows: auto auto;
+        grid-template-columns: 4fr 1fr 1fr;
+        /* 2:1 비율 (4 : 1+1) */
         grid-template-areas:
-            "activity activity stats"
+            "activity stats stats"
+            "activity quiz1 quiz2"
             "feeds feeds feeds";
     }
 
@@ -51,6 +53,14 @@
         grid-area: stats;
     }
 
+    .quiz-daily {
+        grid-area: quiz1;
+    }
+
+    .quiz-comp {
+        grid-area: quiz2;
+    }
+
     .feeds-section {
         grid-area: feeds;
     }
@@ -59,10 +69,11 @@
 /* Tablet Layout (768px ~ 1199px) */
 @media (min-width: 768px) and (max-width: 1199px) {
     .dashboard-grid {
-        grid-template-columns: 2fr 1fr;
-        grid-template-rows: auto auto;
+        grid-template-columns: 1fr 1fr;
         grid-template-areas:
-            "activity stats"
+            "activity activity"
+            "stats stats"
+            "quiz1 quiz2"
             "feeds feeds";
     }
 
@@ -72,6 +83,14 @@
 
     .stats-section {
         grid-area: stats;
+    }
+
+    .quiz-daily {
+        grid-area: quiz1;
+    }
+
+    .quiz-comp {
+        grid-area: quiz2;
     }
 
     .feeds-section {
@@ -87,12 +106,33 @@
 
     .dashboard-grid {
         grid-template-columns: 1fr;
-        grid-template-rows: auto;
+        grid-template-areas:
+            "activity"
+            "stats"
+            "quiz1"
+            "quiz2"
+            "feeds";
         gap: 1rem;
     }
 
-    .dashboard-header h1 {
-        font-size: 1.5rem;
+    .activity-section {
+        grid-area: activity;
+    }
+
+    .stats-section {
+        grid-area: stats;
+    }
+
+    .quiz-daily {
+        grid-area: quiz1;
+    }
+
+    .quiz-comp {
+        grid-area: quiz2;
+    }
+
+    .feeds-section {
+        grid-area: feeds;
     }
 }
 
@@ -101,18 +141,25 @@
    ============================================ */
 .activity-section,
 .stats-section,
+.quiz-daily,
+.quiz-comp,
 .feeds-section {
     background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    transition: box-shadow 0.3s ease;
+    border-radius: 24px;
+    padding: 1.75rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
 }
 
 .activity-section:hover,
 .stats-section:hover,
+.quiz-daily:hover,
+.quiz-comp:hover,
 .feeds-section:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
 
 /* Section Headers - 뉴스/인기글 헤더와 통일감 유지 */
@@ -139,59 +186,27 @@
     line-height: 1.6;
 }
 
-/* ============================================
-   Activity Section (캘린더 영역)
-   ============================================ */
+/* Activity Section (캘린더 영역) */
 .activity-section {
-    min-height: 400px;
+    min-height: 580px;
+    /* 캘린더 높이에 맞춤 */
 }
 
-/* ============================================
-   Stats Section (통계 영역)
-   ============================================ */
-.stats-section {
-    min-height: 400px;
-}
-
-/* ============================================
-   Feeds Section (뉴스/게시판 영역)
-   ============================================ */
-.feeds-section {
-    min-height: 300px;
-}
-
-/* ============================================
-   Responsive Typography
-   ============================================ */
+/* Responsive Typography */
 @media (max-width: 767px) {
 
     .activity-section h2,
     .stats-section h2,
     .feeds-section h2 {
-        font-size: 1.125rem;
+        font-size: 1.25rem;
     }
 
     .activity-section,
     .stats-section,
+    .quiz-daily,
+    .quiz-comp,
     .feeds-section {
-        padding: 1rem;
+        padding: 1.25rem;
         min-height: auto;
     }
-}
-
-/* ============================================
-   Utility Classes
-   ============================================ */
-.section-loading {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 200px;
-    color: #a0aec0;
-}
-
-.section-empty {
-    text-align: center;
-    padding: 2rem;
-    color: #a0aec0;
 }

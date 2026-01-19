@@ -531,7 +531,7 @@ public class OAuth2Service {
                 .totalExp(0)
                 .currentPoints(0)
                 .currentLevel(1)
-                .levelName("새싹")
+                .levelName("Bronze")
                 .build();
 
         User savedUser = userRepository.save(user);

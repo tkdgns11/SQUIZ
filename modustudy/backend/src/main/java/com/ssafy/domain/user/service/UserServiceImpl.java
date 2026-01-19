@@ -5,6 +5,7 @@ import com.ssafy.domain.user.dto.request.UserUpdateRequest;
 import com.ssafy.domain.user.entity.User;
 import com.ssafy.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;  // ← import 추가!
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,10 +17,11 @@ import java.util.Optional;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public Optional<User> getUserByUserId(String userId) {
-        return userRepository.findByEmail(userId);  // userId를 email로 검색
+        return userRepository.findByEmail(userId);
     }
 
     @Override
@@ -49,6 +51,12 @@ public class UserServiceImpl implements UserService {
 
         // 닉네임 설정
         user.setNickname(request.getNickname());
+
+        // 비밀번호 설정 (암호화!)
+        if (request.getPassword() != null && !request.getPassword().isEmpty()) {
+            String encodedPassword = passwordEncoder.encode(request.getPassword());
+            user.setPassword(encodedPassword);
+        }
 
         return userRepository.save(user);
     }

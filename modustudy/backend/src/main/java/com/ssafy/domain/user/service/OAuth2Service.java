@@ -97,6 +97,7 @@ public class OAuth2Service {
                 .expiresIn(3600)
                 .isNewUser(isNewUser)
                 .user(UserDTO.from(user))
+                .loginProvider("KAKAO")
                 .build();
     }
 
@@ -282,6 +283,7 @@ public class OAuth2Service {
                     .expiresIn(3600)
                     .isNewUser(isNewUser)
                     .user(UserDTO.from(user))
+                    .loginProvider("NAVER")
                     .build();
         } catch (Exception e){
             System.out.println("=== 에러 발생 ===");
@@ -400,7 +402,9 @@ public class OAuth2Service {
                 "client_id=" + googleClientId +
                 "&redirect_uri=" + googleRedirectUri +
                 "&response_type=code" +
-                "&scope=profile email";
+                "&scope=openid%20profile%20email" +
+                "&access_type=offline" +
+                "&prompt=consent";
     }
 
     /**
@@ -451,6 +455,7 @@ public class OAuth2Service {
                     .expiresIn(3600)
                     .isNewUser(isNewUser)
                     .user(UserDTO.from(user))
+                    .loginProvider("GOOGLE")
                     .build();
         } catch (Exception e) {
             System.out.println("=== 에러 발생 ===");
@@ -543,5 +548,22 @@ public class OAuth2Service {
         socialAccountRepository.save(socialAccount);
 
         return savedUser;
+    }
+    /**
+     * 로그아웃
+     */
+    @Transactional
+    public void logout(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        // 온라인 상태 변경
+        user.setIsOnline(false);
+        user.setLastSeenAt(LocalDateTime.now());
+
+        userRepository.save(user);
+
+        // RefreshToken 무효화 (선택)
+        // refreshTokenRepository.deleteByUserId(userId);
     }
 }

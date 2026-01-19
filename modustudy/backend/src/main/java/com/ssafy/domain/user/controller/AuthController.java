@@ -68,6 +68,9 @@ public class AuthController {
             case "naver":
                 response = oAuth2Service.processNaverCallback(request.getCode(), state);
                 break;
+            case "google":
+                response = oAuth2Service.processGoogleCallback(request.getCode());
+                break;
             default:
                 return ResponseEntity
                         .badRequest()

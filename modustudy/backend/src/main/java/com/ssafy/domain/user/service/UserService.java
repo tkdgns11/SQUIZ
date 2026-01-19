@@ -37,4 +37,7 @@ public interface UserService {
      * 내 정보 수정
      */
     User updateUserInfo(Long userId, UserUpdateRequest request);
+
+
+
 }

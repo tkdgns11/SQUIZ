@@ -50,7 +50,7 @@ public class OAuth2Service {
                 "client_id=" + kakaoClientId +
                 "&redirect_uri=" + kakaoRedirectUri +
                 "&response_type=code" +
-                "&scope=profile_nickname,profile_image,account_email";
+                "&scope=profile_image,account_email";
     }
 
     /**

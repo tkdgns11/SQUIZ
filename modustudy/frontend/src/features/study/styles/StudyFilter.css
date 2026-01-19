@@ -1,5 +1,5 @@
 /* ============================================
-   Study Filter Styles
+   스터디 필터 스타일
    ============================================ */
 
 .study-filter {
@@ -16,22 +16,24 @@
     width: 100%;
 }
 
-/* Search Bar */
+/* 검색바 */
 .search-bar {
     position: relative;
     display: flex;
     align-items: center;
-    background-color: var(--color-surface);
+    background-color: var(--color-white);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
-    padding: var(--spacing-sm) var(--spacing-md);
+    padding: 0 var(--spacing-md);
     transition: all var(--transition-fast);
     flex: 1;
+    height: 44px;
+    box-sizing: border-box;
 }
 
 .search-bar:focus-within {
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px var(--color-primary-alpha-10);
+    box-shadow: none;
 }
 
 .search-icon {
@@ -43,10 +45,16 @@
     flex: 1;
     border: none;
     background: transparent;
-    padding: var(--spacing-xs) var(--spacing-sm);
+    padding: 0 var(--spacing-sm);
     font-size: var(--font-size-base);
     color: var(--color-text-primary);
     outline: none;
+    height: 100%;
+}
+
+.search-input:focus {
+    outline: none;
+    box-shadow: none;
 }
 
 .search-input::placeholder {
@@ -71,13 +79,42 @@
     color: var(--color-primary);
 }
 
-/* Filter Toggle Button */
+/* 스터디 생성 버튼 (강조) */
+.create-study-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: 0 var(--spacing-lg);
+    background-color: var(--color-primary);
+    border: none;
+    border-radius: var(--radius-lg);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-bold);
+    color: white;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+    height: 44px;
+    box-shadow: 0 4px 12px var(--color-primary-alpha-20);
+}
+
+.create-study-btn:hover {
+    background-color: var(--color-primary-dark, #106fdf);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px var(--color-primary-alpha-30);
+}
+
+.create-study-btn:active {
+    transform: translateY(0);
+}
+
+/* 필터 토글 버튼 */
 .filter-toggle-btn {
     display: flex;
     align-items: center;
     gap: var(--spacing-sm);
-    padding: var(--spacing-sm) var(--spacing-md);
-    background-color: var(--color-surface);
+    padding: 0 var(--spacing-lg);
+    background-color: var(--color-white);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
     font-size: var(--font-size-base);
@@ -86,6 +123,8 @@
     cursor: pointer;
     transition: all var(--transition-fast);
     white-space: nowrap;
+    height: 44px;
+    box-sizing: border-box;
 }
 
 .filter-toggle-btn:hover {
@@ -104,7 +143,7 @@
     text-align: center;
 }
 
-/* Filter Panel */
+/* 필터 패널 */
 .filter-panel {
     background-color: var(--color-surface);
     border: 1px solid var(--color-border);
@@ -147,7 +186,7 @@
     color: white;
 }
 
-/* Filter Sections */
+/* 필터 섹션 */
 .filter-sections {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -205,7 +244,7 @@
     font-weight: var(--font-weight-medium);
 }
 
-/* Responsive */
+/* 반응형 스타일 */
 @media (max-width: 768px) {
     .filter-sections {
         grid-template-columns: 1fr;

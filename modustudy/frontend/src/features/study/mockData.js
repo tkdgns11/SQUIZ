@@ -306,6 +306,40 @@ export const mockStudies = [
         },
         isBookmarked: false,
         createdAt: '2025-01-10T07:00:00.000Z'
+    },
+    {
+        id: 9,
+        leaderId: 1,
+        name: '매우매우매우매우매우 길어서 두 줄을 훌쩍 넘어가 버리는 스터디 제목 테스트입니다. 과연 제목은 두 줄에서 잘릴까요? 세 줄이 될까요?',
+        description: '이것은 아주아주아주아주 긴 설명글입니다. 한 줄, 두 줄, 세 줄, 네 줄을 넘어서 계속해서 길어지는 텍스트가 카드의 레이아웃을 무너뜨리지 않고 CSS line-clamp 속성에 의해 두 줄에서 우아하게 잘리는지 확인하기 위한 테스트용 목업 데이터입니다. 더 이상 길어질 수 없을 만큼 길게 작성해 보겠습니다.',
+        topic: '테스트',
+        format: '테스트',
+        studyType: 'PLANNED',
+        meetingType: 'HYBRID',
+        regionId: 1,
+        locationDetail: '테스트 서버',
+        status: 'RECRUITING',
+        isPublic: true,
+        maxMembers: 99,
+        currentMembers: 1,
+        difficulty: 'ADVANCED',
+        scheduleDays: 'MON,TUE,WED,THU,FRI,SAT,SUN',
+        scheduleTime: '00:00:00',
+        recruitStartDate: '2025-01-01',
+        recruitEndDate: '2025-12-31',
+        startDate: '2025-01-01',
+        endDate: '2025-12-31',
+        goal: '오버플로우 완벽 차단',
+        region: { id: 1, name: '서울' },
+        leader: {
+            id: 1,
+            nickname: 'overflow_tester',
+            profileImage: null,
+            leaderRating: 5.0,
+            leaderReviewCount: 999
+        },
+        isBookmarked: false,
+        createdAt: '2025-01-19T00:00:00.000Z'
     }
 ];
 

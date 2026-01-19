@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Search, SlidersHorizontal, X } from 'lucide-react';
+import { Search, SlidersHorizontal, X, Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import '../styles/StudyFilter.css';
 
 interface StudyFilterProps {
@@ -17,6 +18,7 @@ export interface FilterState {
 }
 
 const StudyFilter: React.FC<StudyFilterProps> = ({ onFilterChange, onSearch }) => {
+    const navigate = useNavigate();
     const [searchKeyword, setSearchKeyword] = useState('');
     const [showFilters, setShowFilters] = useState(false);
     const [filters, setFilters] = useState<FilterState>({
@@ -107,6 +109,16 @@ const StudyFilter: React.FC<StudyFilterProps> = ({ onFilterChange, onSearch }) =
         <div className="study-filter">
             {/* 검색 및 필터 버튼 행 */}
             <div className="filter-row">
+                {/* 스터디 생성 버튼 (강조) */}
+                <button
+                    className="create-study-btn"
+                    onClick={() => navigate('/study/create')}
+                    title="새 스터디 만들기"
+                >
+                    <Plus size={20} />
+                    <span>스터디 생성</span>
+                </button>
+
                 {/* 검색바 */}
                 <form className="search-bar" onSubmit={handleSearchSubmit}>
                     <Search size={20} className="search-icon" />

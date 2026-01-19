@@ -6,7 +6,6 @@ import { studyService, Study, SortOption } from './services/studyService';
 import './styles/StudyPage.css';
 
 const StudyPage: React.FC = () => {
-    const [studies, setStudies] = useState<Study[]>([]);
     const [filteredStudies, setFilteredStudies] = useState<Study[]>([]);
     const [searchKeyword, setSearchKeyword] = useState('');
     const [filters, setFilters] = useState<FilterState>({
@@ -28,7 +27,6 @@ const StudyPage: React.FC = () => {
     // 초기 데이터 로드
     useEffect(() => {
         const allStudies = studyService.getAllStudies();
-        setStudies(allStudies);
         setFilteredStudies(allStudies);
     }, []);
 
@@ -81,11 +79,6 @@ const StudyPage: React.FC = () => {
     const handleBookmarkToggle = (studyId: number) => {
         studyService.toggleBookmark(studyId);
         // 상태 업데이트
-        setStudies((prev) =>
-            prev.map((study) =>
-                study.id === studyId ? { ...study, isBookmarked: !study.isBookmarked } : study
-            )
-        );
         setFilteredStudies((prev) =>
             prev.map((study) =>
                 study.id === studyId ? { ...study, isBookmarked: !study.isBookmarked } : study
@@ -114,7 +107,7 @@ const StudyPage: React.FC = () => {
                 {/* 필터 및 검색 */}
                 <StudyFilter onFilterChange={handleFilterChange} onSearch={handleSearch} />
 
-                {/* 정렬 및 뷰 옵션 */}
+                {/* 통합 컨트롤 바 */}
                 <div className="study-controls">
                     <div className="view-toggle">
                         <button
@@ -122,11 +115,11 @@ const StudyPage: React.FC = () => {
                             onClick={() => setViewMode('grid')}
                             title="그리드 뷰"
                         >
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <rect x="3" y="3" width="7" height="7" />
-                                <rect x="14" y="3" width="7" height="7" />
-                                <rect x="3" y="14" width="7" height="7" />
-                                <rect x="14" y="14" width="7" height="7" />
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <rect x="3" y="3" width="7" height="7" rx="1" />
+                                <rect x="14" y="3" width="7" height="7" rx="1" />
+                                <rect x="3" y="14" width="7" height="7" rx="1" />
+                                <rect x="14" y="14" width="7" height="7" rx="1" />
                             </svg>
                         </button>
                         <button
@@ -134,32 +127,79 @@ const StudyPage: React.FC = () => {
                             onClick={() => setViewMode('list')}
                             title="리스트 뷰"
                         >
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                                 <line x1="8" y1="6" x2="21" y2="6" />
                                 <line x1="8" y1="12" x2="21" y2="12" />
                                 <line x1="8" y1="18" x2="21" y2="18" />
-                                <line x1="3" y1="6" x2="3.01" y2="6" />
-                                <line x1="3" y1="12" x2="3.01" y2="12" />
-                                <line x1="3" y1="18" x2="3.01" y2="18" />
+                                <rect x="3" y="5" width="2" height="2" rx="0.5" />
+                                <rect x="3" y="11" width="2" height="2" rx="0.5" />
+                                <rect x="3" y="17" width="2" height="2" rx="0.5" />
                             </svg>
                         </button>
                     </div>
 
-                    <select
-                        className="sort-select"
-                        value={
-                            sortOption.field === 'createdAt' && sortOption.order === 'desc' ? 'latest' :
-                                sortOption.field === 'createdAt' && sortOption.order === 'asc' ? 'oldest' :
-                                    sortOption.field === 'currentMembers' ? 'popular' :
-                                        sortOption.field === 'recruitEndDate' ? 'deadline' : 'latest'
-                        }
-                        onChange={handleSortChange}
-                    >
-                        <option value="latest">최신순</option>
-                        <option value="oldest">오래된순</option>
-                        <option value="popular">인기순</option>
-                        <option value="deadline">마감임박순</option>
-                    </select>
+                    <div className="meeting-type-group">
+                        <div className="meeting-type-tabs">
+                            <button
+                                className={`tab-btn ${filters.meetingType.length === 0 ? 'active' : ''}`}
+                                onClick={() => handleFilterChange({ ...filters, meetingType: [] })}
+                            >
+                                무관
+                            </button>
+                            <button
+                                className={`tab-btn ${filters.meetingType.includes('ONLINE') ? 'active' : ''}`}
+                                onClick={() => handleFilterChange({ ...filters, meetingType: ['ONLINE'] })}
+                            >
+                                온라인
+                            </button>
+                            <button
+                                className={`tab-btn ${filters.meetingType.includes('OFFLINE') ? 'active' : ''}`}
+                                onClick={() => handleFilterChange({ ...filters, meetingType: ['OFFLINE'] })}
+                            >
+                                오프라인
+                            </button>
+                            <button
+                                className={`tab-btn ${filters.meetingType.includes('HYBRID') ? 'active' : ''}`}
+                                onClick={() => handleFilterChange({ ...filters, meetingType: ['HYBRID'] })}
+                            >
+                                혼합
+                            </button>
+                        </div>
+                        <select
+                            className="meeting-type-select"
+                            value={filters.meetingType.length === 0 ? 'ALL' : filters.meetingType[0]}
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                handleFilterChange({
+                                    ...filters,
+                                    meetingType: val === 'ALL' ? [] : [val]
+                                });
+                            }}
+                        >
+                            <option value="ALL">방식 무관</option>
+                            <option value="ONLINE">온라인</option>
+                            <option value="OFFLINE">오프라인</option>
+                            <option value="HYBRID">혼합</option>
+                        </select>
+                    </div>
+
+                    <div className="sort-wrapper">
+                        <select
+                            className="sort-select"
+                            value={
+                                sortOption.field === 'createdAt' && sortOption.order === 'desc' ? 'latest' :
+                                    sortOption.field === 'createdAt' && sortOption.order === 'asc' ? 'oldest' :
+                                        sortOption.field === 'currentMembers' ? 'popular' :
+                                            sortOption.field === 'recruitEndDate' ? 'deadline' : 'latest'
+                            }
+                            onChange={handleSortChange}
+                        >
+                            <option value="latest">최신순</option>
+                            <option value="oldest">오래된순</option>
+                            <option value="popular">인기순</option>
+                            <option value="deadline">마감임박순</option>
+                        </select>
+                    </div>
                 </div>
 
                 {/* 스터디 목록 */}
@@ -180,21 +220,37 @@ const StudyPage: React.FC = () => {
                         {paginatedData.totalPages > 1 && (
                             <div className="pagination">
                                 <button
-                                    className="pagination-btn"
+                                    className="pagination-btn arrow"
                                     disabled={currentPage === 1}
                                     onClick={() => setCurrentPage((prev) => prev - 1)}
+                                    title="이전 페이지"
                                 >
-                                    이전
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="m15 18-6-6 6-6" />
+                                    </svg>
                                 </button>
-                                <span className="pagination-info">
-                                    {currentPage} / {paginatedData.totalPages}
-                                </span>
+
+                                <div className="pagination-numbers">
+                                    {Array.from({ length: paginatedData.totalPages }, (_, i) => i + 1).map((pageNum) => (
+                                        <button
+                                            key={pageNum}
+                                            className={`pagination-number ${currentPage === pageNum ? 'active' : ''}`}
+                                            onClick={() => setCurrentPage(pageNum)}
+                                        >
+                                            {pageNum}
+                                        </button>
+                                    ))}
+                                </div>
+
                                 <button
-                                    className="pagination-btn"
+                                    className="pagination-btn arrow"
                                     disabled={currentPage === paginatedData.totalPages}
                                     onClick={() => setCurrentPage((prev) => prev + 1)}
+                                    title="다음 페이지"
                                 >
-                                    다음
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="m9 18 6-6-6-6" />
+                                    </svg>
                                 </button>
                             </div>
                         )}

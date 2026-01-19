@@ -10,7 +10,7 @@ interface StudyListContainerProps {
 
 const StudyListContainer: React.FC<StudyListContainerProps> = ({
     children,
-    maxWidth = '1400px',
+    maxWidth = '100%',
     className = '',
 }) => {
     return (

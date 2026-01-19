@@ -191,6 +191,30 @@ class StudyService {
             pageSize,
         };
     }
+
+    // 스터디 신청 (API 시뮬레이션)
+    async applyToStudy(studyId: number, message: string): Promise<{ success: boolean; message: string }> {
+        console.log(`[StudyService] Applying to study ${studyId}: ${message}`);
+        // 비동기 통신 시뮬레이션 (1.5초 대기)
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                // 시뮬레이션을 위해 10% 확률로 실패 발생
+                const isError = Math.random() < 0.1;
+
+                if (isError) {
+                    resolve({
+                        success: false,
+                        message: '서버와의 통신 중 오류가 발생했습니다. 다시 시도해주세요.'
+                    });
+                } else {
+                    resolve({
+                        success: true,
+                        message: '스터디 신청이 완료되었습니다! 스터디장의 승인을 기다려주세요.'
+                    });
+                }
+            }, 1500);
+        });
+    }
 }
 
 // 싱글톤 인스턴스 export

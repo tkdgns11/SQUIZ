@@ -4,7 +4,9 @@ import {
     Heart, Star, Users, Calendar,
     ChevronLeft, Target, Award, Shield
 } from 'lucide-react';
+import { useAuthStore } from '@/store/authStore';
 import { studyService, Study } from './services/studyService';
+import StudyApplyModal from './components/StudyApplyModal';
 import StudyListContainer from './components/StudyListContainer';
 import { MainLayout } from '@/layouts/MainLayout';
 import './styles/StudyDetailPage.css';
@@ -14,6 +16,8 @@ const StudyDetailPage: React.FC = () => {
     const navigate = useNavigate();
     const [study, setStudy] = useState<Study | null>(null);
     const [isBookmarked, setIsBookmarked] = useState(false);
+    const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
+    const { user } = useAuthStore();
 
     useEffect(() => {
         if (id) {
@@ -167,11 +171,41 @@ const StudyDetailPage: React.FC = () => {
                                     </div>
                                 </div>
                                 <div className="apply-section">
-                                    <button className="btn-apply">
-                                        참여 신청하기
-                                    </button>
+                                    {String(user?.id) === String(study.leader.id) ? (
+                                        <button className="btn-apply" onClick={() => navigate(`/study/edit/${study.id}`)}>
+                                            게시글 수정하기
+                                        </button>
+                                    ) : (
+                                        <button className="btn-apply" onClick={() => setIsApplyModalOpen(true)}>
+                                            스터디 신청하기
+                                        </button>
+                                    )}
                                     <p style={{ fontSize: '12px', color: 'var(--color-text-tertiary)', textAlign: 'center' }}>
-                                        신청 후 스터디장의 승인이 필요합니다.
+                                        {String(user?.id) === String(study.leader.id)
+                                            ? '스터디 정보를 수정할 수 있습니다.'
+                                            : '신청 후 스터디장의 승인이 필요합니다.'}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* 리더 활동 잔디 (2D Grass Graph) */}
+                            <div className="detail-card leader-activity-card" style={{ marginTop: '16px' }}>
+                                <h4 style={{ fontSize: '14px', marginBottom: '12px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <Target size={16} />
+                                    리더 활동 지수
+                                </h4>
+                                <div className="grass-placeholder">
+                                    <div className="grass-track">
+                                        {Array.from({ length: 28 }).map((_, i) => (
+                                            <div
+                                                key={i}
+                                                className={`grass-node level-${Math.floor(Math.random() * 4)}`}
+                                                title={`Activity level: ${Math.floor(Math.random() * 4)}`}
+                                            />
+                                        ))}
+                                    </div>
+                                    <p style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', marginTop: '10px', textAlign: 'center' }}>
+                                        최근 한 달간의 스터디 참여 활동입니다.
                                     </p>
                                 </div>
                             </div>
@@ -191,6 +225,13 @@ const StudyDetailPage: React.FC = () => {
                     </div>
                 </div>
             </StudyListContainer>
+
+            {isApplyModalOpen && study && (
+                <StudyApplyModal
+                    study={study}
+                    onClose={() => setIsApplyModalOpen(false)}
+                />
+            )}
         </MainLayout>
     );
 };

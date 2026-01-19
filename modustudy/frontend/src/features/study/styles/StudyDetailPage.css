@@ -5,21 +5,21 @@
 .study-detail-container {
     max-width: 1100px;
     margin: 0 auto;
-    padding: var(--spacing-xl) 0;
+    padding: var(--spacing-md) 0;
 }
 
 /* 히어로 섹션 */
 .study-detail-hero {
     background-color: var(--color-surface);
     border-radius: var(--radius-2xl);
-    padding: var(--spacing-2xl);
+    padding: var(--spacing-xl);
     border: 1px solid var(--color-border);
     box-shadow: var(--shadow-lg);
-    margin-bottom: var(--spacing-xl);
+    margin-bottom: var(--spacing-md);
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: var(--spacing-xl);
+    gap: var(--spacing-lg);
     position: relative;
     overflow: hidden;
 }
@@ -82,19 +82,19 @@
 .study-detail-grid {
     display: grid;
     grid-template-columns: 2fr 1fr;
-    gap: var(--spacing-xl);
+    gap: var(--spacing-md);
 }
 
 .detail-main-section {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-xl);
+    gap: var(--spacing-md);
 }
 
 .detail-card {
     background-color: var(--color-surface);
     border-radius: var(--radius-xl);
-    padding: var(--spacing-xl);
+    padding: var(--spacing-lg);
     border: 1px solid var(--color-border);
     box-shadow: var(--shadow-sm);
 }
@@ -103,7 +103,7 @@
     font-size: var(--font-size-xl);
     font-weight: var(--font-weight-bold);
     color: var(--color-text-primary);
-    margin: 0 0 var(--spacing-lg) 0;
+    margin: 0 0 var(--spacing-md) 0;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -117,7 +117,7 @@
 .info-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: var(--spacing-xl);
+    gap: var(--spacing-lg);
 }
 
 .info-block {
@@ -194,10 +194,10 @@
 
 /* 참여 버튼 */
 .apply-section {
-    margin-top: var(--spacing-xl);
+    margin-top: var(--spacing-md);
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-md);
+    gap: var(--spacing-sm);
 }
 
 .btn-apply {
@@ -243,6 +243,52 @@
     color: var(--color-error);
     border-color: var(--color-error-alpha-20);
     background-color: var(--color-error-alpha-10);
+}
+
+/* 잔디 그래프 (Grass Graph) 스타일 */
+.grass-placeholder {
+    padding: 8px 0;
+}
+
+.grass-track {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    justify-content: center;
+}
+
+.grass-node {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 2px;
+    background-color: var(--color-background-secondary);
+    transition: transform 0.2s ease;
+}
+
+.grass-node:hover {
+    transform: scale(1.2);
+    z-index: 1;
+}
+
+/* 활동 레벨별 색상 (Squiz 브랜드 컬러 기반) */
+.grass-node.level-0 {
+    background-color: var(--color-background-secondary);
+}
+
+.grass-node.level-1 {
+    background-color: var(--color-accent-light);
+}
+
+.grass-node.level-2 {
+    background-color: var(--color-accent);
+}
+
+.grass-node.level-3 {
+    background-color: var(--color-accent-dark);
+}
+
+.grass-node.level-4 {
+    background-color: var(--color-primary);
 }
 
 /* 반응형 */

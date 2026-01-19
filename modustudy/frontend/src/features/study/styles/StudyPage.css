@@ -2,11 +2,14 @@
    스터디 페이지 스타일
    ============================================ */
 
-/* 정보 영역 (스터디 개수 등) */
+/* 정보 영역 (스터디 개수 및 난이도 범례) */
 .study-page-info {
     margin-bottom: var(--spacing-md);
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
 }
 
 .study-count {
@@ -18,6 +21,40 @@
 .study-count strong {
     color: var(--color-primary);
     font-weight: var(--font-weight-bold);
+}
+
+.difficulty-legend {
+    display: flex;
+    gap: var(--spacing-md);
+    align-items: center;
+}
+
+.legend-item {
+    font-size: 11px;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-tertiary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.legend-item::before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+}
+
+.legend-item.beginner::before {
+    background-color: var(--color-accent-dark);
+}
+
+.legend-item.intermediate::before {
+    background-color: var(--color-primary);
+}
+
+.legend-item.advanced::before {
+    background-color: var(--color-error);
 }
 
 /* 컨트롤 */

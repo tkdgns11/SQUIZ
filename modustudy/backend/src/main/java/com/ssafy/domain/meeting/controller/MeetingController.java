@@ -68,7 +68,7 @@ public class MeetingController {
             @Valid @RequestBody MeetingRequest request
     ) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.created(meetingService.startMeeting(studyId, request)));
+                .body(ApiResponse.success(meetingService.startMeeting(studyId, request)));
     }
 
     @PutMapping("/{meetingId}/end")
@@ -100,7 +100,7 @@ public class MeetingController {
     ) {
         Long userId = userDetails == null ? null : userDetails.getUser().getId();
         meetingService.leaveMeeting(studyId, meetingId, requireUserId(userId));
-        return ResponseEntity.ok(ApiResponse.success());
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     @GetMapping("/{meetingId}/summary")
@@ -140,7 +140,7 @@ public class MeetingController {
             @Valid @RequestBody MeetingTranscriptRequest request
     ) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.created(meetingService.addTranscript(studyId, meetingId, request)));
+                .body(ApiResponse.success(meetingService.addTranscript(studyId, meetingId, request)));
     }
 
     @GetMapping("/{meetingId}/recording")
@@ -179,7 +179,7 @@ public class MeetingController {
             @RequestPart("image") MultipartFile image
     ) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.created(meetingService.addPhoto(studyId, meetingId, image)));
+                .body(ApiResponse.success(meetingService.addPhoto(studyId, meetingId, image)));
     }
 
     @PutMapping("/{meetingId}/keywords")
@@ -242,7 +242,7 @@ public class MeetingController {
             @RequestBody MeetingActionItemRequest request
     ) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.created(meetingService.addActionItem(studyId, meetingId, request)));
+                .body(ApiResponse.success(meetingService.addActionItem(studyId, meetingId, request)));
     }
 
     @PutMapping("/{meetingId}/action-items/{actionItemId}")

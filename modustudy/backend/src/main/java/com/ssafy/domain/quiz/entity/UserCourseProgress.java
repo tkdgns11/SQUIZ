@@ -27,7 +27,6 @@ import java.time.LocalDateTime;
 @Table(name = "user_course_progress", uniqueConstraints = {
         @UniqueConstraint(name = "uk_user_course", columnNames = {"user_id", "course_id"})
 })
-@IdClass(UserCourseProgressId.class)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EntityListeners(AuditingEntityListener.class)

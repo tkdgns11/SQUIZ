@@ -1,7 +1,23 @@
 package com.ssafy.domain.user.service;
 
-import org.springframework.stereotype.Service;
+import com.ssafy.domain.user.entity.User;
 
-@Service
-public class UserService {
+import java.util.Optional;
+
+public interface UserService {
+
+    /**
+     * userId로 사용자 조회
+     */
+    Optional<User> getUserByUserId(String userId);
+
+    /**
+     * id로 사용자 조회
+     */
+    Optional<User> getUserById(Long id);
+
+    /**
+     * email로 사용자 조회
+     */
+    Optional<User> getUserByEmail(String email);
 }

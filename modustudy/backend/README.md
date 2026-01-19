@@ -1,4 +1,4 @@
-# ModuStudy Backend API
+0# ModuStudy Backend API
 
 > Spring Boot 기반 스터디 관리 플랫폼 백엔드 서버
 

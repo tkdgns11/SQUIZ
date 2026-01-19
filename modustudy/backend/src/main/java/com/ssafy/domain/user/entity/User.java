@@ -4,63 +4,60 @@ import com.ssafy.common.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "user")
 @Getter
 @Setter
-@Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
+@Builder
 public class User extends BaseEntity {
 
-    @Column(nullable = false, unique = true, length = 100)
-    private String email;
+    @Column(unique = true)
+    private String userId;
 
-    @Column(length = 255)
     private String password;
 
-    @Column(length = 50)
     private String name;
+    private String department;
+    private String position;
 
-    @Column(nullable = false, unique = true, length = 50)
+    // ========== 소셜 로그인용 ==========
+
+    @Column(unique = true, length = 100)
+    private String email;
+
+    @Column(unique = true, length = 50)
     private String nickname;
-
-    @Column(name = "profile_image", length = 500)
-    private String profileImage;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
-    @Builder.Default
-    private Role role = Role.USER;
+    private Role role;
 
-    @Column(name = "is_active")
-    @Builder.Default
+    @Column(nullable = false)
     private Boolean isActive = true;
 
-    @Column(name = "is_online")
-    @Builder.Default
+    private LocalDateTime lastLoginAt;
+
+    @Column(nullable = false)
     private Boolean isOnline = false;
 
-    @Column(name = "last_seen_at")
-    private java.time.LocalDateTime lastSeenAt;
+    private LocalDateTime lastSeenAt;
 
-    @Column(name = "is_searchable")
-    @Builder.Default
+    @Column(nullable = false)
     private Boolean isSearchable = true;
 
-    @Column(name = "leader_rating")
-    @Builder.Default
-    private Float leaderRating = 0.0f;
+    @Column(nullable = false)
+    private Integer totalExp = 0;
 
-    @Column(name = "leader_review_count")
-    @Builder.Default
-    private Integer leaderReviewCount = 0;
+    @Column(nullable = false)
+    private Integer currentPoints = 0;
 
-    @Column(name = "last_login_at")
-    private java.time.LocalDateTime lastLoginAt;
+    @Column(nullable = false)
+    private Integer currentLevel = 1;
 
-    // Enum 정의
-    public enum Role {
-        USER, ADMIN
-    }
+    @Column(length = 50)
+    private String levelName = "Bronze";
 }

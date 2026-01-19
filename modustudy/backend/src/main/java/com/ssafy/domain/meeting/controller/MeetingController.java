@@ -2,6 +2,7 @@ package com.ssafy.domain.meeting.controller;
 
 import com.ssafy.common.auth.SsafyUserDetails;
 import com.ssafy.common.response.ApiResponse;
+import com.ssafy.common.response.MessageResponse;
 import com.ssafy.common.response.PageResponse;
 import com.ssafy.domain.meeting.dto.request.MeetingActionItemRequest;
 import com.ssafy.domain.meeting.dto.request.MeetingKeywordUpdateRequest;
@@ -93,14 +94,14 @@ public class MeetingController {
 
     @PostMapping("/{meetingId}/leave")
     @Operation(summary = "미팅 퇴장", description = "미팅에서 퇴장 처리한다.")
-    public ResponseEntity<ApiResponse<Void>> leave(
+    public ResponseEntity<ApiResponse<MessageResponse>> leave(
             @PathVariable Long studyId,
             @PathVariable Long meetingId,
             @AuthenticationPrincipal SsafyUserDetails userDetails
     ) {
         Long userId = userDetails == null ? null : userDetails.getUser().getId();
         meetingService.leaveMeeting(studyId, meetingId, requireUserId(userId));
-        return ResponseEntity.ok(ApiResponse.success(null));
+        return ResponseEntity.ok(ApiResponse.success("Left meeting"));
     }
 
     @GetMapping("/{meetingId}/summary")
@@ -184,7 +185,7 @@ public class MeetingController {
 
     @PutMapping("/{meetingId}/keywords")
     @Operation(summary = "미팅 키워드 업데이트", description = "미팅 키워드 목록을 저장한다.")
-    public ResponseEntity<ApiResponse<Void>> updateKeywords(
+    public ResponseEntity<ApiResponse<MessageResponse>> updateKeywords(
             @PathVariable Long studyId,
             @PathVariable Long meetingId,
             @Valid @RequestBody MeetingKeywordUpdateRequest request
@@ -195,7 +196,7 @@ public class MeetingController {
 
     @PutMapping("/{meetingId}/participants/{userId}/mute")
     @Operation(summary = "참가자 음소거", description = "미팅 참가자의 음소거 상태를 변경한다.")
-    public ResponseEntity<ApiResponse<Void>> muteParticipant(
+    public ResponseEntity<ApiResponse<MessageResponse>> muteParticipant(
             @PathVariable Long studyId,
             @PathVariable Long meetingId,
             @PathVariable Long userId,

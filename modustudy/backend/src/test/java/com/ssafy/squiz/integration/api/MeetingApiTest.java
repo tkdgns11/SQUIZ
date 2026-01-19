@@ -335,13 +335,13 @@ class MeetingApiTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("Keywords updated"));
+                .andExpect(jsonPath("$.data.message").value("Keywords updated"));
 
         mockMvc.perform(put("/api/v1/studies/1/meetings/2/participants/1/mute")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"muted\":true}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("Participant updated"));
+                .andExpect(jsonPath("$.data.message").value("Participant updated"));
     }
 
     @Test

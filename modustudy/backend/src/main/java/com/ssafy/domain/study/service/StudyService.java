@@ -207,6 +207,7 @@ public class StudyService {
     /**
      * 모집 기간 연장
      */
+    @Transactional
     public StudyResponse extendRecruitment(Long studyId, java.time.LocalDate newEndDate, Long leaderId) {
         log.info("모집 기간 연장 - studyId: {}, 새 종료일: {}", studyId, newEndDate);
 

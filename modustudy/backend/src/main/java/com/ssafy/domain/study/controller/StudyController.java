@@ -221,6 +221,7 @@ public class StudyController {
      * 모집 기간 연장
      * PATCH /api/v1/study/{studyId}/extend-recruitment
      */
+    @PatchMapping("/{studyId}/extend-recruitment")
     public ResponseEntity<StudyResponse> extendRecruitment(
             @PathVariable Long studyId,
             @RequestBody RecruitmentExtensionRequest request,

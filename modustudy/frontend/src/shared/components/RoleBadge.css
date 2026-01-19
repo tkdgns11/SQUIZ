@@ -1,0 +1,27 @@
+.role-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.role-badge.role-leader {
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #dbeafe;
+}
+
+.role-badge.role-sub-leader {
+    background: #fff7ed;
+    color: #ea580c;
+    border: 1px solid #ffedd5;
+}
+
+.role-badge.role-member {
+    background: #f8fafc;
+    color: #64748b;
+    border: 1px solid #f1f5f9;
+}

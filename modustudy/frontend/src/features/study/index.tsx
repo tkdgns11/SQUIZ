@@ -2,6 +2,7 @@
 export { default as StudyPage } from './StudyPage';
 export { default as StudyCreatePage } from './StudyCreatePage';
 export { default as StudyDetailPage } from './StudyDetailPage';
+export { StudyManagementPage } from './manage';
 export { default as StudyCardContent } from './components/StudyCardContent';
 export { default as StudyFilter } from './components/StudyFilter';
 export { default as StudyListContainer } from './components/StudyListContainer';

@@ -711,7 +711,7 @@ CREATE TABLE `quiz_course_question` (
     `section_id` BIGINT NOT NULL,
     `question_number` INT NOT NULL,
     `question_text` TEXT NOT NULL,
-    `question_type` ENUM('MULTIPLE_CHOICE', 'SHORT_ANSWER') DEFAULT 'MULTIPLE_CHOICE',
+    `question_type` ENUM('MULTIPLE_CHOICE', 'SHORT_ANSWER', 'MULTIPLE_CHOICE') DEFAULT 'MULTIPLE_CHOICE',
     `options` JSON,                              -- 객관식 보기
     `correct_answer` VARCHAR(500) NOT NULL,
     `explanation` TEXT,

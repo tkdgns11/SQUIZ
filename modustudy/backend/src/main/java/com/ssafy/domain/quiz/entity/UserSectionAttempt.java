@@ -1,13 +1,10 @@
 package com.ssafy.domain.quiz.entity;
 
 import com.ssafy.common.entity.BaseEntity;
-<<<<<<< HEAD
 import com.ssafy.domain.user.entity.User;
 import jakarta.persistence.*;
-=======
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
->>>>>>> origin/study
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;

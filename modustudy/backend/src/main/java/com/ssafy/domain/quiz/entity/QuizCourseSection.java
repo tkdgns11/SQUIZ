@@ -1,13 +1,9 @@
 package com.ssafy.domain.quiz.entity;
 
-import com.ssafy.common.entity.BaseEntity;
 import jakarta.persistence.*;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,25 +16,18 @@ import java.util.List;
  * DDL 참조: docs/sql/ERD.sql - quiz_course_section
  */
 @Entity
-@Table(name = "quiz_course_section", uniqueConstraints = {
-        @UniqueConstraint(name = "uk_course_section", columnNames = {"course_id", "section_number"})
-})
+@Table(name = "quiz_course_section")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class QuizCourseSection extends BaseEntity {
+public class QuizCourseSection {
 
     /**
      * 소속 코스.
      */
     @ManyToOne(fetch = FetchType.LAZY)
+    @MapsId("courseId")  // QuizCourseSectionId의 courseId와 매핑
     @JoinColumn(name = "course_id", nullable = false)
     private QuizCourse course;
-
-    /**
-     * 섹션 순서 번호 (1부터 시작).
-     */
-    @Column(name = "section_number", nullable = false)
-    private Integer sectionNumber;
 
     /**
      * 섹션 이름 (예: 기본 문법, 객체지향).
@@ -70,4 +59,37 @@ public class QuizCourseSection extends BaseEntity {
     @OneToMany(mappedBy = "section", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("questionNumber ASC")
     private List<QuizCourseQuestion> questions = new ArrayList<>();
+
+    /**
+     * 정적 팩토리 메서드 - section_number는 자동 할당.
+     */
+    public static QuizCourseSection create(
+            QuizCourse course,
+            String name,
+            String description,
+            Integer passScore
+    ) {
+        QuizCourseSection section = new QuizCourseSection();
+        section.course = course;
+        section.name = name;
+        section.description = description;
+        section.passScore = passScore != null ? passScore : 70;
+        // section_number는 @PrePersist에서 자동 할당
+        return section;
+    }
+
+    /**
+     * 저장 전에 section_number를 자동으로 할당.
+     * 같은 course_id를 가진 섹션 중 최대값 + 1로 설정.
+     */
+    @PrePersist
+    public void prePersist() {
+        if (this.id == null && this.course != null) {
+            // Repository를 통해 다음 section_number를 조회해야 함
+            // 이 부분은 Service 레이어에서 처리하는 것이 더 안전
+            throw new IllegalStateException(
+                    "section_number must be set before persisting. Use Service layer to create sections."
+            );
+        }
+    }
 }

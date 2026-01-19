@@ -1,22 +1,213 @@
-import React from 'react';
-import { MainLayout } from '@/layouts/MainLayout';
+import React, { useState, useEffect } from 'react';
+import StudyListContainer from './components/StudyListContainer';
+import StudyCardContent from './components/StudyCardContent';
+import StudyFilter, { FilterState } from './components/StudyFilter';
+import { studyService, Study, SortOption } from './services/studyService';
+import './styles/StudyPage.css';
 
-export const StudyPage: React.FC = () => {
+const StudyPage: React.FC = () => {
+    const [studies, setStudies] = useState<Study[]>([]);
+    const [filteredStudies, setFilteredStudies] = useState<Study[]>([]);
+    const [searchKeyword, setSearchKeyword] = useState('');
+    const [filters, setFilters] = useState<FilterState>({
+        status: [],
+        topic: [],
+        meetingType: [],
+        difficulty: [],
+        studyType: [],
+        regionId: [],
+    });
+    const [sortOption, setSortOption] = useState<SortOption>({
+        field: 'createdAt',
+        order: 'desc',
+    });
+    const [currentPage, setCurrentPage] = useState(1);
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid'); // 뷰 모드 상태
+    const pageSize = 12;
+
+    // 초기 데이터 로드
+    useEffect(() => {
+        const allStudies = studyService.getAllStudies();
+        setStudies(allStudies);
+        setFilteredStudies(allStudies);
+    }, []);
+
+    // 필터 및 검색 적용
+    useEffect(() => {
+        let result = studyService.getFilteredStudies({
+            ...filters,
+            keyword: searchKeyword,
+        });
+
+        // 정렬 적용
+        result = studyService.sortStudies(result, sortOption);
+
+        setFilteredStudies(result);
+        setCurrentPage(1); // 필터 변경 시 첫 페이지로
+    }, [filters, searchKeyword, sortOption]);
+
+    // 필터 변경 핸들러
+    const handleFilterChange = (newFilters: FilterState) => {
+        setFilters(newFilters);
+    };
+
+    // 검색 핸들러
+    const handleSearch = (keyword: string) => {
+        setSearchKeyword(keyword);
+    };
+
+    // 정렬 변경 핸들러
+    const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const value = e.target.value;
+        switch (value) {
+            case 'latest':
+                setSortOption({ field: 'createdAt', order: 'desc' });
+                break;
+            case 'oldest':
+                setSortOption({ field: 'createdAt', order: 'asc' });
+                break;
+            case 'popular':
+                setSortOption({ field: 'currentMembers', order: 'desc' });
+                break;
+            case 'deadline':
+                setSortOption({ field: 'recruitEndDate', order: 'asc' });
+                break;
+            default:
+                setSortOption({ field: 'createdAt', order: 'desc' });
+        }
+    };
+
+    // 찜하기 토글 핸들러
+    const handleBookmarkToggle = (studyId: number) => {
+        studyService.toggleBookmark(studyId);
+        // 상태 업데이트
+        setStudies((prev) =>
+            prev.map((study) =>
+                study.id === studyId ? { ...study, isBookmarked: !study.isBookmarked } : study
+            )
+        );
+        setFilteredStudies((prev) =>
+            prev.map((study) =>
+                study.id === studyId ? { ...study, isBookmarked: !study.isBookmarked } : study
+            )
+        );
+    };
+
+    // 스터디 클릭 핸들러
+    const handleStudyClick = (studyId: number) => {
+        console.log('Study clicked:', studyId);
+        // TODO: 스터디 상세 페이지로 이동
+    };
+
+    // 페이지네이션
+    const paginatedData = studyService.paginateStudies(filteredStudies, currentPage, pageSize);
+
     return (
-        <MainLayout>
-            <div className="space-y-6">
-                <div className="flex flex-col gap-2">
-                    <h1 className="text-3xl font-bold text-study-text">스터디 관리</h1>
-                    <p className="text-study-text/60">참여 중인 스터디와 스터디 일정을 확인하세요.</p>
+        <StudyListContainer>
+            <div className="study-page">
+                <div className="study-page-info">
+                    <p className="study-count">
+                        총 <strong>{filteredStudies.length}</strong>개의 스터디
+                    </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {/* Placeholder content */}
-                    <div className="bg-white p-6 rounded-google shadow-sm border border-study-blue/10 h-40 flex items-center justify-center text-study-text/40">
-                        준비 중인 서비스입니다.
+                {/* 필터 및 검색 */}
+                <StudyFilter onFilterChange={handleFilterChange} onSearch={handleSearch} />
+
+                {/* 정렬 및 뷰 옵션 */}
+                <div className="study-controls">
+                    <div className="view-toggle">
+                        <button
+                            className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
+                            onClick={() => setViewMode('grid')}
+                            title="그리드 뷰"
+                        >
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <rect x="3" y="3" width="7" height="7" />
+                                <rect x="14" y="3" width="7" height="7" />
+                                <rect x="3" y="14" width="7" height="7" />
+                                <rect x="14" y="14" width="7" height="7" />
+                            </svg>
+                        </button>
+                        <button
+                            className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
+                            onClick={() => setViewMode('list')}
+                            title="리스트 뷰"
+                        >
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <line x1="8" y1="6" x2="21" y2="6" />
+                                <line x1="8" y1="12" x2="21" y2="12" />
+                                <line x1="8" y1="18" x2="21" y2="18" />
+                                <line x1="3" y1="6" x2="3.01" y2="6" />
+                                <line x1="3" y1="12" x2="3.01" y2="12" />
+                                <line x1="3" y1="18" x2="3.01" y2="18" />
+                            </svg>
+                        </button>
                     </div>
+
+                    <select
+                        className="sort-select"
+                        value={
+                            sortOption.field === 'createdAt' && sortOption.order === 'desc' ? 'latest' :
+                                sortOption.field === 'createdAt' && sortOption.order === 'asc' ? 'oldest' :
+                                    sortOption.field === 'currentMembers' ? 'popular' :
+                                        sortOption.field === 'recruitEndDate' ? 'deadline' : 'latest'
+                        }
+                        onChange={handleSortChange}
+                    >
+                        <option value="latest">최신순</option>
+                        <option value="oldest">오래된순</option>
+                        <option value="popular">인기순</option>
+                        <option value="deadline">마감임박순</option>
+                    </select>
                 </div>
+
+                {/* 스터디 목록 */}
+                {paginatedData.studies.length > 0 ? (
+                    <>
+                        <div className={`study-grid ${viewMode === 'list' ? 'list-view' : ''}`}>
+                            {paginatedData.studies.map((study) => (
+                                <StudyCardContent
+                                    key={study.id}
+                                    study={study}
+                                    onBookmarkToggle={handleBookmarkToggle}
+                                    onClick={handleStudyClick}
+                                />
+                            ))}
+                        </div>
+
+                        {/* 페이지네이션 */}
+                        {paginatedData.totalPages > 1 && (
+                            <div className="pagination">
+                                <button
+                                    className="pagination-btn"
+                                    disabled={currentPage === 1}
+                                    onClick={() => setCurrentPage((prev) => prev - 1)}
+                                >
+                                    이전
+                                </button>
+                                <span className="pagination-info">
+                                    {currentPage} / {paginatedData.totalPages}
+                                </span>
+                                <button
+                                    className="pagination-btn"
+                                    disabled={currentPage === paginatedData.totalPages}
+                                    onClick={() => setCurrentPage((prev) => prev + 1)}
+                                >
+                                    다음
+                                </button>
+                            </div>
+                        )}
+                    </>
+                ) : (
+                    <div className="empty-state">
+                        <p>검색 결과가 없습니다.</p>
+                        <p className="empty-state-subtitle">다른 검색어나 필터를 시도해보세요.</p>
+                    </div>
+                )}
             </div>
-        </MainLayout>
+        </StudyListContainer>
     );
 };
+
+export default StudyPage;

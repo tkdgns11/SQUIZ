@@ -319,7 +319,7 @@ true
 **Request Headers:**
 ```
 Content-Type: application/json
-Authorization: Bearer {accessToken}
+User-Id: 1  (임시 인증 방식, 추후 JWT로 변경 예정)
 ```
 
 **Request Body:**
@@ -368,7 +368,15 @@ Authorization: Bearer {accessToken}
   "leaderId": 1,
   "name": "알고리즘 스터디",
   "description": "매주 백준 문제를 풀고 코드 리뷰를 진행합니다.",
+  "topic": "알고리즘",
+  "format": "문제풀이",
+  "studyType": "PLANNED",
+  "meetingType": "OFFLINE",
   "status": "DRAFT",
+  "maxMembers": 6,
+  "difficulty": "INTERMEDIATE",
+  "startDate": "2025-01-15",
+  "endDate": "2025-03-15",
   "createdAt": "2025-01-19T10:30:00",
   "updatedAt": "2025-01-19T10:30:00"
 }
@@ -382,6 +390,8 @@ Authorization: Bearer {accessToken}
 
 **설명:** 기존 스터디 정보를 수정합니다. (스터디장만 가능)
 
+**인증:** 필요
+
 **Path Parameters:**
 | 파라미터 | 타입 | 필수 | 설명 |
 |---------|------|------|------|
@@ -390,7 +400,7 @@ Authorization: Bearer {accessToken}
 **Request Headers:**
 ```
 Content-Type: application/json
-Authorization: Bearer {token}  (JWT 인증 필요)
+User-Id: 1  (임시 인증 방식, 추후 JWT로 변경 예정)
 ```
 
 **Request Body:** (수정할 필드만 포함)
@@ -410,8 +420,7 @@ Authorization: Bearer {token}  (JWT 인증 필요)
   "name": "스프링 부트 심화 프로젝트",
   "maxMembers": 10,
   "description": "Spring Boot 심화 내용 추가",
-  "updatedAt": "2025-01-19T11:00:00",
-  ...
+  "updatedAt": "2025-01-19T11:00:00"
 }
 ```
 
@@ -430,6 +439,8 @@ Authorization: Bearer {token}  (JWT 인증 필요)
 
 **설명:** 스터디를 삭제합니다. (스터디장만 가능, 진행중/완료 스터디는 삭제 불가)
 
+**인증:** 필요
+
 **Path Parameters:**
 | 파라미터 | 타입 | 필수 | 설명 |
 |---------|------|------|------|
@@ -437,7 +448,7 @@ Authorization: Bearer {token}  (JWT 인증 필요)
 
 **Request Headers:**
 ```
-Authorization: Bearer {token}  (JWT 인증 필요)
+User-Id: 1  (임시 인증 방식, 추후 JWT로 변경 예정)
 ```
 
 **Request Example:**
@@ -471,6 +482,8 @@ DELETE /api/v1/study/9
 
 **설명:** 스터디 상태를 변경합니다. (스터디장만 가능)
 
+**인증:** 필요
+
 **Path Parameters:**
 | 파라미터 | 타입 | 필수 | 설명 |
 |---------|------|------|------|
@@ -479,7 +492,7 @@ DELETE /api/v1/study/9
 **Request Headers:**
 ```
 Content-Type: application/json
-Authorization: Bearer {token}  (JWT 인증 필요)
+User-Id: 1  (임시 인증 방식, 추후 JWT로 변경 예정)
 ```
 
 **Request Body:**
@@ -499,8 +512,7 @@ PATCH /api/v1/study/9/status
 {
   "id": 9,
   "status": "RECRUITING",
-  "updatedAt": "2025-01-19T12:00:00",
-  ...
+  "updatedAt": "2025-01-19T12:00:00"
 }
 ```
 
@@ -512,6 +524,8 @@ PATCH /api/v1/study/9/status
 
 **설명:** 스터디 모집 기간을 연장합니다. (최대 1회, 스터디장만 가능)
 
+**인증:** 필요
+
 **Path Parameters:**
 | 파라미터 | 타입 | 필수 | 설명 |
 |---------|------|------|------|
@@ -520,7 +534,7 @@ PATCH /api/v1/study/9/status
 **Request Headers:**
 ```
 Content-Type: application/json
-Authorization: Bearer {token}  (JWT 인증 필요)
+User-Id: 1  (임시 인증 방식, 추후 JWT로 변경 예정)
 ```
 
 **Request Body:**
@@ -541,8 +555,7 @@ PATCH /api/v1/study/9/extend-recruitment
   "id": 9,
   "recruitEndDate": "2025-02-15",
   "extensionCount": 1,
-  "updatedAt": "2025-01-19T13:00:00",
-  ...
+  "updatedAt": "2025-01-19T13:00:00"
 }
 ```
 

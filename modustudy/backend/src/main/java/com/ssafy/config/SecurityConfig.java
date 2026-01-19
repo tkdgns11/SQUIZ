@@ -19,11 +19,12 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // OAuth2 로그인 비활성화 (추가!)
+                .oauth2Login(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         // 일단 모든 요청 허용
                         .anyRequest().permitAll()
                 );
-        // JWT 필터 제거
 
         return http.build();
     }

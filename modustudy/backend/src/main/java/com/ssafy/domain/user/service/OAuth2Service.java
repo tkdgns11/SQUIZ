@@ -232,47 +232,61 @@ public class OAuth2Service {
      * 네이버 로그인 콜백 처리
      */
     public AuthResponse processNaverCallback(String code, String state) {
-        // 1. Authorization Code로 Access Token 받기
-        String naverAccessToken = getNaverAccessToken(code, state);
+        System.out.println("=== 네이버 콜백 시작 ===");
+        System.out.println("code: " + code);
+        System.out.println("state: " + state);
 
-        // 2. Access Token으로 사용자 정보 받기
-        OAuth2UserInfo userInfo = getNaverUserInfo(naverAccessToken);
+        try {
+            // 1. Authorization Code로 Access Token 받기
+            System.out.println("1. Access Token 요청 시작");
+            String naverAccessToken = getNaverAccessToken(code, state);
+            System.out.println("Access Token: " + naverAccessToken);
 
-        // 3. 기존 회원 확인 또는 신규 회원 생성
-        Optional<UserSocialAccount> existingSocial = socialAccountRepository
-                .findByProviderAndProviderUserId(SocialProvider.NAVER, userInfo.getProviderId());
+            // 2. Access Token으로 사용자 정보 받기
+            System.out.println("2. 사용자 정보 요청 시작");
+            OAuth2UserInfo userInfo = getNaverUserInfo(naverAccessToken);
+            System.out.println("사용자 정보: " + userInfo.getEmail());
 
-        User user;
-        boolean isNewUser;
+            // 3. 기존 회원 확인 또는 신규 회원 생성
+            Optional<UserSocialAccount> existingSocial = socialAccountRepository
+                    .findByProviderAndProviderUserId(SocialProvider.NAVER, userInfo.getProviderId());
 
-        if (existingSocial.isPresent()) {
-            // 기존 회원 로그인
-            user = existingSocial.get().getUser();
-            user.setLastLoginAt(LocalDateTime.now());
-            user.setIsOnline(true);
-            isNewUser = false;
-        } else {
-            // 신규 회원가입
-            user = createNewUserForNaver(userInfo);
-            isNewUser = true;
+            User user;
+            boolean isNewUser;
+
+            if (existingSocial.isPresent()) {
+                // 기존 회원 로그인
+                user = existingSocial.get().getUser();
+                user.setLastLoginAt(LocalDateTime.now());
+                user.setIsOnline(true);
+                isNewUser = false;
+            } else {
+                // 신규 회원가입
+                user = createNewUserForNaver(userInfo);
+                isNewUser = true;
+            }
+
+            userRepository.save(user);
+
+            // 4. JWT 토큰 발급
+            String accessToken = jwtTokenUtil.createAccessToken(String.valueOf(user.getId()));
+            String refreshToken = jwtTokenUtil.createRefreshToken(String.valueOf(user.getId()));
+
+            // 5. Refresh Token 저장
+            saveRefreshToken(user, refreshToken);
+
+            return AuthResponse.builder()
+                    .accessToken(accessToken)
+                    .refreshToken(refreshToken)
+                    .expiresIn(3600)
+                    .isNewUser(isNewUser)
+                    .user(UserDTO.from(user))
+                    .build();
+        } catch (Exception e){
+            System.out.println("=== 에러 발생 ===");
+            e.printStackTrace();
+            throw e;
         }
-
-        userRepository.save(user);
-
-        // 4. JWT 토큰 발급
-        String accessToken = jwtTokenUtil.createAccessToken(String.valueOf(user.getId()));
-        String refreshToken = jwtTokenUtil.createRefreshToken(String.valueOf(user.getId()));
-
-        // 5. Refresh Token 저장
-        saveRefreshToken(user, refreshToken);
-
-        return AuthResponse.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .expiresIn(3600)
-                .isNewUser(isNewUser)
-                .user(UserDTO.from(user))
-                .build();
     }
     /**
      * Authorization Code로 Access Token 받기 (네이버)
@@ -289,12 +303,26 @@ public class OAuth2Service {
         params.add("client_secret", naverClientSecret);
         params.add("code", code);
         params.add("state", state);
+        // 이거 추가 안 했었어!!!
+        // params.add("redirect_uri", naverRedirectUri);  // 필요 없을 수도?
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
 
         ResponseEntity<Map> response = restTemplate.postForEntity(tokenUrl, request, Map.class);
 
-        return (String) response.getBody().get("access_token");
+        // 디버깅
+        System.out.println("=== 네이버 토큰 응답 ===");
+        System.out.println(response.getBody());
+        System.out.println("=====================");
+
+        Map<String, Object> body = response.getBody();
+
+        // 에러 체크
+        if (body.containsKey("error")) {
+            throw new RuntimeException("네이버 토큰 발급 실패: " + body.get("error_description"));
+        }
+
+        return (String) body.get("access_token");
     }
     /**
      * Access Token으로 사용자 정보 받기 (네이버)

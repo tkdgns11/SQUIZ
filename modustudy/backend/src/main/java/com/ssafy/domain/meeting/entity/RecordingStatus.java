@@ -4,5 +4,6 @@ public enum RecordingStatus {
     WAITING,
     RECORDING,
     READY,
+    UPLOADING,
     FAILED
 }

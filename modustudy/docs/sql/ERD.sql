@@ -370,7 +370,7 @@ CREATE TABLE `meeting_participant` (
     FOREIGN KEY (`user_id`) REFERENCES `user`(`id`)
 );
 
-CREATE TABLE `meeting_prticipant_summary` (
+CREATE TABLE `meeting_participant_summary` (
 	`id`	VARCHAR(255)	NOT NULL,
 	`meeting_id`	BIGINT	NULL,
 	`user_id`	BIGINT	NOT NULL,

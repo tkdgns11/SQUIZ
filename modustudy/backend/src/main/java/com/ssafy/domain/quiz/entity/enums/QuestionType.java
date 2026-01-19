@@ -12,5 +12,10 @@ public enum QuestionType {
     /**
      * 단답형.
      */
-    SHORT_ANSWER
+    SHORT_ANSWER,
+
+    /**
+     * 객관식 (다중 선택).
+     */
+    MULTIPLE_CHOICE_MULTIPLE,
 }

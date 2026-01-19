@@ -4,6 +4,9 @@
 - Base URL: `/api/v1/quiz-courses`
 - 인증: 일부 JWT 필요
 
+### 정책
+본 서비스는 섹션 문제의 노출 순서가 랜덤(셔플)될 수 있으므로, 제출/채점은 questionNumber가 아닌 questionId(문항 고유 식별자)를 기준으로 처리한다.
+
 ---
 
 ## 엔드포인트 목록
@@ -232,7 +235,7 @@ Authorization: Bearer {accessToken}
     "passScore": 70,
     "questions": [
       {
-        "questionNumber": 1,
+        "questionId": 101,
         "questionText": "Java에서 정수형 변수를 선언할 때 사용하는 키워드는?",
         "questionType": "MULTIPLE_CHOICE",
         "options": [
@@ -243,7 +246,7 @@ Authorization: Bearer {accessToken}
         ]
       },
       {
-        "questionNumber": 2,
+        "questionId": 102,
         "questionText": "다음 중 Java의 기본 자료형이 아닌 것은?",
         "questionType": "MULTIPLE_CHOICE",
         "options": [
@@ -282,8 +285,8 @@ Content-Type: application/json
 ```json
 {
   "answers": [
-    { "questionNumber": 1, "answer": ["B"] },
-    { "questionNumber": 2, "answer": ["B"] }
+    { "questionId": 101, "answer": ["B"] },
+    { "questionId": 102, "answer": ["B"] }
   ]
 }
 ```
@@ -309,14 +312,14 @@ Content-Type: application/json
     },
     "results": [
       {
-        "questionNumber": 1,
+        "questionId": 101,
         "isCorrect": true,
         "userAnswer": ["B"],
         "correctAnswer": ["B"],
         "explanation": "Java에서 정수형은 int 키워드를 사용합니다."
       },
       {
-        "questionNumber": 2,
+        "questionId": 102,
         "isCorrect": true,
         "userAnswer": ["B"],
         "correctAnswer": ["B"],

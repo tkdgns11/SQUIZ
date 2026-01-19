@@ -32,9 +32,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                     </button>
 
                     {/* 로고 영역 */}
-                    <div className="flex items-center">
+                    <Link to="/dashboard" className="flex items-center">
                         <SquizLogo width={120} height={40} className="scale-125 origin-left" />
-                    </div>
+                    </Link>
                 </div>
 
                 {/* 우측 네비게이션 및 인증 영역 */}
@@ -89,7 +89,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                     transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                 >
                     {/* 페이지 콘텐츠 */}
-                    <div className="flex-1 overflow-auto px-6 pt-2 pb-6 bg-study-bg">
+                    <div className={`flex-1 overflow-auto pt-2 pb-6 bg-study-bg ${isSidebarOpen ? 'px-6' : 'px-0'}`}>
                         {children}
                     </div>
                 </motion.main>

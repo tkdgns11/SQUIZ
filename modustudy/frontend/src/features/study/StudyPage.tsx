@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import StudyListContainer from './components/StudyListContainer';
 import StudyCardContent from './components/StudyCardContent';
 import StudyFilter, { FilterState } from './components/StudyFilter';
@@ -7,6 +8,7 @@ import { MainLayout } from '@/layouts/MainLayout';
 import './styles/StudyPage.css';
 
 const StudyPage: React.FC = () => {
+    const navigate = useNavigate();
     const [filteredStudies, setFilteredStudies] = useState<Study[]>([]);
     const [searchKeyword, setSearchKeyword] = useState('');
     const [filters, setFilters] = useState<FilterState>({
@@ -89,8 +91,7 @@ const StudyPage: React.FC = () => {
 
     // 스터디 클릭 핸들러
     const handleStudyClick = (studyId: number) => {
-        console.log('Study clicked:', studyId);
-        // TODO: 스터디 상세 페이지로 이동
+        navigate(`/study/${studyId}`);
     };
 
     // 페이지네이션

@@ -1,5 +1,6 @@
 package com.ssafy.common.exception.handler;
 
+import com.ssafy.common.exception.BusinessException;
 import com.ssafy.common.response.ErrorResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;

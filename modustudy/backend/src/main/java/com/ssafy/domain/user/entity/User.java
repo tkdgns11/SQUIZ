@@ -1,10 +1,14 @@
 package com.ssafy.domain.user.entity;
 
 import com.ssafy.common.entity.BaseEntity;
+import com.ssafy.domain.quiz.entity.UserCourseProgress;
+import com.ssafy.domain.quiz.entity.UserSectionAttempt;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "user")
@@ -60,4 +64,17 @@ public class User extends BaseEntity {
 
     @Column(length = 50)
     private String levelName = "Bronze";
+
+    // ======= 퀴즈 관련 =======
+    /**
+     * 사용자의 코스 진행 목록.
+     */
+    @OneToMany(mappedBy = "user")
+    private List<UserCourseProgress> courseProgresses = new ArrayList<>();
+
+    /**
+     * 사용자의 섹션 시도 목록.
+     */
+    @OneToMany(mappedBy = "user")
+    private List<UserSectionAttempt> sectionAttempts = new ArrayList<>();
 }

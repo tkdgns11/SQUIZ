@@ -4,8 +4,8 @@
 .dashboard-container {
     width: 100%;
     min-height: 100vh;
-    padding: 2rem;
-    background: #f5f7fa;
+    padding: 0.8rem 2rem 2rem 2rem;
+    background: var(--color-bg);
 }
 
 .dashboard-header {

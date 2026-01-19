@@ -21,7 +21,7 @@ const mockNews: NewsItem[] = [
         description: "블랙베리를 닮은 '커뮤니케이터'",
         source: "디에디트",
         date: "2026.01.16",
-        thumbnail: "https://via.placeholder.com/600x400/1a1a1b/ffffff?text=Product+1",
+        thumbnail: "https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&q=80&w=600&h=400",
         tags: ["일반", "스타트업", "마케팅 인사이트"],
         url: "#"
     },
@@ -31,7 +31,7 @@ const mockNews: NewsItem[] = [
         description: "AI에서 양자 컴퓨팅까지, 미래를 바꿀 기술들",
         source: "테크크런치",
         date: "2026.01.15",
-        thumbnail: "https://via.placeholder.com/600x400/2d3748/ffffff?text=Tech+Trends",
+        thumbnail: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&q=80&w=600&h=400",
         tags: ["기술", "미래", "AI"],
         url: "#"
     },
@@ -41,7 +41,7 @@ const mockNews: NewsItem[] = [
         description: "더 똑똑해진 컴파일러와 리액트 서버 컴포넌트",
         source: "코드인사이드",
         date: "2026.01.14",
-        thumbnail: "https://via.placeholder.com/600x400/4299e1/ffffff?text=React+19",
+        thumbnail: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?auto=format&fit=crop&q=80&w=600&h=400",
         tags: ["개발", "웹", "React"],
         url: "#"
     },
@@ -51,7 +51,7 @@ const mockNews: NewsItem[] = [
         description: "효율적인 협업을 위한 피그마와 스토리북 활용법",
         source: "디자인로그",
         date: "2026.01.13",
-        thumbnail: "https://via.placeholder.com/600x400/9f7aea/ffffff?text=Design+System",
+        thumbnail: "https://images.unsplash.com/photo-1586717791821-3f44a563dc4c?auto=format&fit=crop&q=80&w=600&h=400",
         tags: ["디자인", "가이드", "UI/UX"],
         url: "#"
     }

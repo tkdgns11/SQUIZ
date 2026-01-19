@@ -96,6 +96,54 @@
     transition: var(--transition-fast);
 }
 
+.calendar-day.large.is-sun .day-number {
+    color: var(--color-error-light);
+}
+
+.calendar-day.large.is-sat .day-number {
+    color: var(--color-secondary-light);
+}
+
+.expanded-calendar-wrapper {
+    display: flex;
+    flex-direction: column;
+}
+
+.calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.weekday.large {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 1.5rem 0;
+    text-align: center;
+}
+
+.weekday.large.is-sun {
+    color: var(--color-error-light);
+}
+
+.weekday.large.is-sat {
+    color: var(--color-secondary-light);
+}
+
+.calendar-grid.large {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+}
+
+.day-number {
+    font-size: var(--font-size-lg);
+    font-weight: 850;
+    color: var(--color-text-secondary);
+}
+
 .calendar-day.large:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-sm);
@@ -143,7 +191,7 @@
 }
 
 .planner-action-btn.secondary {
-    background: var(--color-background-secondary);
+    background: var(--color-surface);
     color: var(--color-text-secondary);
     border: 1px solid var(--color-border);
 }
@@ -160,41 +208,68 @@
     gap: 2rem;
 }
 
-.dark-stone-texture {
-    /* 기존 질감표현 제거 및 아주 얇은 그리드 패턴 적용 */
-    background-color: #1e293b;
-    background-image:
-        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-    background-size: 20px 20px;
-
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: var(--shadow-lg);
+/* 공통 위젯 베이스 */
+.sidebar-widget {
     border-radius: var(--radius-2xl);
     padding: 2.5rem;
-    color: var(--color-text-inverse);
     position: relative;
     overflow: hidden;
+    box-shadow: var(--shadow-lg);
+    transition: var(--transition-smooth);
 }
 
-/* 그리드 상단에 아주 은은한 비네팅 효과만 추가 (입체감용) */
-.dark-stone-texture::before {
+.sidebar-widget:hover {
+    transform: translateY(-2px);
+}
+
+/* 1. 오늘의 학습 목표 - Soft Teal Theme */
+.goals-widget {
+    background: linear-gradient(135deg, var(--color-secondary-dark), var(--color-secondary));
+    color: white;
+}
+
+/* 텍스트 가독성을 위한 그림자 살짝 추가 */
+.goals-widget h3 {
+    margin: 0;
+    font-size: var(--font-size-xl);
+    font-weight: 850;
+    color: white;
+    letter-spacing: -0.02em;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* 2. 학습 메모 - Soft Green/Mint Theme */
+.memo-widget {
+    background: linear-gradient(135deg, var(--color-accent-dark), var(--color-accent));
+    color: var(--color-text-primary);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.memo-widget h3 {
+    margin: 0;
+    font-size: var(--font-size-xl);
+    font-weight: 850;
+    color: var(--color-text-primary);
+    letter-spacing: -0.02em;
+}
+
+/* 그리드 패턴 (Themes에 공통 적용) */
+.goals-widget::before,
+.memo-widget::before {
     content: '';
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: radial-gradient(circle at center, transparent 0%, rgba(0, 0, 0, 0.15) 100%);
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+    opacity: 0.3;
     pointer-events: none;
-}
-
-.sidebar-widget h3 {
-    margin: 0;
-    font-size: var(--font-size-xl);
-    font-weight: 850;
-    color: var(--color-text-inverse);
-    letter-spacing: -0.02em;
 }
 
 /* 목표 입력 (다크 버전) */
@@ -206,20 +281,30 @@
 
 .goal-input-form-dark input {
     flex: 1;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     padding: 14px 18px;
     border-radius: var(--radius-lg);
-    color: var(--color-text-inverse);
+    color: white;
     font-weight: var(--font-weight-medium);
     outline: none;
+    transition: var(--transition-fast);
+}
+
+.goal-input-form-dark input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.goal-input-form-dark input:focus {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: white;
 }
 
 .goal-input-form-dark button {
     width: 48px;
     height: 48px;
-    background: var(--color-primary);
-    color: var(--color-text-inverse);
+    background: white;
+    color: var(--color-secondary-dark);
     border: none;
     border-radius: var(--radius-lg);
     display: flex;
@@ -230,7 +315,8 @@
 }
 
 .goal-input-form-dark button:hover {
-    background: var(--color-primary-dark);
+    background: var(--color-bg);
+    transform: scale(1.05);
 }
 
 /* 다크 리스트 아이템 */
@@ -248,15 +334,15 @@
     align-items: center;
     gap: 15px;
     padding: 14px 18px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: var(--radius-lg);
     cursor: pointer;
     transition: var(--transition-fast);
 }
 
 .goal-item-dark:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.2);
     transform: translateX(4px);
 }
 
@@ -271,9 +357,14 @@
 }
 
 .goal-item-dark.completed .goal-checkbox-dark {
-    background: var(--color-success);
-    border-color: var(--color-success);
-    box-shadow: 0 0 10px var(--color-success-alpha-30);
+    background: white;
+    border-color: white;
+    color: var(--color-secondary-dark);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+.goal-item-dark.completed .goal-checkbox-dark span {
+    font-weight: 900;
 }
 
 .goal-item-dark.completed .goal-text {
@@ -296,15 +387,15 @@
 
 .progress-bar-dark {
     height: 10px;
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.2);
     border-radius: var(--radius-full);
 }
 
 .progress-fill-dark {
     height: 100%;
-    background: linear-gradient(90deg, var(--color-primary), var(--color-secondary-light));
+    background: white;
     border-radius: var(--radius-full);
-    box-shadow: 0 0 10px var(--color-primary-alpha-30);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
 }
 
 /* 메모 & 해시태그 */
@@ -326,8 +417,8 @@
 }
 
 .tag-badge {
-    background: var(--color-primary-alpha-20);
-    color: var(--color-primary);
+    background: var(--color-secondary-alpha-20);
+    color: var(--color-secondary-light);
     padding: 4px 10px;
     border-radius: var(--radius-full);
     font-size: var(--font-size-xs);
@@ -348,27 +439,33 @@
 }
 
 .tag-input {
-    background: transparent;
-    border: 1px dashed rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.3);
+    border: 1px dashed rgba(0, 0, 0, 0.2);
     border-radius: var(--radius-full);
     padding: 2px 10px;
-    color: var(--color-text-inverse);
+    color: var(--color-text-primary);
     font-size: var(--font-size-xs);
     width: 80px;
     outline: none;
 }
 
-.memo-area textarea {
+.memo-widget textarea {
     flex: 1;
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(0, 0, 0, 0.05);
     border-radius: var(--radius-xl);
     padding: 1.5rem;
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--color-text-primary);
     font-size: var(--font-size-sm);
     line-height: 1.6;
     resize: none;
     outline: none;
+    transition: var(--transition-fast);
+}
+
+.memo-widget textarea:focus {
+    background: rgba(255, 255, 255, 0.6);
+    border-color: rgba(0, 0, 0, 0.1);
 }
 
 /* 일자 클릭 모달 */
@@ -492,6 +589,135 @@
 .modal-add-btn:hover {
     background: #000000;
     transform: translateY(-2px);
+}
+
+/* 정식 일정 추가 모달 (Google 스타일) */
+.schedule-modal {
+    width: 100%;
+    max-width: 500px;
+    background: var(--color-surface);
+    border-radius: var(--radius-2xl);
+    padding: 2rem 2.5rem;
+    box-shadow: var(--shadow-2xl);
+    position: relative;
+}
+
+.modal-header-formal {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.modal-header-formal h2 {
+    font-size: var(--font-size-xl);
+    font-weight: 850;
+    margin: 0;
+    color: var(--color-text-primary);
+}
+
+.schedule-formal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.formal-input,
+.formal-select {
+    width: 100%;
+    height: 52px;
+    padding: 0 1rem;
+    background: var(--color-background-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    font-size: var(--font-size-base);
+    color: var(--color-text-primary);
+    outline: none;
+    transition: var(--transition-fast);
+}
+
+.formal-input:focus,
+.formal-select:focus {
+    border-color: var(--color-primary);
+    background: var(--color-surface-hover);
+    box-shadow: 0 0 0 4px var(--color-primary-alpha-10);
+}
+
+.form-row {
+    display: flex;
+    gap: 1.25rem;
+}
+
+.confirm-btn-formal {
+    width: 100%;
+    height: 56px;
+    margin-top: 1rem;
+    border: none;
+    border-radius: var(--radius-xl);
+    font-weight: var(--font-weight-bold);
+    font-size: var(--font-size-base);
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.confirm-btn-formal.primary {
+    background: var(--color-primary);
+    color: white;
+    box-shadow: 0 4px 12px var(--color-primary-alpha-30);
+}
+
+.confirm-btn-formal.primary:hover {
+    background: var(--color-primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px var(--color-primary-alpha-30);
+}
+
+/* 날짜 컴포넌트 내부 퀵 버튼 */
+.day-header-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.quick-add-btn {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    background: var(--color-background-secondary);
+    border: none;
+    color: var(--color-text-tertiary);
+    font-size: 14px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: var(--transition-fast);
+}
+
+.calendar-day:hover .quick-add-btn {
+    opacity: 1;
+}
+
+.quick-add-btn:hover {
+    background: var(--color-primary);
+    color: white;
 }
 
 @keyframes modal-pop {

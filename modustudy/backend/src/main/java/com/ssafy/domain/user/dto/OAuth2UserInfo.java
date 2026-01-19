@@ -40,4 +40,15 @@ public class OAuth2UserInfo {
                 .profileImageUrl((String) response.get("profile_image"))
                 .build();
     }
+    /**
+     * Google 사용자 정보 파싱
+     */
+    public static OAuth2UserInfo fromGoogle(Map<String, Object> attributes) {
+        return OAuth2UserInfo.builder()
+                .providerId((String) attributes.get("sub"))  // Google의 고유 ID
+                .email((String) attributes.get("email"))
+                .name((String) attributes.get("name"))
+                .profileImageUrl((String) attributes.get("picture"))
+                .build();
+    }
 }

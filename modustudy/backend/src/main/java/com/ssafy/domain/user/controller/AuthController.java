@@ -36,6 +36,9 @@ public class AuthController {
             case "naver":
                 authUrl = oAuth2Service.getNaverAuthUrl();
                 break;
+            case "google":
+                authUrl = oAuth2Service.getGoogleAuthUrl();
+                break;
             default:
                 return ResponseEntity
                         .badRequest()
@@ -100,4 +103,5 @@ public class AuthController {
     private static class AuthUrlResponse {
         private String authUrl;
     }
+
 }

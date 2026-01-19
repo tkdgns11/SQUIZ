@@ -1,6 +1,7 @@
 package com.ssafy.domain.user.dto.response;
 
 import com.ssafy.domain.user.entity.User;
+import com.ssafy.domain.user.entity.UserSocialAccount;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -14,12 +15,22 @@ public class UserDTO {
     private String loginProvider;
 
     public static UserDTO from(User user) {
+        // Primary 소셜 계정 찾기
+        String provider = null;
+        if (user.getSocialAccounts() != null && !user.getSocialAccounts().isEmpty()) {
+            provider = user.getSocialAccounts().stream()
+                    .filter(UserSocialAccount::getIsPrimary)
+                    .findFirst()
+                    .map(account -> account.getProvider().name())
+                    .orElse(null);
+        }
+
         return UserDTO.builder()
                 .id(user.getId())
                 .email(user.getEmail())
                 .nickname(user.getNickname())
-                .profileImage(null)
-                .loginProvider(null)
+                .profileImage(user.getProfileImage())
+                .loginProvider(provider)
                 .build();
     }
 }

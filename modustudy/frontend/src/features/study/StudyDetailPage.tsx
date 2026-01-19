@@ -172,8 +172,8 @@ const StudyDetailPage: React.FC = () => {
                                 </div>
                                 <div className="apply-section">
                                     {String(user?.id) === String(study.leader.id) ? (
-                                        <button className="btn-apply" onClick={() => navigate(`/study/edit/${study.id}`)}>
-                                            게시글 수정하기
+                                        <button className="btn-apply" onClick={() => navigate(`/study/manage/${study.id}`)}>
+                                            스터디 관리하기
                                         </button>
                                     ) : (
                                         <button className="btn-apply" onClick={() => setIsApplyModalOpen(true)}>
@@ -182,7 +182,7 @@ const StudyDetailPage: React.FC = () => {
                                     )}
                                     <p style={{ fontSize: '12px', color: 'var(--color-text-tertiary)', textAlign: 'center' }}>
                                         {String(user?.id) === String(study.leader.id)
-                                            ? '스터디 정보를 수정할 수 있습니다.'
+                                            ? '스터디 신청자, 멤버, 출석 등을 관리할 수 있습니다.'
                                             : '신청 후 스터디장의 승인이 필요합니다.'}
                                     </p>
                                 </div>

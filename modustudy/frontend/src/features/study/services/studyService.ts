@@ -1,5 +1,5 @@
 // Study Service - Mock 데이터를 사용한 스터디 관련 비즈니스 로직
-import { mockStudies, mockRegions, mockUsers } from '../mockData';
+import { mockStudies, mockRegions, mockUsers, mockApplicants, mockMembers, Applicant, StudyMember } from '../mockData';
 
 export interface Study {
     id: number;
@@ -11,6 +11,7 @@ export interface Study {
     studyType: string;
     meetingType: string;
     status: string;
+    isPublic: boolean;
     maxMembers: number;
     currentMembers: number;
     difficulty: string;
@@ -26,7 +27,7 @@ export interface Study {
     leader: {
         id: number;
         nickname: string;
-        profileImage?: string;
+        profileImage: string | null;
         leaderRating: number;
         leaderReviewCount: number;
     };
@@ -214,6 +215,72 @@ class StudyService {
                 }
             }, 1500);
         });
+    }
+
+    // 신청자 목록 조회
+    getApplicantsByStudyId(studyId: number): Applicant[] {
+        return mockApplicants.filter(app => app.studyId === studyId);
+    }
+
+    // 신청 상태 업데이트
+    updateApplicantStatus(applicantId: number, status: 'APPROVED' | 'REJECTED'): boolean {
+        const applicant = mockApplicants.find(app => app.id === applicantId);
+        if (applicant) {
+            applicant.status = status;
+
+            // 승인 시 멤버로 자동 추가
+            if (status === 'APPROVED') {
+                this.addMemberFromApplicant(applicant);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    // 신청자 정보를 바탕으로 멤버 추가
+    private addMemberFromApplicant(applicant: Applicant) {
+        // 이미 멤버인지 확인
+        const isAlreadyMember = mockMembers.some(
+            m => m.studyId === applicant.studyId && m.userId === applicant.userId
+        );
+
+        if (!isAlreadyMember) {
+            const newMember: StudyMember = {
+                id: mockMembers.length > 0 ? Math.max(...mockMembers.map(m => m.id)) + 1 : 1,
+                studyId: applicant.studyId,
+                userId: applicant.userId,
+                nickname: applicant.nickname,
+                role: 'MEMBER',
+                joinedAt: new Date().toISOString(),
+                attendanceRate: 100 // 초기 출석률
+            };
+            mockMembers.push(newMember);
+
+            // 실제 데이터라면 Study의 currentMembers도 증가시켜야 함
+            const study = mockStudies.find(s => s.id === applicant.studyId);
+            if (study) {
+                study.currentMembers += 1;
+            }
+        }
+    }
+
+    // 멤버 강퇴/탈퇴 처리
+    expelMember(studyId: number, userId: number): boolean {
+        const index = mockMembers.findIndex(m => m.studyId === studyId && m.userId === userId);
+        if (index !== -1) {
+            mockMembers.splice(index, 1);
+            const study = mockStudies.find(s => s.id === studyId);
+            if (study && study.currentMembers > 0) {
+                study.currentMembers -= 1;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    // 멤버 목록 조회
+    getMembersByStudyId(studyId: number): StudyMember[] {
+        return mockMembers.filter(member => member.studyId === studyId);
     }
 }
 

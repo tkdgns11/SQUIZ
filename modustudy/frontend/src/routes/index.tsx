@@ -5,7 +5,7 @@ import { CommentlePage } from '../features/commentle/CommentlePage';
 import { QuizPage } from '../features/quiz/QuizPage';
 import { LoginPage, SignupPage } from '../features/auth/index';
 import { RecruitmentPage } from '../features/recruitment/RecruitmentPage';
-import { StudyPage, StudyCreatePage, StudyDetailPage } from '../features/study';
+import { StudyPage, StudyCreatePage, StudyDetailPage, StudyManagementPage } from '../features/study';
 import { TestSidebarPage } from '../features/test/TestSidebarPage';
 
 export const AppRouter = () => {
@@ -22,6 +22,7 @@ export const AppRouter = () => {
                 <Route path="/study" element={<StudyPage />} />
                 <Route path="/study/create" element={<StudyCreatePage />} />
                 <Route path="/study/:id" element={<StudyDetailPage />} />
+                <Route path="/study/manage/:id" element={<StudyManagementPage />} />
                 <Route path="/recruitment" element={<RecruitmentPage />} />
                 <Route path="/test-sidebar" element={<TestSidebarPage />} />
                 <Route path="/" element={

@@ -33,6 +33,22 @@ export const mockUsers = [
         nickname: 'ssafy_choi',
         role: 'USER',
         isActive: true
+    },
+    {
+        id: 5,
+        email: 'user5@ssafy.com',
+        name: '정싸피',
+        nickname: 'ssafy_jung',
+        role: 'USER',
+        isActive: true
+    },
+    {
+        id: 6,
+        email: 'user6@ssafy.com',
+        name: '강싸피',
+        nickname: 'ssafy_kang',
+        role: 'USER',
+        isActive: true
     }
 ];
 
@@ -510,6 +526,95 @@ export const mockStudies = [
         },
         isBookmarked: false,
         createdAt: '2025-01-25T16:00:00.000Z'
+    }
+];
+
+export interface Applicant {
+    id: number;
+    studyId: number;
+    userId: number;
+    nickname: string;
+    message: string;
+    status: 'PENDING' | 'APPROVED' | 'REJECTED';
+    createdAt: string;
+}
+
+export interface StudyMember {
+    id: number;
+    studyId: number;
+    userId: number;
+    nickname: string;
+    role: 'LEADER' | 'SUB_LEADER' | 'MEMBER';
+    joinedAt: string;
+    attendanceRate: number;
+}
+
+export const mockApplicants: Applicant[] = [
+    {
+        id: 1,
+        studyId: 1,
+        userId: 2,
+        nickname: 'ssafy_lee',
+        message: '안녕하세요! 알고리즘에 관심이 많아 신청합니다. 정말 열심히 하겠습니다!',
+        status: 'PENDING',
+        createdAt: '2025-01-20T10:00:00.000Z'
+    },
+    {
+        id: 2,
+        studyId: 1,
+        userId: 3,
+        nickname: 'ssafy_park',
+        message: '알고리즘 골드 티어가 목표입니다. 꼭 뽑아주세요!',
+        status: 'PENDING',
+        createdAt: '2025-01-21T11:30:00.000Z'
+    },
+    {
+        id: 3,
+        studyId: 2,
+        userId: 4,
+        nickname: 'ssafy_choi',
+        message: 'CS 기초를 탄탄히 다지고 싶습니다.',
+        status: 'PENDING',
+        createdAt: '2025-01-19T09:00:00.000Z'
+    },
+    {
+        id: 4,
+        studyId: 1,
+        userId: 5,
+        nickname: 'ssafy_jung',
+        message: '안녕하세요! 파이썬 개발자인데 알고리즘 보완하고 싶어서 신청합니다.',
+        status: 'PENDING',
+        createdAt: '2025-01-22T14:20:00.000Z'
+    },
+    {
+        id: 5,
+        studyId: 1,
+        userId: 6,
+        nickname: 'ssafy_kang',
+        message: '매일 참여 가능합니다! 꼭 같이 공부하고 싶어요.',
+        status: 'PENDING',
+        createdAt: '2025-01-23T09:15:00.000Z'
+    }
+];
+
+export const mockMembers: StudyMember[] = [
+    {
+        id: 1,
+        studyId: 1,
+        userId: 1,
+        nickname: 'ssafy_kim',
+        role: 'LEADER',
+        joinedAt: '2025-01-15T10:00:00.000Z',
+        attendanceRate: 100
+    },
+    {
+        id: 2,
+        studyId: 1,
+        userId: 4,
+        nickname: 'ssafy_choi',
+        role: 'SUB_LEADER',
+        joinedAt: '2025-01-16T11:00:00.000Z',
+        attendanceRate: 90
     }
 ];
 

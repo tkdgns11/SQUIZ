@@ -1,5 +1,6 @@
 package com.ssafy.domain.study.entity;
 
+import com.ssafy.common.exception.StudyException;
 import com.ssafy.domain.study.converter.JsonConverter;
 import jakarta.persistence.*;
 import lombok.*;
@@ -139,8 +140,13 @@ public class Study {
     }
 
     public void extendRecruitment(LocalDate newEndDate) {
+        // extensionCount가 null이면 0으로 초기화
+        if (this.extensionCount == null) {
+            this.extensionCount = 0;
+        }
+
         if (this.extensionCount >= 1) {
-            throw new IllegalStateException("모집 기간은 최대 1회만 연장 가능합니다.");
+            throw new StudyException.MaxExtensionReachedException();
         }
         this.recruitEndDate = newEndDate;
         this.extensionCount++;

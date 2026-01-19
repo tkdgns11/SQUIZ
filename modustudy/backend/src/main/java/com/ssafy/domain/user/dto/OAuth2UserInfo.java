@@ -29,4 +29,15 @@ public class OAuth2UserInfo {
                 .provider(SocialProvider.KAKAO)
                 .build();
     }
+
+    public static OAuth2UserInfo fromNaver(Map<String, Object> attributes) {
+        Map<String, Object> response = (Map<String, Object>) attributes.get("response");
+
+        return OAuth2UserInfo.builder()
+                .providerId((String) response.get("id"))
+                .email((String) response.get("email"))
+                .name((String) response.get("name"))
+                .profileImageUrl((String) response.get("profile_image"))
+                .build();
+    }
 }

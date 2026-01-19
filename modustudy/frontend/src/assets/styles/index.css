@@ -414,7 +414,6 @@ a:hover {
     width: var(--sidebar-width);
     background-color: var(--color-bg);
     /* 배경과 동일 */
-    border-right: 1px solid var(--border-light);
     /* GPU 가속을 위한 transform 사용 */
     transform: translateX(0);
     transition: transform var(--transition-smooth);

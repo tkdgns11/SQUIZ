@@ -1,37 +1,36 @@
 package com.ssafy.common.auth;
 
-import com.ssafy.db.entity.User;
+import com.ssafy.domain.user.entity.User;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.Collections;
 
+@Getter
+@RequiredArgsConstructor
 public class SsafyUserDetails implements UserDetails {
 
     private final User user;
 
-    public SsafyUserDetails(User user) {
-        this.user = user;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.emptyList();
+        return Collections.singletonList(
+                new SimpleGrantedAuthority("ROLE_" + user.getRole().name())
+        );
     }
 
     @Override
     public String getPassword() {
-        return user.getPassword();
+        return null; // OAuth 로그인이라 비밀번호 없음
     }
 
     @Override
     public String getUsername() {
-        return user.getUserId();
+        return user.getEmail();
     }
 
     @Override
@@ -51,6 +50,6 @@ public class SsafyUserDetails implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return user.getIsActive();
     }
 }

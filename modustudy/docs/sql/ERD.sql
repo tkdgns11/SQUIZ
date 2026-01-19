@@ -684,7 +684,6 @@ CREATE TABLE `quiz_course` (
     `code` VARCHAR(50) NOT NULL UNIQUE,          -- JAVA, PYTHON, CS_BASIC 등
     `name` VARCHAR(100) NOT NULL,                -- Java 마스터, Python 기초 등
     `description` TEXT,
-    `icon` VARCHAR(10),                          -- ☕, 🐍 등
     `badge_code` VARCHAR(50),                    -- 완료 시 부여할 뱃지 코드
     `total_sections` INT DEFAULT 0,
     `is_active` BOOLEAN DEFAULT TRUE,
@@ -712,7 +711,7 @@ CREATE TABLE `quiz_course_question` (
     `section_id` BIGINT NOT NULL,
     `question_number` INT NOT NULL,
     `question_text` TEXT NOT NULL,
-    `question_type` ENUM('MULTIPLE_CHOICE', 'SHORT_ANSWER') DEFAULT 'MULTIPLE_CHOICE',
+    `question_type` ENUM('MULTIPLE_CHOICE', 'SHORT_ANSWER', 'MULTIPLE_CHOICE') DEFAULT 'MULTIPLE_CHOICE',
     `options` JSON,                              -- 객관식 보기
     `correct_answer` VARCHAR(500) NOT NULL,
     `explanation` TEXT,

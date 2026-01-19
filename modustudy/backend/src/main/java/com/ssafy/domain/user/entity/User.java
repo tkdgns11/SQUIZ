@@ -1,6 +1,5 @@
 package com.ssafy.domain.user.entity;
 
-
 import com.ssafy.common.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -60,5 +59,5 @@ public class User extends BaseEntity {
     private Integer currentLevel = 1;
 
     @Column(length = 50)
-    private String levelName = "새싹";
+    private String levelName = "Bronze";
 }

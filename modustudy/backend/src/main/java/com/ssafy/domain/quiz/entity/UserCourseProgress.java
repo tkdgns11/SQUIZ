@@ -1,7 +1,13 @@
 package com.ssafy.domain.quiz.entity;
 
+<<<<<<< HEAD
 import com.ssafy.domain.user.entity.User;
 import jakarta.persistence.*;
+=======
+import com.ssafy.common.entity.BaseEntity;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+>>>>>>> origin/study
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -27,8 +33,12 @@ import java.time.LocalDateTime;
 @IdClass(UserCourseProgressId.class)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+<<<<<<< HEAD
 @EntityListeners(AuditingEntityListener.class)
 public class UserCourseProgress {
+=======
+public class UserCourseProgress extends BaseEntity {
+>>>>>>> origin/study
 
     /**
      * 사용자 ID (복합 키).

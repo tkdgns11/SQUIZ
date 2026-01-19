@@ -1,9 +1,9 @@
 # 스터디 API (Study)
 
 ## 기본 정보
-- Base URL: `/api/v1/studies`
+- Base URL: `/api/v1/study`
 - 인증: JWT 필요 (일부 조회 제외)
-
+ 
 ---
 
 ## 엔드포인트 목록
@@ -32,7 +32,7 @@
 
 **Request**
 ```
-GET /api/v1/studies?page=0&size=20&topic=알고리즘&format=문제풀이&studyType=PLANNED&status=RECRUITING&sort=createdAt,desc
+GET /api/v1/study?page=0&size=20&topic=알고리즘&format=문제풀이&studyType=PLANNED&status=RECRUITING&sort=createdAt,desc
 ```
 
 | Parameter | Type | 필수 | 설명 |
@@ -101,7 +101,7 @@ GET /api/v1/studies?page=0&size=20&topic=알고리즘&format=문제풀이&studyT
 
 **Request**
 ```
-GET /api/v1/studies/{studyId}
+GET /api/v1/study/{studyId}
 Authorization: Bearer {accessToken}  // 선택
 ```
 
@@ -176,7 +176,7 @@ Authorization: Bearer {accessToken}  // 선택
 
 **Request**
 ```
-POST /api/v1/studies
+POST /api/v1/study
 Authorization: Bearer {accessToken}
 Content-Type: application/json
 ```
@@ -223,7 +223,7 @@ Content-Type: application/json
 
 **Request**
 ```
-PUT /api/v1/studies/{studyId}
+PUT /api/v1/study/{studyId}
 Authorization: Bearer {accessToken}
 Content-Type: application/json
 ```
@@ -250,7 +250,7 @@ Content-Type: application/json
 
 **Request**
 ```
-GET /api/v1/studies/my
+GET /api/v1/study/my
 Authorization: Bearer {accessToken}
 ```
 
@@ -292,7 +292,7 @@ Authorization: Bearer {accessToken}
 
 **Request**
 ```
-GET /api/v1/studies/bookmarks
+GET /api/v1/study/bookmarks
 Authorization: Bearer {accessToken}
 ```
 
@@ -320,13 +320,13 @@ Authorization: Bearer {accessToken}
 
 **Request - 찜하기**
 ```
-POST /api/v1/studies/{studyId}/bookmark
+POST /api/v1/study/{studyId}/bookmark
 Authorization: Bearer {accessToken}
 ```
 
 **Request - 찜 해제**
 ```
-DELETE /api/v1/studies/{studyId}/bookmark
+DELETE /api/v1/study/{studyId}/bookmark
 Authorization: Bearer {accessToken}
 ```
 
@@ -344,7 +344,7 @@ Authorization: Bearer {accessToken}
 
 **Request**
 ```
-GET /api/v1/studies/recommendations
+GET /api/v1/study/recommendations
 Authorization: Bearer {accessToken}
 ```
 
@@ -378,7 +378,7 @@ Authorization: Bearer {accessToken}
 
 **Request**
 ```
-POST /api/v1/studies/{studyId}/invite-link
+POST /api/v1/study/{studyId}/invite-link
 Authorization: Bearer {accessToken}
 ```
 
@@ -400,7 +400,7 @@ Authorization: Bearer {accessToken}
 
 **Request**
 ```
-GET /api/v1/studies/regions
+GET /api/v1/study/regions
 ```
 
 **Response**

@@ -1,7 +1,7 @@
-package com.ssafy.domain.meeting.controller;
+package com.ssafy.squiz.integration.api;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ssafy.common.auth.SsafyUserDetails;
+import com.ssafy.domain.meeting.controller.MeetingController;
 import com.ssafy.domain.meeting.dto.request.MeetingActionItemRequest;
 import com.ssafy.domain.meeting.dto.request.MeetingKeywordUpdateRequest;
 import com.ssafy.domain.meeting.dto.request.MeetingParticipantSummaryRequest;
@@ -29,11 +29,18 @@ import com.ssafy.domain.meeting.entity.ActionItemStatus;
 import com.ssafy.domain.meeting.entity.MeetingType;
 import com.ssafy.domain.meeting.entity.SummaryStatus;
 import com.ssafy.domain.meeting.service.MeetingService;
-import com.ssafy.db.entity.User;
+import com.ssafy.domain.user.entity.Role;
+import com.ssafy.domain.user.entity.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentMatchers;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.SpringBootConfiguration;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
+import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
+import org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -42,8 +49,16 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.context.annotation.Import;
+import org.springframework.core.MethodParameter;
+import org.springframework.web.bind.support.WebDataBinderFactory;
+import org.springframework.web.context.request.NativeWebRequest;
+import org.springframework.web.method.support.HandlerMethodArgumentResolver;
+import org.springframework.web.method.support.ModelAndViewContainer;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.test.web.servlet.MockMvc;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
@@ -63,22 +78,22 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+@SpringBootTest(classes = MeetingApiTest.TestApplication.class)
 @AutoConfigureMockMvc(addFilters = false)
-class MeetingControllerTest {
+class MeetingApiTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
     @MockBean
     private MeetingService meetingService;
 
     @Test
-    @DisplayName("미팅 목록 조회: 유형/날짜 필터 포함")
-    void listMeetings() throws Exception {
+    @DisplayName("미팅 목록 조회: 필터 포함")
+    void listMeetings_withFilters() throws Exception {
+        // given
         MeetingListItemResponse item = new MeetingListItemResponse(
                 1L,
                 "weekly",
@@ -101,6 +116,7 @@ class MeetingControllerTest {
                 eq(LocalDate.parse("2025-01-01")), eq(LocalDate.parse("2025-01-31")),
                 any())).thenReturn(page);
 
+        // when & then
         mockMvc.perform(get("/api/v1/studies/1/meetings")
                         .param("meetingType", "DAILY")
                         .param("startDate", "2025-01-01")
@@ -114,8 +130,9 @@ class MeetingControllerTest {
     }
 
     @Test
-    @DisplayName("미팅 상세 조회: 상태/요약/참가자 포함")
+    @DisplayName("미팅 상세 조회: 상태/요약/참여자 포함")
     void getMeetingDetail() throws Exception {
+        // given
         MeetingSummaryResponse summary = new MeetingSummaryResponse(
                 1L,
                 "summary",
@@ -145,6 +162,7 @@ class MeetingControllerTest {
         );
         when(meetingService.getMeetingDetail(1L, 1L)).thenReturn(detail);
 
+        // when & then
         mockMvc.perform(get("/api/v1/studies/1/meetings/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.id").value(1))
@@ -153,8 +171,9 @@ class MeetingControllerTest {
     }
 
     @Test
-    @DisplayName("미팅 시작: 유형/자동공유 옵션 포함")
+    @DisplayName("미팅 시작: 타입/공유 옵션 포함")
     void startMeeting() throws Exception {
+        // given
         MeetingResponse response = new MeetingResponse(
                 1L,
                 "title",
@@ -167,6 +186,7 @@ class MeetingControllerTest {
         );
         when(meetingService.startMeeting(eq(1L), any())).thenReturn(response);
 
+        // when & then
         MeetingRequest request = new MeetingRequest("title", 10L, 2L, MeetingType.DAILY, true, 12L);
         mockMvc.perform(post("/api/v1/studies/1/meetings")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -179,8 +199,10 @@ class MeetingControllerTest {
     @Test
     @DisplayName("미팅 종료: 요약 상태 반환")
     void endMeeting() throws Exception {
+        // given
         when(meetingService.endMeeting(1L, 2L)).thenReturn(new MeetingEndResponse(5400, 5, "PROCESSING"));
 
+        // when & then
         mockMvc.perform(put("/api/v1/studies/1/meetings/2/end"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.summaryStatus").value("PROCESSING"));
@@ -189,10 +211,12 @@ class MeetingControllerTest {
     @Test
     @DisplayName("미팅 참여/퇴장")
     void joinAndLeaveMeeting() throws Exception {
+        // given
         when(meetingService.joinMeeting(1L, 2L, 1L))
                 .thenReturn(new MeetingJoinResponse("meeting-2", List.of()));
         doNothing().when(meetingService).leaveMeeting(1L, 2L, 1L);
 
+        // when & then
         mockMvc.perform(post("/api/v1/studies/1/meetings/2/join")
                         .with(authentication(authUser(1L))))
                 .andExpect(status().isOk())
@@ -206,6 +230,7 @@ class MeetingControllerTest {
     @Test
     @DisplayName("요약 조회/업데이트")
     void summaryEndpoints() throws Exception {
+        // given
         MeetingSummaryResponse summary = new MeetingSummaryResponse(
                 1L,
                 "summary",
@@ -217,6 +242,7 @@ class MeetingControllerTest {
         when(meetingService.getSummary(1L, 2L)).thenReturn(summary);
         when(meetingService.upsertSummary(eq(1L), eq(2L), any())).thenReturn(summary);
 
+        // when & then
         mockMvc.perform(get("/api/v1/studies/1/meetings/2/summary"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.status").value("DONE"));
@@ -235,8 +261,9 @@ class MeetingControllerTest {
     }
 
     @Test
-    @DisplayName("전사 조회/저장: startMs/endMs 포함")
+    @DisplayName("전문 조회/추가: startMs/endMs 포함")
     void transcriptEndpoints() throws Exception {
+        // given
         MeetingTranscriptItemResponse item = new MeetingTranscriptItemResponse(
                 1L,
                 new MeetingUserResponse(1L, "user"),
@@ -254,6 +281,7 @@ class MeetingControllerTest {
         when(meetingService.getTranscripts(eq(1L), eq(2L), any())).thenReturn(page);
         when(meetingService.addTranscript(eq(1L), eq(2L), any())).thenReturn(item);
 
+        // when & then
         mockMvc.perform(get("/api/v1/studies/1/meetings/2/transcript")
                         .param("page", "0")
                         .param("size", "20"))
@@ -271,11 +299,13 @@ class MeetingControllerTest {
     @Test
     @DisplayName("사진 조회/등록")
     void photoEndpoints() throws Exception {
+        // given
         MeetingPhotoResponse photo = new MeetingPhotoResponse(1L, "meeting/2/photo.png",
                 LocalDateTime.of(2025, 1, 15, 20, 10), false);
         when(meetingService.getPhotos(1L, 2L)).thenReturn(List.of(photo));
         when(meetingService.addPhoto(eq(1L), eq(2L), any())).thenReturn(photo);
 
+        // when & then
         mockMvc.perform(get("/api/v1/studies/1/meetings/2/photos"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data[0].imageUrl").value("meeting/2/photo.png"));
@@ -293,11 +323,13 @@ class MeetingControllerTest {
     }
 
     @Test
-    @DisplayName("키워드 업데이트/음소거")
+    @DisplayName("키워드 업데이트/뮤트")
     void updateKeywordsAndMute() throws Exception {
+        // given
         doNothing().when(meetingService).updateKeywords(eq(1L), eq(2L), any());
         doNothing().when(meetingService).updateParticipantMute(1L, 2L, 1L, true);
 
+        // when & then
         MeetingKeywordUpdateRequest request = new MeetingKeywordUpdateRequest(List.of("DP"));
         mockMvc.perform(put("/api/v1/studies/1/meetings/2/keywords")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -313,8 +345,9 @@ class MeetingControllerTest {
     }
 
     @Test
-    @DisplayName("녹음 조회/저장")
+    @DisplayName("녹음 조회/업데이트")
     void recordingEndpoints() throws Exception {
+        // given
         MeetingRecordingResponse response = new MeetingRecordingResponse(
                 1L,
                 "s3://bucket/meeting.wav",
@@ -329,6 +362,7 @@ class MeetingControllerTest {
         when(meetingService.getRecording(1L, 2L)).thenReturn(response);
         when(meetingService.upsertRecording(eq(1L), eq(2L), any())).thenReturn(response);
 
+        // when & then
         mockMvc.perform(get("/api/v1/studies/1/meetings/2/recording"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.status").value("READY"));
@@ -350,8 +384,9 @@ class MeetingControllerTest {
     }
 
     @Test
-    @DisplayName("참가자 요약 조회/저장")
+    @DisplayName("참여자 요약 조회/업데이트")
     void participantSummaryEndpoints() throws Exception {
+        // given
         MeetingParticipantSummaryResponse response = new MeetingParticipantSummaryResponse(
                 1L,
                 1L,
@@ -362,6 +397,7 @@ class MeetingControllerTest {
         when(meetingService.upsertParticipantSummaries(eq(1L), eq(2L), any()))
                 .thenReturn(List.of(response));
 
+        // when & then
         mockMvc.perform(get("/api/v1/studies/1/meetings/2/participant-summaries"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data[0].summary").value("summary"));
@@ -377,6 +413,7 @@ class MeetingControllerTest {
     @Test
     @DisplayName("액션 아이템 조회/생성/수정")
     void actionItemEndpoints() throws Exception {
+        // given
         MeetingActionItemResponse response = new MeetingActionItemResponse(
                 11L,
                 "todo",
@@ -387,6 +424,7 @@ class MeetingControllerTest {
         when(meetingService.addActionItem(eq(1L), eq(2L), any())).thenReturn(response);
         when(meetingService.updateActionItem(eq(1L), eq(2L), eq(11L), any())).thenReturn(response);
 
+        // when & then
         mockMvc.perform(get("/api/v1/studies/1/meetings/2/action-items"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data[0].id").value(11));
@@ -409,11 +447,13 @@ class MeetingControllerTest {
     @Test
     @DisplayName("내보내기: Markdown/PDF")
     void exportEndpoints() throws Exception {
+        // given
         String markdown = "# Meeting Summary";
         byte[] pdf = "pdf".getBytes(StandardCharsets.UTF_8);
         when(meetingService.exportMeetingMarkdown(1L, 2L)).thenReturn(markdown);
         when(meetingService.exportMeetingPdf(1L, 2L)).thenReturn(pdf);
 
+        // when & then
         mockMvc.perform(get("/api/v1/studies/1/meetings/2/export")
                         .param("format", "MARKDOWN"))
                 .andExpect(status().isOk())
@@ -428,9 +468,51 @@ class MeetingControllerTest {
     }
 
     private UsernamePasswordAuthenticationToken authUser(Long userId) {
-        User user = new User();
-        user.setUserId("user-" + userId);
+        User user = User.builder()
+                .userId("user-" + userId)
+                .email("user-" + userId + "@test.local")
+                .role(Role.USER)
+                .isActive(true)
+                .build();
         ReflectionTestUtils.setField(user, "id", userId);
         return new UsernamePasswordAuthenticationToken(new SsafyUserDetails(user), null, List.of());
+    }
+
+    @SpringBootConfiguration
+    @EnableAutoConfiguration(exclude = {
+            DataSourceAutoConfiguration.class,
+            DataSourceTransactionManagerAutoConfiguration.class,
+            HibernateJpaAutoConfiguration.class,
+            JpaRepositoriesAutoConfiguration.class
+    })
+    @Import(MeetingController.class)
+    static class TestApplication implements WebMvcConfigurer {
+
+        @Override
+        public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
+            resolvers.add(new TestAuthenticationPrincipalResolver());
+        }
+    }
+
+    static class TestAuthenticationPrincipalResolver implements HandlerMethodArgumentResolver {
+
+        @Override
+        public boolean supportsParameter(MethodParameter parameter) {
+            return parameter.hasParameterAnnotation(AuthenticationPrincipal.class)
+                    && SsafyUserDetails.class.isAssignableFrom(parameter.getParameterType());
+        }
+
+        @Override
+        public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
+                                      NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
+            User user = User.builder()
+                    .userId("user-1")
+                    .email("user-1@test.local")
+                    .role(Role.USER)
+                    .isActive(true)
+                    .build();
+            ReflectionTestUtils.setField(user, "id", 1L);
+            return new SsafyUserDetails(user);
+        }
     }
 }

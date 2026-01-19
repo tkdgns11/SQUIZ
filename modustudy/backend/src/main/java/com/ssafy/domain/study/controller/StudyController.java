@@ -1,16 +1,24 @@
 package com.ssafy.domain.study.controller;
 
+import com.ssafy.domain.study.dto.request.StudyCreateRequest;
+import com.ssafy.domain.study.dto.request.StudyUpdateRequest;
+import com.ssafy.domain.study.dto.response.StudyResponse;
 import com.ssafy.domain.study.entity.Status;
 import com.ssafy.domain.study.entity.Study;
 import com.ssafy.domain.study.repository.StudySearchCondition;
 import com.ssafy.domain.study.service.StudyService;
-import lombok.RequiredArgsConstructor;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/v1/study")
@@ -141,5 +149,113 @@ public class StudyController {
         boolean exists = studyService.existsStudy(studyId);
 
         return ResponseEntity.ok(exists);
+    }
+
+    /**
+     * 스터디 생성
+     * POST /api/v1/study
+     */
+    @PostMapping
+    public ResponseEntity<StudyResponse> createStudy(
+            @Valid @RequestBody StudyCreateRequest request,
+            @RequestHeader("User-Id") Long userId) {
+
+        log.info("API 호출 - 스터디 생성: userId={}, studyName={}", userId, request.getName());
+
+        StudyResponse response = studyService.createStudy(request, userId);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+    /**
+     * 스터디 수정
+     * PUT /api/v1/study/{studyId}
+     */
+    @PutMapping("/{studyId}")
+    public ResponseEntity<StudyResponse> updateStudy(
+            @PathVariable Long studyId,
+            @Valid @RequestBody StudyUpdateRequest request,
+            @RequestHeader("User-Id") Long userId) {
+
+        log.info("API 호출 - 스터디 수정: studyId={}, userId={}", studyId, userId);
+
+        StudyResponse response = studyService.updateStudy(studyId, request, userId);
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 스터디 삭제
+     * DELETE /api/v1/study/{studyId}
+     */
+    @DeleteMapping("/{studyId}")
+    public ResponseEntity<Void> deleteStudy(
+            @PathVariable Long studyId,
+            @RequestHeader("User-Id") Long userId) {
+
+        log.info("API 호출 - 스터디 삭제: studyId={}, userId={}", studyId, userId);
+
+        studyService.deleteStudy(studyId, userId);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * 스터디 상태 변경
+     * PATCH /api/v1/study/{studyId}/status
+     */
+    @PatchMapping("/{studyId}/status")
+    public ResponseEntity<StudyResponse> updateStudyStatus(
+            @PathVariable Long studyId,
+            @RequestBody StatusUpdateRequest request,
+            @RequestHeader("User-Id") Long userId) {
+
+        log.info("API 호출 - 스터디 상태 변경: studyId={}, newStatus={}, userId={}",
+                studyId, request.getStatus(), userId);
+
+        StudyResponse response = studyService.updateStudyStatus(studyId, request.getStatus(), userId);
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 모집 기간 연장
+     * PATCH /api/v1/study/{studyId}/extend-recruitment
+     */
+    @PatchMapping("/{studyId}/extend-recruitment")
+    public ResponseEntity<StudyResponse> extendRecruitment(
+            @PathVariable Long studyId,
+            @RequestBody RecruitmentExtensionRequest request,
+            @RequestHeader("User-Id") Long userId) {
+
+        log.info("API 호출 - 모집 기간 연장: studyId={}, newEndDate={}, userId={}",
+                studyId, request.getNewEndDate(), userId);
+
+        StudyResponse response = studyService.extendRecruitment(studyId, request.getNewEndDate(), userId);
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 스터디 상태 변경 요청 DTO
+     */
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class StatusUpdateRequest {
+        @NotNull(message = "상태는 필수입니다")
+        private Status status;
+    }
+
+    /**
+     * 모집 기간 연장 요청 DTO
+     */
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RecruitmentExtensionRequest {
+        @NotNull(message = "새로운 모집 종료일은 필수입니다")
+        private LocalDate newEndDate;
     }
 }

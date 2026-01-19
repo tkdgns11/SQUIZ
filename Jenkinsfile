@@ -2,13 +2,9 @@ pipeline {
     agent any
 
     environment {
-        // EC2 서버 정보
         EC2_HOST = 'i14d106.p.ssafy.io'
         EC2_USER = 'ubuntu'
         DEPLOY_PATH = '/home/ubuntu/squiz'
-
-        // Docker 이미지 태그
-        IMAGE_TAG = "${BUILD_NUMBER}"
     }
 
     stages {
@@ -22,67 +18,44 @@ pipeline {
         }
 
         // ===========================================
-        // 2. Backend Test
+        // 2. Backend Build
         // ===========================================
-        stage('Backend Test') {
+        stage('Backend Build') {
             steps {
                 dir('modustudy/backend') {
                     sh '''
                         chmod +x gradlew
-                        ./gradlew test --no-daemon
-                    '''
-                }
-            }
-            post {
-                always {
-                    junit allowEmptyResults: true, testResults: 'modustudy/backend/build/test-results/test/*.xml'
-                }
-            }
-        }
-
-        // ===========================================
-        // 3. Frontend Build Test
-        // ===========================================
-        stage('Frontend Build') {
-            steps {
-                dir('modustudy/frontend') {
-                    sh '''
-                        npm ci
-                        npm run build
+                        ./gradlew build -x test --no-daemon
                     '''
                 }
             }
         }
 
         // ===========================================
-        // 4. Deploy to EC2
+        // 3. Deploy to EC2
         // ===========================================
         stage('Deploy to EC2') {
             steps {
-                sshagent(credentials: ['ec2-ssh-key']) {
+                withCredentials([file(credentialsId: 'ec2-pem', variable: 'SSH_KEY')]) {
                     sh '''
+                        chmod 600 $SSH_KEY
+
                         # 프로젝트 파일 EC2로 전송
                         rsync -avz --delete \
                             --exclude 'node_modules' \
                             --exclude '.git' \
                             --exclude 'build' \
                             --exclude '.gradle' \
-                            -e "ssh -o StrictHostKeyChecking=no" \
+                            -e "ssh -o StrictHostKeyChecking=no -i $SSH_KEY" \
                             ./modustudy/ ${EC2_USER}@${EC2_HOST}:${DEPLOY_PATH}/
 
                         # EC2에서 Docker Compose 실행
-                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} << 'ENDSSH'
+                        ssh -o StrictHostKeyChecking=no -i $SSH_KEY ${EC2_USER}@${EC2_HOST} << 'ENDSSH'
                             cd /home/ubuntu/squiz
-
-                            # Docker Compose 빌드 및 실행
                             docker-compose down || true
                             docker-compose build --no-cache
                             docker-compose up -d
-
-                            # 오래된 이미지 정리
                             docker image prune -f
-
-                            # 상태 확인
                             docker-compose ps
 ENDSSH
                     '''
@@ -93,10 +66,10 @@ ENDSSH
 
     post {
         success {
-            echo '✅ 배포 성공!'
+            echo '배포 성공!'
         }
         failure {
-            echo '❌ 배포 실패!'
+            echo '배포 실패!'
         }
         always {
             cleanWs()

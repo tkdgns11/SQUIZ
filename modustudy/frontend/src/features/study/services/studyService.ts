@@ -57,7 +57,7 @@ class StudyService {
 
     // 스터디 ID로 조회
     getStudyById(id: number): Study | undefined {
-        return mockStudies.find((study) => study.id === id);
+        return mockStudies.find((study: Study) => study.id === id);
     }
 
     // 필터링된 스터디 목록 조회
@@ -66,35 +66,35 @@ class StudyService {
 
         // 상태 필터
         if (filters.status && filters.status.length > 0) {
-            filtered = filtered.filter((study) => filters.status!.includes(study.status));
+            filtered = filtered.filter((study: Study) => filters.status!.includes(study.status));
         }
 
         // 주제 필터
         if (filters.topic && filters.topic.length > 0) {
-            filtered = filtered.filter((study) => filters.topic!.includes(study.topic));
+            filtered = filtered.filter((study: Study) => filters.topic!.includes(study.topic));
         }
 
         // 미팅 타입 필터
         if (filters.meetingType && filters.meetingType.length > 0) {
-            filtered = filtered.filter((study) =>
+            filtered = filtered.filter((study: Study) =>
                 filters.meetingType!.includes(study.meetingType)
             );
         }
 
         // 난이도 필터
         if (filters.difficulty && filters.difficulty.length > 0) {
-            filtered = filtered.filter((study) => filters.difficulty!.includes(study.difficulty));
+            filtered = filtered.filter((study: Study) => filters.difficulty!.includes(study.difficulty));
         }
 
         // 스터디 타입 필터
         if (filters.studyType && filters.studyType.length > 0) {
-            filtered = filtered.filter((study) => filters.studyType!.includes(study.studyType));
+            filtered = filtered.filter((study: Study) => filters.studyType!.includes(study.studyType));
         }
 
         // 지역 필터
         if (filters.regionId && filters.regionId.length > 0) {
             filtered = filtered.filter(
-                (study) => study.regionId && filters.regionId!.includes(study.regionId)
+                (study: Study) => study.regionId && filters.regionId!.includes(study.regionId)
             );
         }
 
@@ -102,7 +102,7 @@ class StudyService {
         if (filters.keyword && filters.keyword.trim()) {
             const keyword = filters.keyword.toLowerCase();
             filtered = filtered.filter(
-                (study) =>
+                (study: Study) =>
                     study.name.toLowerCase().includes(keyword) ||
                     study.description.toLowerCase().includes(keyword) ||
                     study.topic.toLowerCase().includes(keyword)
@@ -116,7 +116,7 @@ class StudyService {
     sortStudies(studies: Study[], sortOption: SortOption): Study[] {
         const sorted = [...studies];
 
-        sorted.sort((a, b) => {
+        sorted.sort((a: Study, b: Study) => {
             let aValue: any;
             let bValue: any;
 
@@ -149,17 +149,17 @@ class StudyService {
 
     // 모집중인 스터디만 조회
     getRecruitingStudies(): Study[] {
-        return mockStudies.filter((study) => study.status === 'RECRUITING');
+        return mockStudies.filter((study: Study) => study.status === 'RECRUITING');
     }
 
     // 진행중인 스터디만 조회
     getInProgressStudies(): Study[] {
-        return mockStudies.filter((study) => study.status === 'IN_PROGRESS');
+        return mockStudies.filter((study: Study) => study.status === 'IN_PROGRESS');
     }
 
     // 찜하기 토글 (실제로는 API 호출, 여기서는 로컬 상태만 변경)
     toggleBookmark(studyId: number): boolean {
-        const study = mockStudies.find((s) => s.id === studyId);
+        const study = mockStudies.find((s: Study) => s.id === studyId);
         if (study) {
             study.isBookmarked = !study.isBookmarked;
             return study.isBookmarked;
@@ -174,7 +174,7 @@ class StudyService {
 
     // 사용자 정보 조회
     getUserById(userId: number) {
-        return mockUsers.find((user) => user.id === userId);
+        return mockUsers.find((user: any) => user.id === userId);
     }
 
     // 페이지네이션

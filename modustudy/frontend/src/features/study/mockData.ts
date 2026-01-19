@@ -514,11 +514,11 @@ export const mockStudies = [
 ];
 
 // 유틸리티 함수들
-export const getStudyById = (id) => {
+export const getStudyById = (id: number) => {
     return mockStudies.find(study => study.id === id);
 };
 
-export const getStudiesByStatus = (status) => {
+export const getStudiesByStatus = (status: string) => {
     return mockStudies.filter(study => study.status === status);
 };
 
@@ -526,23 +526,23 @@ export const getRecruitingStudies = () => {
     return getStudiesByStatus('RECRUITING');
 };
 
-export const getStudiesByTopic = (topic) => {
+export const getStudiesByTopic = (topic: string) => {
     return mockStudies.filter(study => study.topic === topic);
 };
 
-export const searchStudies = (keyword) => {
+export const searchStudies = (keyword: string) => {
     const lowerKeyword = keyword.toLowerCase();
     return mockStudies.filter(study =>
         study.name.toLowerCase().includes(lowerKeyword) ||
         study.description.toLowerCase().includes(lowerKeyword) ||
-        study.topic.toLowerCase().includes(lowerKeyword)
+        study.topic.toLowerCase().includes(keyword.toLowerCase())
     );
 };
 
-export const getRegionById = (id) => {
+export const getRegionById = (id: number) => {
     return mockRegions.find(region => region.id === id);
 };
 
-export const getUserById = (id) => {
+export const getUserById = (id: number) => {
     return mockUsers.find(user => user.id === id);
 };

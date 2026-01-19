@@ -115,6 +115,14 @@
     letter-spacing: 0.05em;
 }
 
+.weekday.is-sun {
+    color: var(--color-error-light);
+}
+
+.weekday.is-sat {
+    color: var(--color-secondary-light);
+}
+
 /* 날짜 그리드 */
 .calendar-grid {
     display: grid;
@@ -147,19 +155,27 @@
 
 .calendar-day.today {
     background: #fff;
-    border: 2px solid #4299e1;
-    box-shadow: 0 4px 12px rgba(66, 153, 225, 0.1);
+    border: 2px solid var(--color-primary);
+    box-shadow: 0 4px 12px var(--color-primary-alpha-10);
 }
 
 .day-number {
     font-size: 0.75rem;
     font-weight: 700;
-    color: #94a3b8;
+    color: var(--color-text-tertiary);
     margin-bottom: 1px;
 }
 
 .calendar-day.today .day-number {
-    color: #4299e1;
+    color: var(--color-primary);
+}
+
+.calendar-day.is-sun .day-number {
+    color: var(--color-error-light);
+}
+
+.calendar-day.is-sat .day-number {
+    color: var(--color-secondary-light);
 }
 
 /* 일정 아이템 */
@@ -171,21 +187,21 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    background: rgba(66, 153, 225, 0.08);
-    color: #3182ce;
-    border-left: 2px solid #4299e1;
+    background: var(--color-primary-alpha-10);
+    color: var(--color-primary-dark);
+    border-left: 2px solid var(--color-primary);
 }
 
 .schedule-item.study {
-    background: rgba(128, 90, 213, 0.08);
-    color: #6b46c1;
-    border-left-color: #9f7aea;
+    background: var(--color-secondary-alpha-10);
+    color: var(--color-secondary-dark);
+    border-left-color: var(--color-secondary);
 }
 
 .schedule-item.project {
-    background: rgba(56, 161, 105, 0.08);
-    color: #2f855a;
-    border-left-color: #48bb78;
+    background: var(--color-accent-alpha-10);
+    color: var(--color-accent-dark);
+    border-left-color: var(--color-accent);
 }
 
 .more-schedules {

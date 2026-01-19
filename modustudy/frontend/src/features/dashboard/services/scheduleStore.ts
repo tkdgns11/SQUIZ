@@ -60,7 +60,7 @@ let state: PlannerState = loadState();
 // 상태 저장 헬퍼
 const saveState = () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    listeners.forEach(l => l(state));
+    listeners.forEach(l => l({ ...state }));
 };
 
 type Listener = (state: PlannerState) => void;
@@ -70,12 +70,12 @@ export const scheduleStore = {
     getState: () => ({ ...state }),
 
     // 일정 관리
-    addSchedule: (title: string, date?: string) => {
+    addSchedule: (title: string, type: Schedule['type'], date?: string) => {
         const newEvent: Schedule = {
             id: Date.now(),
             title,
             date: date || new Date().toISOString().split('T')[0],
-            type: 'study'
+            type: type || 'study'
         };
         state.schedules = [...state.schedules, newEvent];
         saveState();

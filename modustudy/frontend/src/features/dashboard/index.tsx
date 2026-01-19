@@ -7,10 +7,6 @@ export const Dashboard = () => {
     return (
         <MainLayout>
             <div className="dashboard-container">
-                <div className="dashboard-header">
-                    <h1 className="text-3xl font-bold text-study-text mb-4">Dashboard</h1>
-                    <p className="text-study-text">Welcome to ModuStudy!</p>
-                </div>
 
                 <div className="dashboard-grid">
                     <ActivitySection />

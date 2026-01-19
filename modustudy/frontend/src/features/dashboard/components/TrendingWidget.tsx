@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import './TrendingWidget.css';
 
 // 인기 게시글 아이템 인터페이스 정의
@@ -48,7 +49,7 @@ export const TrendingWidget = () => {
         <div className="trending-widget">
             <div className="widget-header">
                 <h3>Trending Topics</h3>
-                <a href="#" className="view-more">View All →</a>
+                <Link to="/recruitment" className="view-more">View All →</Link>
             </div>
 
             <div className="trending-posts-container">

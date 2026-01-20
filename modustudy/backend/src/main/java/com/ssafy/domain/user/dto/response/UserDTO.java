@@ -1,5 +1,6 @@
 package com.ssafy.domain.user.dto.response;
 
+import com.ssafy.domain.user.entity.SocialProvider;
 import com.ssafy.domain.user.entity.User;
 import com.ssafy.domain.user.entity.UserSocialAccount;
 import lombok.Builder;
@@ -14,14 +15,14 @@ public class UserDTO {
     private String profileImage;
     private String loginProvider;
 
+    // 기존 메서드 (다른 곳에서 사용 중일 수 있으니 유지)
     public static UserDTO from(User user) {
-        // Primary 소셜 계정 찾기
         String provider = null;
         if (user.getSocialAccounts() != null && !user.getSocialAccounts().isEmpty()) {
             provider = user.getSocialAccounts().stream()
                     .filter(UserSocialAccount::getIsPrimary)
                     .findFirst()
-                    .map(account -> account.getProvider().name())
+                    .map(account -> account.getProvider().name())  // 👈 여기는 .name() 맞음
                     .orElse(null);
         }
 
@@ -30,7 +31,18 @@ public class UserDTO {
                 .email(user.getEmail())
                 .nickname(user.getNickname())
                 .profileImage(user.getProfileImage())
-                .loginProvider(provider)
+                .loginProvider(provider)  // 👈 이미 String이니까 .name() 제거
+                .build();
+    }
+
+    // 새로운 메서드 (OAuth2Service에서 사용)
+    public static UserDTO from(User user, SocialProvider provider) {
+        return UserDTO.builder()
+                .id(user.getId())
+                .email(user.getEmail())
+                .nickname(user.getNickname())
+                .profileImage(user.getProfileImage())
+                .loginProvider(provider != null ? provider.name() : null)  // 👈 Enum이니까 .name() 호출
                 .build();
     }
 }

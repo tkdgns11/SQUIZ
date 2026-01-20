@@ -96,7 +96,7 @@ public class OAuth2Service {
                 .refreshToken(refreshToken)
                 .expiresIn(3600)
                 .isNewUser(isNewUser)
-                .user(UserDTO.from(user))
+                .user(UserDTO.from(user, SocialProvider.KAKAO))  // 👈 여기 수정!
                 .loginProvider("KAKAO")
                 .build();
     }
@@ -282,7 +282,7 @@ public class OAuth2Service {
                     .refreshToken(refreshToken)
                     .expiresIn(3600)
                     .isNewUser(isNewUser)
-                    .user(UserDTO.from(user))
+                    .user(UserDTO.from(user, SocialProvider.NAVER))
                     .loginProvider("NAVER")
                     .build();
         } catch (Exception e){
@@ -306,8 +306,6 @@ public class OAuth2Service {
         params.add("client_secret", naverClientSecret);
         params.add("code", code);
         params.add("state", state);
-        // 이거 추가 안 했었어!!!
-        // params.add("redirect_uri", naverRedirectUri);  // 필요 없을 수도?
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
 
@@ -454,7 +452,7 @@ public class OAuth2Service {
                     .refreshToken(refreshToken)
                     .expiresIn(3600)
                     .isNewUser(isNewUser)
-                    .user(UserDTO.from(user))
+                    .user(UserDTO.from(user, SocialProvider.GOOGLE))
                     .loginProvider("GOOGLE")
                     .build();
         } catch (Exception e) {

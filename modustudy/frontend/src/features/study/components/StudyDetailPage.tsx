@@ -5,9 +5,9 @@ import {
     ChevronLeft, Target, Award, Shield
 } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
-import { studyService, Study } from './services/studyService';
-import StudyApplyModal from './components/StudyApplyModal';
-import StudyListContainer from './components/StudyListContainer';
+import { studyService, Study } from '../services/studyService';
+import StudyApplyModal from '../components/StudyApplyModal';
+import StudyListContainer from '../components/StudyListContainer';
 import { MainLayout } from '@/layouts/MainLayout';
 import './styles/StudyDetailPage.css';
 

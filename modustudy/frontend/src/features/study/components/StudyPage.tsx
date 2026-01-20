@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import StudyListContainer from './components/StudyListContainer';
-import StudyCardContent from './components/StudyCardContent';
-import StudyFilter, { FilterState } from './components/StudyFilter';
-import { studyService, Study, SortOption } from './services/studyService';
+import StudyListContainer from './StudyListContainer';
+import StudyCardContent from './StudyCardContent';
+import StudyFilter, { FilterState } from './StudyFilter';
+import { studyService, Study, SortOption } from '../services/studyService';
 import { MainLayout } from '@/layouts/MainLayout';
 import './styles/StudyPage.css';
 

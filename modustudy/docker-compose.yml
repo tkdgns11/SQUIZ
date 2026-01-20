@@ -53,12 +53,12 @@ services:
   # ===========================================
   sfu-server:
     build:
-      context: ./rtc_mockup/sfu-server
+      context: ./sfu-server
       dockerfile: Dockerfile
     container_name: squiz-sfu
     ports:
-      - "3000:3000"
-      - "40000-40100:40000-40100/udp"  # RTC UDP ports
+      - "4000:4000"
+      - "20000-22000:20000-22000/udp"  # RTC UDP ports
     environment:
       - NODE_ENV=production
       - SFU_SSL_KEY_PATH=/ssl/sfu-key.pem

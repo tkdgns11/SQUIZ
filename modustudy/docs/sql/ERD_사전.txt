@@ -22,10 +22,14 @@ study_application         스터디가입신청
 study_leader_review       스터디장평가
 channel                   채널
 message                   메시지
+sender_name               발신자명
+sent_at                   전송시각
 meeting                   미팅
 meeting_participant       미팅참여자
-meeting_transcript        미팅녹취록
-meeting_summary           미팅요약
+meeting_chat_message      미팅채팅메시지
+meeting_audio_recording   미팅오디오녹음
+meeting_stt_file          미팅STT파일
+meeting_stt_summary       미팅STT요약
 meeting_photo             미팅사진
 attendance                출석
 session_memo              세션메모
@@ -179,6 +183,7 @@ is_default                기본채널여부
 channel_id                채널ID
 message_type              메시지타입
 file_url                  파일URL
+track_type                트랙유형
 meeting_id                미팅ID
 started_at                시작일시
 ended_at                  종료일시
@@ -416,6 +421,10 @@ SYSTEM                    시스템메시지
 WAITING                   대기중
 IN_PROGRESS               진행중
 ENDED                     종료
+
+--- track_type (트랙유형) ---
+MIXED                     전체믹스
+INDIVIDUAL                개인별
 
 --- check_type (출석방식) ---
 BLE                       BLE태깅출석

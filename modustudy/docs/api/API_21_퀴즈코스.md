@@ -4,6 +4,9 @@
 - Base URL: `/api/v1/quiz-courses`
 - 인증: 일부 JWT 필요
 
+### 정책
+본 서비스는 섹션 문제의 노출 순서가 랜덤(셔플)될 수 있으므로, 제출/채점은 questionNumber가 아닌 questionId(문항 고유 식별자)를 기준으로 처리한다.
+
 ---
 
 ## 엔드포인트 목록
@@ -13,8 +16,8 @@
 | GET | `/` | 코스 목록 조회 | X |
 | GET | `/{courseId}` | 코스 상세 조회 | X |
 | GET | `/{courseId}/sections` | 섹션 목록 조회 | O |
-| GET | `/{courseId}/sections/{sectionId}` | 섹션 문제 조회 | O |
-| POST | `/{courseId}/sections/{sectionId}/submit` | 섹션 제출 | O |
+| GET | `/{courseId}/sections/{sectionNumber}` | 섹션 문제 조회 | O |
+| POST | `/{courseId}/sections/{sectionNumber}/submit` | 섹션 제출 | O |
 | GET | `/my/progress` | 내 코스 진행 현황 | O |
 | GET | `/my/progress/{courseId}` | 특정 코스 진행 상세 | O |
 
@@ -36,7 +39,7 @@ GET /api/v1/quiz-courses
   "data": {
     "courses": [
       {
-        "id": 1,
+        "courseId": 1,
         "code": "JAVA",
         "name": "Java 마스터",
         "description": "Java 기초부터 고급까지",
@@ -45,7 +48,7 @@ GET /api/v1/quiz-courses
         "badgeName": "Java 마스터"
       },
       {
-        "id": 2,
+        "courseId": 2,
         "code": "PYTHON",
         "name": "Python 기초",
         "description": "Python 입문자를 위한 코스",
@@ -54,7 +57,7 @@ GET /api/v1/quiz-courses
         "badgeName": "Python 마스터"
       },
       {
-        "id": 3,
+        "courseId": 3,
         "code": "CS_BASIC",
         "name": "CS 기초",
         "description": "컴퓨터 과학 기초 개념",
@@ -81,7 +84,7 @@ GET /api/v1/quiz-courses/{courseId}
 {
   "success": true,
   "data": {
-    "id": 1,
+    "courseId": 1,
     "code": "JAVA",
     "name": "Java 마스터",
     "description": "Java 기초부터 고급까지 단계별 학습",
@@ -156,7 +159,6 @@ Authorization: Bearer {accessToken}
     },
     "sections": [
       {
-        "id": 1,
         "sectionNumber": 1,
         "name": "기본 문법",
         "totalQuestions": 10,
@@ -167,7 +169,6 @@ Authorization: Bearer {accessToken}
         "attemptCount": 2
       },
       {
-        "id": 2,
         "sectionNumber": 2,
         "name": "객체지향",
         "totalQuestions": 15,
@@ -178,7 +179,6 @@ Authorization: Bearer {accessToken}
         "attemptCount": 1
       },
       {
-        "id": 3,
         "sectionNumber": 3,
         "name": "컬렉션",
         "totalQuestions": 12,
@@ -189,7 +189,6 @@ Authorization: Bearer {accessToken}
         "attemptCount": 1
       },
       {
-        "id": 4,
         "sectionNumber": 4,
         "name": "람다 & 스트림",
         "totalQuestions": 10,
@@ -200,7 +199,6 @@ Authorization: Bearer {accessToken}
         "attemptCount": 0
       },
       {
-        "id": 5,
         "sectionNumber": 5,
         "name": "쓰레드",
         "totalQuestions": 10,
@@ -221,7 +219,7 @@ Authorization: Bearer {accessToken}
 
 **Request**
 ```
-GET /api/v1/quiz-courses/{courseId}/sections/{sectionId}
+GET /api/v1/quiz-courses/{courseId}/sections/{sectionNumber}
 Authorization: Bearer {accessToken}
 ```
 
@@ -230,13 +228,14 @@ Authorization: Bearer {accessToken}
 {
   "success": true,
   "data": {
-    "sectionId": 1,
+    "courseId": 1,
+    "sectionNumber": 1,
     "sectionName": "기본 문법",
     "totalQuestions": 10,
     "passScore": 70,
     "questions": [
       {
-        "questionNumber": 1,
+        "questionId": 101,
         "questionText": "Java에서 정수형 변수를 선언할 때 사용하는 키워드는?",
         "questionType": "MULTIPLE_CHOICE",
         "options": [
@@ -247,7 +246,7 @@ Authorization: Bearer {accessToken}
         ]
       },
       {
-        "questionNumber": 2,
+        "questionId": 102,
         "questionText": "다음 중 Java의 기본 자료형이 아닌 것은?",
         "questionType": "MULTIPLE_CHOICE",
         "options": [
@@ -279,16 +278,15 @@ Authorization: Bearer {accessToken}
 
 **Request**
 ```
-POST /api/v1/quiz-courses/{courseId}/sections/{sectionId}/submit
+POST /api/v1/quiz-courses/{courseId}/sections/{sectionNumber}/submit
 Authorization: Bearer {accessToken}
 Content-Type: application/json
 ```
 ```json
 {
   "answers": [
-    {"questionNumber": 1, "answer": "B"},
-    {"questionNumber": 2, "answer": "B"},
-    {"questionNumber": 3, "answer": "A"}
+    { "questionId": 101, "answer": ["B"] },
+    { "questionId": 102, "answer": ["B"] }
   ]
 }
 ```
@@ -298,7 +296,8 @@ Content-Type: application/json
 {
   "success": true,
   "data": {
-    "sectionId": 1,
+    "courseId": 1,
+    "sectionNumber": 1,
     "sectionName": "기본 문법",
     "score": 80,
     "correctCount": 8,
@@ -307,23 +306,23 @@ Content-Type: application/json
     "isPassed": true,
     "isFirstPass": true,
     "nextSection": {
-      "id": 2,
+      "courseId": 1,
       "sectionNumber": 2,
       "name": "객체지향"
     },
     "results": [
       {
-        "questionNumber": 1,
+        "questionId": 101,
         "isCorrect": true,
-        "userAnswer": "B",
-        "correctAnswer": "B",
+        "userAnswer": ["B"],
+        "correctAnswer": ["B"],
         "explanation": "Java에서 정수형은 int 키워드를 사용합니다."
       },
       {
-        "questionNumber": 2,
+        "questionId": 102,
         "isCorrect": true,
-        "userAnswer": "B",
-        "correctAnswer": "B",
+        "userAnswer": ["B"],
+        "correctAnswer": ["B"],
         "explanation": "String은 참조형입니다."
       }
     ]
@@ -337,7 +336,8 @@ Content-Type: application/json
 {
   "success": true,
   "data": {
-    "sectionId": 5,
+    "courseId": 1,
+    "sectionNumber": 5,
     "sectionName": "쓰레드",
     "score": 90,
     "correctCount": 9,
@@ -363,13 +363,30 @@ Content-Type: application/json
 {
   "success": true,
   "data": {
-    "sectionId": 1,
+    "courseId": 1,
+    "sectionNumber": 3,
+    "sectionName": "컬렉션",
     "score": 50,
     "correctCount": 5,
-    "totalQuestions": 10,
+    "totalQuestions": 12,
     "passScore": 70,
     "isPassed": false,
-    "results": [...]
+    "results": [
+      {
+        "questionNumber": 1,
+        "isCorrect": true,
+        "userAnswer": ["B"],
+        "correctAnswer": ["B"],
+        "explanation": "List는 순서가 있는 컬렉션입니다."
+      },
+      {
+        "questionNumber": 2,
+        "isCorrect": false,
+        "userAnswer": ["A"],
+        "correctAnswer": ["C"],
+        "explanation": "Set은 중복을 허용하지 않습니다."
+      }
+    ]
   },
   "message": "아쉽습니다. 70% 이상 맞춰야 통과입니다. 다시 도전해보세요!"
 }

@@ -1,30 +1,37 @@
 package com.ssafy.domain.quiz.controller;
 
+import com.ssafy.common.auth.SsafyUserDetails;
 import com.ssafy.common.response.ApiResponse;
-import com.ssafy.domain.quiz.dto.response.QuizCourseDetailResponse;
-import com.ssafy.domain.quiz.dto.response.QuizCourseListResponse;
+import com.ssafy.domain.quiz.dto.request.SaveAnswerRequest;
+import com.ssafy.domain.quiz.dto.response.*;
 import com.ssafy.domain.quiz.service.QuizCourseService;
+import com.ssafy.domain.quiz.service.QuizSectionAttemptService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 
 /**
- * 퀴즈 코스 공개 API 컨트롤러.
+ * 퀴즈 코스 API 컨트롤러.
  *
  * API 문서: docs/api/API_21_퀴즈코스.md
  *
  * 호출 경로:
  * - Web/Mobile 코스 목록 화면(SC-190, M-080)에서 GET /api/v1/quiz-courses
- *
  */
+@Tag(name = "Quiz Course", description = "퀴즈 코스 API")
 @RestController
 @RequestMapping("/api/v1/quiz-courses")
 @RequiredArgsConstructor
 public class QuizCourseController {
 
     private final QuizCourseService quizCourseService;
+    private final QuizSectionAttemptService attemptService;
+
+    // ========== 코스 조회 API ==========
 
     /**
      * 코스 목록 조회.
@@ -33,6 +40,7 @@ public class QuizCourseController {
      *
      * @return 코스 목록 응답
      */
+    @Operation(summary = "코스 목록 조회", description = "활성화된 코스 목록을 조회합니다.")
     @GetMapping
     public ApiResponse<QuizCourseListResponse> getCourseList() {
         return ApiResponse.success(quizCourseService.getCourseList());
@@ -46,8 +54,123 @@ public class QuizCourseController {
      * @param courseId 코스 ID
      * @return 코스 상세 응답
      */
+    @Operation(summary = "코스 상세 조회", description = "코스 상세 정보와 섹션 목록을 조회합니다.")
     @GetMapping("/{courseId}")
-    public ApiResponse<QuizCourseDetailResponse> getCourseDetail(@PathVariable Long courseId) {
+    public ApiResponse<QuizCourseDetailResponse> getCourseDetail(
+            @Parameter(description = "코스 ID") @PathVariable Long courseId) {
         return ApiResponse.success(quizCourseService.getCourseDetail(courseId));
+    }
+
+    // ========== 섹션 시도 API ==========
+
+    /**
+     * 섹션 시도 시작/재개.
+     *
+     * 진행 중인 시도가 있으면 재개하고, 없으면 새로 생성한다.
+     * 문제는 셔플되어 order_index 순서로 반환된다.
+     *
+     * @param courseId      코스 ID
+     * @param sectionNumber 섹션 번호
+     * @param userDetails   인증된 사용자 정보
+     * @return 시도 정보 및 문제 목록
+     */
+    @Operation(summary = "섹션 시도 시작/재개", description = "섹션 문제 풀이를 시작하거나 기존 진행 중인 시도를 재개합니다. 인증 필요.")
+    @PostMapping("/{courseId}/sections/{sectionNumber}/attempts")
+    public ApiResponse<SectionAttemptResponse> startOrResumeAttempt(
+            @Parameter(description = "코스 ID") @PathVariable Long courseId,
+            @Parameter(description = "섹션 번호") @PathVariable Integer sectionNumber,
+            @AuthenticationPrincipal SsafyUserDetails userDetails) {
+        Long userId = userDetails.getUser().getId();
+        return ApiResponse.success(attemptService.startOrResumeAttempt(courseId, sectionNumber, userId));
+    }
+
+    /**
+     * 답안 임시 저장.
+     *
+     * 진행 중인 시도에 대해 부분 답안을 저장한다.
+     * 완료된 시도는 수정할 수 없다.
+     *
+     * @param courseId      코스 ID
+     * @param sectionNumber 섹션 번호
+     * @param attemptId     시도 ID
+     * @param request       저장할 답안 목록
+     * @param userDetails   인증된 사용자 정보
+     * @return 성공 응답
+     */
+    @Operation(summary = "답안 임시 저장", description = "진행 중인 시도의 답안을 임시 저장합니다. 인증 필요.")
+    @PatchMapping("/{courseId}/sections/{sectionNumber}/attempts/{attemptId}/answers")
+    public ApiResponse<Void> saveAnswers(
+            @Parameter(description = "코스 ID") @PathVariable Long courseId,
+            @Parameter(description = "섹션 번호") @PathVariable Integer sectionNumber,
+            @Parameter(description = "시도 ID") @PathVariable Long attemptId,
+            @Valid @RequestBody SaveAnswerRequest request,
+            @AuthenticationPrincipal SsafyUserDetails userDetails) {
+        Long userId = userDetails.getUser().getId();
+        attemptService.saveAnswers(attemptId, request, userId);
+        return ApiResponse.success((Void) null);
+    }
+
+    /**
+     * 시도 제출 및 채점.
+     *
+     * 진행 중인 시도를 제출하고 채점 결과를 반환한다.
+     * 통과 시 다음 섹션이 해금되고, 코스 완료 시 배지가 수여된다.
+     *
+     * @param courseId      코스 ID
+     * @param sectionNumber 섹션 번호
+     * @param attemptId     시도 ID
+     * @param userDetails   인증된 사용자 정보
+     * @return 채점 결과
+     */
+    @Operation(summary = "시도 제출 및 채점", description = "시도를 제출하고 채점 결과를 받습니다. 인증 필요.")
+    @PostMapping("/{courseId}/sections/{sectionNumber}/attempts/{attemptId}/submit")
+    public ApiResponse<AttemptResultResponse> submitAttempt(
+            @Parameter(description = "코스 ID") @PathVariable Long courseId,
+            @Parameter(description = "섹션 번호") @PathVariable Integer sectionNumber,
+            @Parameter(description = "시도 ID") @PathVariable Long attemptId,
+            @AuthenticationPrincipal SsafyUserDetails userDetails) {
+        Long userId = userDetails.getUser().getId();
+        return ApiResponse.success(attemptService.submitAttempt(attemptId, userId));
+    }
+
+    /**
+     * 시도 포기.
+     *
+     * 진행 중인 시도를 포기한다. 점수는 기록되지 않는다.
+     *
+     * @param courseId      코스 ID
+     * @param sectionNumber 섹션 번호
+     * @param attemptId     시도 ID
+     * @param userDetails   인증된 사용자 정보
+     * @return 성공 응답
+     */
+    @Operation(summary = "시도 포기", description = "진행 중인 시도를 포기합니다. 인증 필요.")
+    @DeleteMapping("/{courseId}/sections/{sectionNumber}/attempts/{attemptId}")
+    public ApiResponse<Void> abandonAttempt(
+            @Parameter(description = "코스 ID") @PathVariable Long courseId,
+            @Parameter(description = "섹션 번호") @PathVariable Integer sectionNumber,
+            @Parameter(description = "시도 ID") @PathVariable Long attemptId,
+            @AuthenticationPrincipal SsafyUserDetails userDetails) {
+        Long userId = userDetails.getUser().getId();
+        attemptService.abandonAttempt(attemptId, userId);
+        return ApiResponse.success((Void) null);
+    }
+
+    // ========== Legacy API (Deprecated) ==========
+
+    /**
+     * 섹션 문제 조회 (Deprecated).
+     *
+     * @deprecated 시도 기반 API로 변경됨. {@link #startOrResumeAttempt} 사용 권장.
+     */
+    @Deprecated
+    @Operation(summary = "섹션 문제 조회 (Deprecated)", description = "시도 기반 API로 변경되었습니다. POST /attempts를 사용하세요.")
+    @GetMapping("/{courseId}/sections/{sectionNumber}")
+    public ApiResponse<SectionQuestionsResponse> getSectionQuestions(
+            @Parameter(description = "코스 ID") @PathVariable Long courseId,
+            @Parameter(description = "섹션 번호") @PathVariable Integer sectionNumber,
+            @AuthenticationPrincipal SsafyUserDetails userDetails) {
+        Long userId = userDetails.getUser().getId();
+        return ApiResponse.success(quizCourseService.getSectionQuestions(courseId, sectionNumber, userId));
     }
 }

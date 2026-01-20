@@ -99,10 +99,12 @@ public class UserCourseProgress extends BaseEntity {
     private LocalDateTime updatedAt;
 
     @Builder
-    public UserCourseProgress(Long userId, Long courseId) {
-        this.userId = userId;
-        this.courseId = courseId;
-        this.currentSection = 1;
+    public UserCourseProgress(User user, QuizCourse course, Integer currentSection) {
+        this.userId = user.getId();
+        this.courseId = course.getId();
+        this.user = user;
+        this.course = course;
+        this.currentSection = currentSection != null ? currentSection : 1;
         this.completedSections = 0;
         this.isCompleted = false;
     }
@@ -119,6 +121,18 @@ public class UserCourseProgress extends BaseEntity {
                 this.isCompleted = true;
                 this.completedAt = LocalDateTime.now();
             }
+        }
+    }
+
+    /**
+     * 특정 섹션으로 진행 상황을 업데이트한다.
+     *
+     * @param newSectionNumber 새로운 현재 섹션 번호
+     */
+    public void advanceToSection(int newSectionNumber) {
+        if (newSectionNumber > this.currentSection) {
+            this.completedSections = newSectionNumber - 1;
+            this.currentSection = newSectionNumber;
         }
     }
 }

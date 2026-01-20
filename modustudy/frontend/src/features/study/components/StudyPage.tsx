@@ -5,7 +5,7 @@ import StudyCardContent from './StudyCardContent';
 import StudyFilter, { FilterState } from './StudyFilter';
 import { studyService, Study, SortOption } from '../services/studyService';
 import { MainLayout } from '@/layouts/MainLayout';
-import './styles/StudyPage.css';
+import '../styles/StudyPage.css';
 
 const StudyPage: React.FC = () => {
     const navigate = useNavigate();

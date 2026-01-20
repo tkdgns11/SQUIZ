@@ -6,10 +6,10 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { studyService, Study } from '../services/studyService';
-import StudyApplyModal from '../components/StudyApplyModal';
-import StudyListContainer from '../components/StudyListContainer';
+import StudyApplyModal from './StudyApplyModal';
+import StudyListContainer from './StudyListContainer';
 import { MainLayout } from '@/layouts/MainLayout';
-import './styles/StudyDetailPage.css';
+import '../styles/StudyDetailPage.css';
 
 const StudyDetailPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();

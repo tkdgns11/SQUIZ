@@ -10,6 +10,7 @@ import com.ssafy.domain.user.repository.RefreshTokenRepository;
 import com.ssafy.domain.user.repository.UserRepository;
 import com.ssafy.domain.user.repository.UserSocialAccountRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -32,6 +34,8 @@ public class OAuth2Service {
     private final RefreshTokenRepository refreshTokenRepository;
     private final JwtTokenUtil jwtTokenUtil;
     private final RestTemplate restTemplate;
+
+    // ==================== 카카오 ====================
 
     @Value("${spring.security.oauth2.client.registration.kakao.client-id}")
     private String kakaoClientId;
@@ -57,6 +61,8 @@ public class OAuth2Service {
      * 카카오 로그인 콜백 처리
      */
     public AuthResponse processKakaoCallback(String code) {
+        log.info("카카오 로그인 콜백 처리 시작");
+
         // 1. Authorization Code로 Access Token 받기
         String kakaoAccessToken = getKakaoAccessToken(code);
 
@@ -71,15 +77,15 @@ public class OAuth2Service {
         boolean isNewUser;
 
         if (existingSocial.isPresent()) {
-            // 기존 회원 로그인
             user = existingSocial.get().getUser();
             user.setLastLoginAt(LocalDateTime.now());
             user.setIsOnline(true);
             isNewUser = false;
+            log.info("기존 회원 로그인: userId={}", user.getId());
         } else {
-            // 신규 회원가입
-            user = createNewUser(userInfo);
+            user = createNewUserForKakao(userInfo);
             isNewUser = true;
+            log.info("신규 회원 가입: userId={}", user.getId());
         }
 
         userRepository.save(user);
@@ -96,13 +102,13 @@ public class OAuth2Service {
                 .refreshToken(refreshToken)
                 .expiresIn(3600)
                 .isNewUser(isNewUser)
-                .user(UserDTO.from(user, SocialProvider.KAKAO))  // 👈 여기 수정!
+                .user(UserDTO.from(user, SocialProvider.KAKAO))
                 .loginProvider("KAKAO")
                 .build();
     }
 
     /**
-     * Authorization Code로 Access Token 받기
+     * Authorization Code로 Access Token 받기 (카카오)
      */
     private String getKakaoAccessToken(String code) {
         String tokenUrl = "https://kauth.kakao.com/oauth/token";
@@ -118,14 +124,13 @@ public class OAuth2Service {
         params.add("code", code);
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
-
         ResponseEntity<Map> response = restTemplate.postForEntity(tokenUrl, request, Map.class);
 
         return (String) response.getBody().get("access_token");
     }
 
     /**
-     * Access Token으로 사용자 정보 받기
+     * Access Token으로 사용자 정보 받기 (카카오)
      */
     private OAuth2UserInfo getKakaoUserInfo(String accessToken) {
         String userInfoUrl = "https://kapi.kakao.com/v2/user/me";
@@ -146,10 +151,9 @@ public class OAuth2Service {
     }
 
     /**
-     * 신규 회원 생성
+     * 신규 회원 생성 (카카오)
      */
-    private User createNewUser(OAuth2UserInfo userInfo) {
-        // User 생성
+    private User createNewUserForKakao(OAuth2UserInfo userInfo) {
         User user = User.builder()
                 .email(userInfo.getEmail())
                 .name(userInfo.getName())
@@ -168,7 +172,6 @@ public class OAuth2Service {
 
         User savedUser = userRepository.save(user);
 
-        // SocialAccount 생성
         UserSocialAccount socialAccount = UserSocialAccount.builder()
                 .user(savedUser)
                 .provider(SocialProvider.KAKAO)
@@ -183,35 +186,8 @@ public class OAuth2Service {
         return savedUser;
     }
 
-    /**
-     * Refresh Token 저장
-     */
-    private void saveRefreshToken(User user, String token) {
-        RefreshToken refreshToken = RefreshToken.builder()
-                .user(user)
-                .token(token)
-                .expiresAt(LocalDateTime.now().plusDays(7))
-                .isRevoked(false)
-                .build();
+    // ==================== 네이버 ====================
 
-        refreshTokenRepository.save(refreshToken);
-    }
-
-    /**
-     * Access Token 갱신
-     */
-    public String refreshAccessToken(String refreshToken) {
-        RefreshToken token = refreshTokenRepository.findByToken(refreshToken)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid refresh token"));
-
-        if (token.getIsRevoked() || token.getExpiresAt().isBefore(LocalDateTime.now())) {
-            throw new IllegalStateException("Refresh token expired");
-        }
-
-        return jwtTokenUtil.createAccessToken(String.valueOf(token.getUser().getId()));
-    }
-
-    // 네이버 설정
     @Value("${spring.security.oauth2.client.registration.naver.client-id}")
     private String naverClientId;
 
@@ -220,6 +196,7 @@ public class OAuth2Service {
 
     @Value("${spring.security.oauth2.client.registration.naver.redirect-uri:http://localhost:8080/login/oauth2/code/naver}")
     private String naverRedirectUri;
+
     /**
      * 네이버 로그인 URL 생성
      */
@@ -228,69 +205,59 @@ public class OAuth2Service {
                 "client_id=" + naverClientId +
                 "&redirect_uri=" + naverRedirectUri +
                 "&response_type=code" +
-                "&state=random_state_string";  // CSRF 방지용
+                "&state=random_state_string";
     }
+
     /**
      * 네이버 로그인 콜백 처리
      */
     public AuthResponse processNaverCallback(String code, String state) {
-        System.out.println("=== 네이버 콜백 시작 ===");
-        System.out.println("code: " + code);
-        System.out.println("state: " + state);
+        log.info("네이버 로그인 콜백 처리 시작");
 
-        try {
-            // 1. Authorization Code로 Access Token 받기
-            System.out.println("1. Access Token 요청 시작");
-            String naverAccessToken = getNaverAccessToken(code, state);
-            System.out.println("Access Token: " + naverAccessToken);
+        // 1. Authorization Code로 Access Token 받기
+        String naverAccessToken = getNaverAccessToken(code, state);
 
-            // 2. Access Token으로 사용자 정보 받기
-            System.out.println("2. 사용자 정보 요청 시작");
-            OAuth2UserInfo userInfo = getNaverUserInfo(naverAccessToken);
-            System.out.println("사용자 정보: " + userInfo.getEmail());
+        // 2. Access Token으로 사용자 정보 받기
+        OAuth2UserInfo userInfo = getNaverUserInfo(naverAccessToken);
 
-            // 3. 기존 회원 확인 또는 신규 회원 생성
-            Optional<UserSocialAccount> existingSocial = socialAccountRepository
-                    .findByProviderAndProviderUserId(SocialProvider.NAVER, userInfo.getProviderId());
+        // 3. 기존 회원 확인 또는 신규 회원 생성
+        Optional<UserSocialAccount> existingSocial = socialAccountRepository
+                .findByProviderAndProviderUserId(SocialProvider.NAVER, userInfo.getProviderId());
 
-            User user;
-            boolean isNewUser;
+        User user;
+        boolean isNewUser;
 
-            if (existingSocial.isPresent()) {
-                // 기존 회원 로그인
-                user = existingSocial.get().getUser();
-                user.setLastLoginAt(LocalDateTime.now());
-                user.setIsOnline(true);
-                isNewUser = false;
-            } else {
-                // 신규 회원가입
-                user = createNewUserForNaver(userInfo);
-                isNewUser = true;
-            }
-
-            userRepository.save(user);
-
-            // 4. JWT 토큰 발급
-            String accessToken = jwtTokenUtil.createAccessToken(String.valueOf(user.getId()));
-            String refreshToken = jwtTokenUtil.createRefreshToken(String.valueOf(user.getId()));
-
-            // 5. Refresh Token 저장
-            saveRefreshToken(user, refreshToken);
-
-            return AuthResponse.builder()
-                    .accessToken(accessToken)
-                    .refreshToken(refreshToken)
-                    .expiresIn(3600)
-                    .isNewUser(isNewUser)
-                    .user(UserDTO.from(user, SocialProvider.NAVER))
-                    .loginProvider("NAVER")
-                    .build();
-        } catch (Exception e){
-            System.out.println("=== 에러 발생 ===");
-            e.printStackTrace();
-            throw e;
+        if (existingSocial.isPresent()) {
+            user = existingSocial.get().getUser();
+            user.setLastLoginAt(LocalDateTime.now());
+            user.setIsOnline(true);
+            isNewUser = false;
+            log.info("기존 회원 로그인: userId={}", user.getId());
+        } else {
+            user = createNewUserForNaver(userInfo);
+            isNewUser = true;
+            log.info("신규 회원 가입: userId={}", user.getId());
         }
+
+        userRepository.save(user);
+
+        // 4. JWT 토큰 발급
+        String accessToken = jwtTokenUtil.createAccessToken(String.valueOf(user.getId()));
+        String refreshToken = jwtTokenUtil.createRefreshToken(String.valueOf(user.getId()));
+
+        // 5. Refresh Token 저장
+        saveRefreshToken(user, refreshToken);
+
+        return AuthResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .expiresIn(3600)
+                .isNewUser(isNewUser)
+                .user(UserDTO.from(user, SocialProvider.NAVER))
+                .loginProvider("NAVER")
+                .build();
     }
+
     /**
      * Authorization Code로 Access Token 받기 (네이버)
      */
@@ -308,23 +275,17 @@ public class OAuth2Service {
         params.add("state", state);
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
-
         ResponseEntity<Map> response = restTemplate.postForEntity(tokenUrl, request, Map.class);
-
-        // 디버깅
-        System.out.println("=== 네이버 토큰 응답 ===");
-        System.out.println(response.getBody());
-        System.out.println("=====================");
 
         Map<String, Object> body = response.getBody();
 
-        // 에러 체크
         if (body.containsKey("error")) {
             throw new RuntimeException("네이버 토큰 발급 실패: " + body.get("error_description"));
         }
 
         return (String) body.get("access_token");
     }
+
     /**
      * Access Token으로 사용자 정보 받기 (네이버)
      */
@@ -345,11 +306,11 @@ public class OAuth2Service {
 
         return OAuth2UserInfo.fromNaver(response.getBody());
     }
+
     /**
      * 신규 회원 생성 (네이버)
      */
     private User createNewUserForNaver(OAuth2UserInfo userInfo) {
-        // User 생성
         User user = User.builder()
                 .email(userInfo.getEmail())
                 .name(userInfo.getName())
@@ -363,12 +324,11 @@ public class OAuth2Service {
                 .totalExp(0)
                 .currentPoints(0)
                 .currentLevel(1)
-                .levelName("Bronze")
+                .levelName("새싹")
                 .build();
 
         User savedUser = userRepository.save(user);
 
-        // SocialAccount 생성
         UserSocialAccount socialAccount = UserSocialAccount.builder()
                 .user(savedUser)
                 .provider(SocialProvider.NAVER)
@@ -382,7 +342,9 @@ public class OAuth2Service {
 
         return savedUser;
     }
-    // Google 설정
+
+    // ==================== 구글 ====================
+
     @Value("${spring.security.oauth2.client.registration.google.client-id}")
     private String googleClientId;
 
@@ -409,57 +371,50 @@ public class OAuth2Service {
      * 구글 로그인 콜백 처리
      */
     public AuthResponse processGoogleCallback(String code) {
-        System.out.println("=== 구글 콜백 시작 ===");
-        System.out.println("code: " + code);
+        log.info("구글 로그인 콜백 처리 시작");
 
-        try {
-            // 1. Authorization Code로 Access Token 받기
-            String googleAccessToken = getGoogleAccessToken(code);
-            System.out.println("Access Token: " + googleAccessToken);
+        // 1. Authorization Code로 Access Token 받기
+        String googleAccessToken = getGoogleAccessToken(code);
 
-            // 2. Access Token으로 사용자 정보 받기
-            OAuth2UserInfo userInfo = getGoogleUserInfo(googleAccessToken);
-            System.out.println("사용자 정보: " + userInfo.getEmail());
+        // 2. Access Token으로 사용자 정보 받기
+        OAuth2UserInfo userInfo = getGoogleUserInfo(googleAccessToken);
 
-            // 3. 기존 회원 확인 또는 신규 회원 생성
-            Optional<UserSocialAccount> existingSocial = socialAccountRepository
-                    .findByProviderAndProviderUserId(SocialProvider.GOOGLE, userInfo.getProviderId());
+        // 3. 기존 회원 확인 또는 신규 회원 생성
+        Optional<UserSocialAccount> existingSocial = socialAccountRepository
+                .findByProviderAndProviderUserId(SocialProvider.GOOGLE, userInfo.getProviderId());
 
-            User user;
-            boolean isNewUser;
+        User user;
+        boolean isNewUser;
 
-            if (existingSocial.isPresent()) {
-                user = existingSocial.get().getUser();
-                user.setLastLoginAt(LocalDateTime.now());
-                user.setIsOnline(true);
-                isNewUser = false;
-            } else {
-                user = createNewUserForGoogle(userInfo);
-                isNewUser = true;
-            }
-
-            userRepository.save(user);
-
-            // 4. JWT 토큰 발급
-            String accessToken = jwtTokenUtil.createAccessToken(String.valueOf(user.getId()));
-            String refreshToken = jwtTokenUtil.createRefreshToken(String.valueOf(user.getId()));
-
-            // 5. Refresh Token 저장
-            saveRefreshToken(user, refreshToken);
-
-            return AuthResponse.builder()
-                    .accessToken(accessToken)
-                    .refreshToken(refreshToken)
-                    .expiresIn(3600)
-                    .isNewUser(isNewUser)
-                    .user(UserDTO.from(user, SocialProvider.GOOGLE))
-                    .loginProvider("GOOGLE")
-                    .build();
-        } catch (Exception e) {
-            System.out.println("=== 에러 발생 ===");
-            e.printStackTrace();
-            throw e;
+        if (existingSocial.isPresent()) {
+            user = existingSocial.get().getUser();
+            user.setLastLoginAt(LocalDateTime.now());
+            user.setIsOnline(true);
+            isNewUser = false;
+            log.info("기존 회원 로그인: userId={}", user.getId());
+        } else {
+            user = createNewUserForGoogle(userInfo);
+            isNewUser = true;
+            log.info("신규 회원 가입: userId={}", user.getId());
         }
+
+        userRepository.save(user);
+
+        // 4. JWT 토큰 발급
+        String accessToken = jwtTokenUtil.createAccessToken(String.valueOf(user.getId()));
+        String refreshToken = jwtTokenUtil.createRefreshToken(String.valueOf(user.getId()));
+
+        // 5. Refresh Token 저장
+        saveRefreshToken(user, refreshToken);
+
+        return AuthResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .expiresIn(3600)
+                .isNewUser(isNewUser)
+                .user(UserDTO.from(user, SocialProvider.GOOGLE))
+                .loginProvider("GOOGLE")
+                .build();
     }
 
     /**
@@ -479,7 +434,6 @@ public class OAuth2Service {
         params.add("code", code);
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
-
         ResponseEntity<Map> response = restTemplate.postForEntity(tokenUrl, request, Map.class);
 
         Map<String, Object> body = response.getBody();
@@ -529,7 +483,7 @@ public class OAuth2Service {
                 .totalExp(0)
                 .currentPoints(0)
                 .currentLevel(1)
-                .levelName("Bronze")
+                .levelName("새싹")
                 .build();
 
         User savedUser = userRepository.save(user);
@@ -547,6 +501,37 @@ public class OAuth2Service {
 
         return savedUser;
     }
+
+    // ==================== 공통 ====================
+
+    /**
+     * Refresh Token 저장
+     */
+    private void saveRefreshToken(User user, String token) {
+        RefreshToken refreshToken = RefreshToken.builder()
+                .user(user)
+                .token(token)
+                .expiresAt(LocalDateTime.now().plusDays(7))
+                .isRevoked(false)
+                .build();
+
+        refreshTokenRepository.save(refreshToken);
+    }
+
+    /**
+     * Access Token 갱신
+     */
+    public String refreshAccessToken(String refreshToken) {
+        RefreshToken token = refreshTokenRepository.findByToken(refreshToken)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid refresh token"));
+
+        if (token.getIsRevoked() || token.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new IllegalStateException("Refresh token expired");
+        }
+
+        return jwtTokenUtil.createAccessToken(String.valueOf(token.getUser().getId()));
+    }
+
     /**
      * 로그아웃
      */
@@ -555,13 +540,9 @@ public class OAuth2Service {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-        // 온라인 상태 변경
         user.setIsOnline(false);
         user.setLastSeenAt(LocalDateTime.now());
 
         userRepository.save(user);
-
-        // RefreshToken 무효화 (선택)
-        // refreshTokenRepository.deleteByUserId(userId);
     }
 }

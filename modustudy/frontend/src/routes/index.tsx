@@ -3,7 +3,7 @@ import { StartPage } from '../features/start/StartPage';
 import { Dashboard, CalendarExpandWidget } from '../features/dashboard';
 import { CommentlePage } from '../features/commentle/CommentlePage';
 import { QuizPage } from '../features/quiz/QuizPage';
-import { LoginPage, SignupPage } from '../features/auth/index';
+import { LoginPage, SignupPage, LoginCallbackPage } from '../features/auth/index';
 import { RecruitmentPage } from '../features/recruitment/RecruitmentPage';
 import { StudyPage, StudyCreatePage, StudyDetailPage, StudyManagementPage } from '../features/study';
 import { TestSidebarPage } from '../features/test/TestSidebarPage';
@@ -17,6 +17,7 @@ export const AppRouter = () => {
                 <Route path="/calendar-expand" element={<CalendarExpandWidget />} />
                 <Route path="/commentle" element={<CommentlePage />} />
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/login/callback" element={<LoginCallbackPage />} />
                 <Route path="/signup" element={<SignupPage />} />
                 <Route path="/quiz" element={<QuizPage />} />
                 <Route path="/study" element={<StudyPage />} />

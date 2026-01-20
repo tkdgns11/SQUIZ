@@ -30,7 +30,7 @@ test:
   script:
     - cd modustudy/backend
     - chmod +x gradlew
-    - ./gradlew test
+    - ./gradlew test -Dspring.profiles.active=test
   only:
     - master
     - main

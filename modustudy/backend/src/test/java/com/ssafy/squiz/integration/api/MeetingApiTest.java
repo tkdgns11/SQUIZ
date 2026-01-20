@@ -4,28 +4,29 @@ import com.ssafy.common.auth.SsafyUserDetails;
 import com.ssafy.domain.meeting.controller.MeetingController;
 import com.ssafy.domain.meeting.dto.request.MeetingActionItemRequest;
 import com.ssafy.domain.meeting.dto.request.MeetingKeywordUpdateRequest;
-import com.ssafy.domain.meeting.dto.request.MeetingParticipantSummaryRequest;
 import com.ssafy.domain.meeting.dto.request.MeetingRecordingRequest;
 import com.ssafy.domain.meeting.dto.request.MeetingRequest;
 import com.ssafy.domain.meeting.dto.request.MeetingSummaryUpdateRequest;
-import com.ssafy.domain.meeting.dto.request.MeetingTranscriptRequest;
 import com.ssafy.domain.meeting.dto.response.MeetingActionItemResponse;
+import com.ssafy.domain.meeting.dto.response.MeetingAudioRecordingResponse;
+import com.ssafy.domain.meeting.dto.response.MeetingChatMessagePageResponse;
+import com.ssafy.domain.meeting.dto.response.MeetingChatMessageResponse;
 import com.ssafy.domain.meeting.dto.response.MeetingChannelResponse;
 import com.ssafy.domain.meeting.dto.response.MeetingDetailResponse;
 import com.ssafy.domain.meeting.dto.response.MeetingEndResponse;
 import com.ssafy.domain.meeting.dto.response.MeetingJoinResponse;
 import com.ssafy.domain.meeting.dto.response.MeetingListItemResponse;
 import com.ssafy.domain.meeting.dto.response.MeetingParticipantResponse;
-import com.ssafy.domain.meeting.dto.response.MeetingParticipantSummaryResponse;
 import com.ssafy.domain.meeting.dto.response.MeetingPhotoResponse;
 import com.ssafy.domain.meeting.dto.response.MeetingRecordingResponse;
 import com.ssafy.domain.meeting.dto.response.MeetingResponse;
 import com.ssafy.domain.meeting.dto.response.MeetingSessionResponse;
+import com.ssafy.domain.meeting.dto.response.MeetingSttFileResponse;
+import com.ssafy.domain.meeting.dto.response.MeetingSttSummaryResponse;
 import com.ssafy.domain.meeting.dto.response.MeetingSummaryResponse;
-import com.ssafy.domain.meeting.dto.response.MeetingTranscriptItemResponse;
-import com.ssafy.domain.meeting.dto.response.MeetingTranscriptPageResponse;
-import com.ssafy.domain.meeting.dto.response.MeetingUserResponse;
 import com.ssafy.domain.meeting.entity.ActionItemStatus;
+import com.ssafy.domain.meeting.entity.MeetingAudioTrackType;
+import com.ssafy.domain.meeting.entity.MeetingTextTrackType;
 import com.ssafy.domain.meeting.entity.MeetingType;
 import com.ssafy.domain.meeting.entity.SummaryStatus;
 import com.ssafy.domain.meeting.service.MeetingService;
@@ -171,7 +172,7 @@ class MeetingApiTest {
     }
 
     @Test
-    @DisplayName("미팅 시작: 타입/공유 옵션 포함")
+    @DisplayName("미팅 시작: 공유 옵션 포함")
     void startMeeting() throws Exception {
         // given
         MeetingResponse response = new MeetingResponse(
@@ -209,7 +210,7 @@ class MeetingApiTest {
     }
 
     @Test
-    @DisplayName("미팅 참여/퇴장")
+    @DisplayName("미팅 참가/퇴장")
     void joinAndLeaveMeeting() throws Exception {
         // given
         when(meetingService.joinMeeting(1L, 2L, 1L))
@@ -261,39 +262,142 @@ class MeetingApiTest {
     }
 
     @Test
-    @DisplayName("전문 조회/추가: startMs/endMs 포함")
-    void transcriptEndpoints() throws Exception {
+    @DisplayName("채팅 기록 조회")
+    void chatHistoryEndpoint() throws Exception {
         // given
-        MeetingTranscriptItemResponse item = new MeetingTranscriptItemResponse(
+        MeetingChatMessageResponse message = new MeetingChatMessageResponse(
                 1L,
-                new MeetingUserResponse(1L, "user"),
+                1L,
+                "user",
                 "hello",
-                120,
-                120000,
-                121000,
                 LocalDateTime.of(2025, 1, 15, 19, 2)
         );
-        MeetingTranscriptPageResponse page = new MeetingTranscriptPageResponse(
-                List.of(item),
+        MeetingChatMessagePageResponse page = new MeetingChatMessagePageResponse(
+                List.of(message),
                 1,
                 false
         );
-        when(meetingService.getTranscripts(eq(1L), eq(2L), any())).thenReturn(page);
-        when(meetingService.addTranscript(eq(1L), eq(2L), any())).thenReturn(item);
+        when(meetingService.getChatMessages(eq(1L), eq(2L), any())).thenReturn(page);
 
         // when & then
-        mockMvc.perform(get("/api/v1/studies/1/meetings/2/transcript")
+        mockMvc.perform(get("/api/v1/studies/1/meetings/2/chat")
                         .param("page", "0")
                         .param("size", "20"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.content[0].startMs").value(120000));
+                .andExpect(jsonPath("$.data.content[0].senderName").value("user"));
+    }
 
-        MeetingTranscriptRequest request = new MeetingTranscriptRequest(1L, "hello", 120, 120000, 121000, true);
-        mockMvc.perform(post("/api/v1/studies/1/meetings/2/transcript")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+    @Test
+    @DisplayName("오디오 녹음 업로드/조회")
+    void audioRecordingEndpoints() throws Exception {
+        // given
+        MeetingAudioRecordingResponse response = new MeetingAudioRecordingResponse(
+                11L,
+                2L,
+                1L,
+                MeetingAudioTrackType.INDIVIDUAL,
+                "/uploads/meetings/2/recordings/audio/users/1/audio.wav",
+                "wav",
+                123L,
+                LocalDateTime.of(2025, 1, 15, 20, 31)
+        );
+        when(meetingService.uploadRecordingAudio(eq(1L), eq(2L), eq(MeetingAudioTrackType.INDIVIDUAL), eq(1L), any()))
+                .thenReturn(response);
+        when(meetingService.getAudioRecordings(1L, 2L, MeetingAudioTrackType.INDIVIDUAL, 1L))
+                .thenReturn(List.of(response));
+
+        // when & then
+        MockMultipartFile audio = new MockMultipartFile(
+                "audio",
+                "audio.wav",
+                "audio/wav",
+                "wav".getBytes(StandardCharsets.UTF_8)
+        );
+        mockMvc.perform(multipart("/api/v1/studies/1/meetings/2/recording/audio")
+                        .file(audio)
+                        .param("trackType", "INDIVIDUAL")
+                        .param("userId", "1"))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.data.content").value("hello"));
+                .andExpect(jsonPath("$.data.trackType").value("INDIVIDUAL"));
+
+        mockMvc.perform(get("/api/v1/studies/1/meetings/2/recording/audio")
+                        .param("trackType", "INDIVIDUAL")
+                        .param("userId", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].recordingUrl")
+                        .value("/uploads/meetings/2/recordings/audio/users/1/audio.wav"));
+    }
+
+    @Test
+    @DisplayName("STT 파일 업로드/조회")
+    void sttFileEndpoints() throws Exception {
+        // given
+        MeetingSttFileResponse response = new MeetingSttFileResponse(
+                1L,
+                2L,
+                null,
+                MeetingTextTrackType.MIXED,
+                "/uploads/meetings/2/stt/mixed/stt.txt",
+                LocalDateTime.of(2025, 1, 15, 20, 31),
+                LocalDateTime.of(2025, 1, 15, 20, 31)
+        );
+        when(meetingService.uploadSttTextFile(eq(1L), eq(2L), eq(MeetingTextTrackType.MIXED), eq(null), any()))
+                .thenReturn(response);
+        when(meetingService.getMeetingSttFile(1L, 2L, MeetingTextTrackType.MIXED, null)).thenReturn(response);
+
+        // when & then
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "stt.txt",
+                MediaType.TEXT_PLAIN_VALUE,
+                "text".getBytes(StandardCharsets.UTF_8)
+        );
+        mockMvc.perform(multipart("/api/v1/studies/1/meetings/2/stt/file")
+                        .file(file)
+                        .param("trackType", "MIXED"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.fileUrl").value("/uploads/meetings/2/stt/mixed/stt.txt"));
+
+        mockMvc.perform(get("/api/v1/studies/1/meetings/2/stt/file")
+                        .param("trackType", "MIXED"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.trackType").value("MIXED"));
+    }
+
+    @Test
+    @DisplayName("요약 파일 업로드/조회")
+    void summaryFileEndpoints() throws Exception {
+        // given
+        MeetingSttSummaryResponse response = new MeetingSttSummaryResponse(
+                2L,
+                2L,
+                null,
+                MeetingTextTrackType.MIXED,
+                "/uploads/meetings/2/stt/mixed/summary.txt",
+                LocalDateTime.of(2025, 1, 15, 20, 32),
+                LocalDateTime.of(2025, 1, 15, 20, 32)
+        );
+        when(meetingService.uploadSummaryTextFile(eq(1L), eq(2L), eq(MeetingTextTrackType.MIXED), eq(null), any()))
+                .thenReturn(response);
+        when(meetingService.getMeetingSttSummary(1L, 2L, MeetingTextTrackType.MIXED, null)).thenReturn(response);
+
+        // when & then
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "summary.txt",
+                MediaType.TEXT_PLAIN_VALUE,
+                "summary".getBytes(StandardCharsets.UTF_8)
+        );
+        mockMvc.perform(multipart("/api/v1/studies/1/meetings/2/summary/file")
+                        .file(file)
+                        .param("trackType", "MIXED"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.fileUrl").value("/uploads/meetings/2/stt/mixed/summary.txt"));
+
+        mockMvc.perform(get("/api/v1/studies/1/meetings/2/summary/file")
+                        .param("trackType", "MIXED"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.trackType").value("MIXED"));
     }
 
     @Test
@@ -323,7 +427,7 @@ class MeetingApiTest {
     }
 
     @Test
-    @DisplayName("키워드 업데이트/뮤트")
+    @DisplayName("키워드 업데이트/음소거")
     void updateKeywordsAndMute() throws Exception {
         // given
         doNothing().when(meetingService).updateKeywords(eq(1L), eq(2L), any());
@@ -345,7 +449,7 @@ class MeetingApiTest {
     }
 
     @Test
-    @DisplayName("녹음 조회/업데이트")
+    @DisplayName("녹음 메타 조회/업데이트")
     void recordingEndpoints() throws Exception {
         // given
         MeetingRecordingResponse response = new MeetingRecordingResponse(
@@ -384,30 +488,34 @@ class MeetingApiTest {
     }
 
     @Test
-    @DisplayName("참여자 요약 조회/업데이트")
-    void participantSummaryEndpoints() throws Exception {
+    @DisplayName("녹화 영상 업로드")
+    void uploadRecordingVideoEndpoint() throws Exception {
         // given
-        MeetingParticipantSummaryResponse response = new MeetingParticipantSummaryResponse(
+        MeetingRecordingResponse response = new MeetingRecordingResponse(
                 1L,
-                1L,
-                "summary",
-                LocalDateTime.of(2025, 1, 15, 20, 40)
+                "/uploads/meetings/2/recordings/video/video.mp4",
+                "mp4",
+                5400,
+                LocalDateTime.of(2025, 1, 15, 19, 0),
+                LocalDateTime.of(2025, 1, 15, 20, 30),
+                123456L,
+                "READY",
+                LocalDateTime.of(2025, 1, 15, 20, 31)
         );
-        when(meetingService.getParticipantSummaries(1L, 2L)).thenReturn(List.of(response));
-        when(meetingService.upsertParticipantSummaries(eq(1L), eq(2L), any()))
-                .thenReturn(List.of(response));
+        when(meetingService.uploadRecordingVideo(eq(1L), eq(2L), any())).thenReturn(response);
 
         // when & then
-        mockMvc.perform(get("/api/v1/studies/1/meetings/2/participant-summaries"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data[0].summary").value("summary"));
-
-        mockMvc.perform(put("/api/v1/studies/1/meetings/2/participant-summaries")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(
-                                List.of(new MeetingParticipantSummaryRequest(1L, "summary")))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data[0].userId").value(1));
+        MockMultipartFile video = new MockMultipartFile(
+                "video",
+                "video.mp4",
+                "video/mp4",
+                "mp4".getBytes(StandardCharsets.UTF_8)
+        );
+        mockMvc.perform(multipart("/api/v1/studies/1/meetings/2/recording/video")
+                        .file(video))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.recordingUrl")
+                        .value("/uploads/meetings/2/recordings/video/video.mp4"));
     }
 
     @Test
@@ -422,7 +530,8 @@ class MeetingApiTest {
         );
         when(meetingService.getActionItems(1L, 2L)).thenReturn(List.of(response));
         when(meetingService.addActionItem(eq(1L), eq(2L), any())).thenReturn(response);
-        when(meetingService.updateActionItem(eq(1L), eq(2L), eq(11L), any())).thenReturn(response);
+        when(meetingService.updateActionItem(eq(1L), eq(2L), eq(11L), any()))
+                .thenReturn(new MeetingActionItemResponse(11L, "todo", 2L, ActionItemStatus.DONE));
 
         // when & then
         mockMvc.perform(get("/api/v1/studies/1/meetings/2/action-items"))
@@ -441,7 +550,7 @@ class MeetingApiTest {
                         .content(objectMapper.writeValueAsString(
                                 new MeetingActionItemRequest(null, 2L, ActionItemStatus.DONE))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.status").value("TODO"));
+                .andExpect(jsonPath("$.data.status").value("DONE"));
     }
 
     @Test
@@ -516,3 +625,6 @@ class MeetingApiTest {
         }
     }
 }
+
+
+

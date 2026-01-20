@@ -4,38 +4,38 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ssafy.domain.meeting.dto.request.MeetingActionItemRequest;
 import com.ssafy.domain.meeting.dto.request.MeetingKeywordUpdateRequest;
-import com.ssafy.domain.meeting.dto.request.MeetingParticipantSummaryRequest;
 import com.ssafy.domain.meeting.dto.request.MeetingRecordingRequest;
 import com.ssafy.domain.meeting.dto.request.MeetingRequest;
 import com.ssafy.domain.meeting.dto.request.MeetingSummaryUpdateRequest;
-import com.ssafy.domain.meeting.dto.request.MeetingTranscriptRequest;
 import com.ssafy.domain.meeting.dto.response.*;
 import com.ssafy.common.storage.LocalFileStorageService;
 import com.ssafy.config.SfuProperties;
 import com.ssafy.domain.meeting.entity.ActionItemStatus;
 import com.ssafy.domain.meeting.entity.Meeting;
 import com.ssafy.domain.meeting.entity.MeetingActionItem;
+import com.ssafy.domain.meeting.entity.MeetingAudioRecording;
+import com.ssafy.domain.meeting.entity.MeetingAudioTrackType;
 import com.ssafy.domain.meeting.entity.MeetingChatMessage;
 import com.ssafy.domain.meeting.entity.MeetingParticipant;
-import com.ssafy.domain.meeting.entity.MeetingParticipantSummary;
+import com.ssafy.domain.meeting.entity.MeetingSttFile;
+import com.ssafy.domain.meeting.entity.MeetingSttSummary;
+import com.ssafy.domain.meeting.entity.MeetingTextTrackType;
 import com.ssafy.domain.meeting.entity.MeetingPhoto;
 import com.ssafy.domain.meeting.entity.MeetingRecording;
 import com.ssafy.domain.meeting.entity.MeetingStatus;
-import com.ssafy.domain.meeting.entity.MeetingSummary;
-import com.ssafy.domain.meeting.entity.MeetingTranscript;
 import com.ssafy.domain.meeting.entity.MeetingType;
 import com.ssafy.domain.meeting.entity.RecordingStatus;
 import com.ssafy.domain.meeting.entity.SttStatus;
 import com.ssafy.domain.meeting.entity.SummaryStatus;
 import com.ssafy.domain.meeting.repository.MeetingActionItemRepository;
+import com.ssafy.domain.meeting.repository.MeetingAudioRecordingRepository;
 import com.ssafy.domain.meeting.repository.MeetingChatMessageRepository;
 import com.ssafy.domain.meeting.repository.MeetingParticipantRepository;
-import com.ssafy.domain.meeting.repository.MeetingParticipantSummaryRepository;
 import com.ssafy.domain.meeting.repository.MeetingPhotoRepository;
 import com.ssafy.domain.meeting.repository.MeetingRecordingRepository;
 import com.ssafy.domain.meeting.repository.MeetingRepository;
-import com.ssafy.domain.meeting.repository.MeetingSummaryRepository;
-import com.ssafy.domain.meeting.repository.MeetingTranscriptRepository;
+import com.ssafy.domain.meeting.repository.MeetingSttFileRepository;
+import com.ssafy.domain.meeting.repository.MeetingSttSummaryRepository;
 import lombok.RequiredArgsConstructor;
 import com.lowagie.text.Document;
 import com.lowagie.text.DocumentException;
@@ -55,11 +55,14 @@ import org.springframework.beans.factory.annotation.Value;
 
 import java.io.IOException;
 import java.io.ByteArrayOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 @Service
@@ -68,13 +71,13 @@ public class MeetingService {
 
     private final MeetingRepository meetingRepository;
     private final MeetingParticipantRepository meetingParticipantRepository;
-    private final MeetingSummaryRepository meetingSummaryRepository;
-    private final MeetingTranscriptRepository meetingTranscriptRepository;
     private final MeetingPhotoRepository meetingPhotoRepository;
     private final MeetingRecordingRepository meetingRecordingRepository;
-    private final MeetingParticipantSummaryRepository meetingParticipantSummaryRepository;
     private final MeetingActionItemRepository meetingActionItemRepository;
+    private final MeetingAudioRecordingRepository meetingAudioRecordingRepository;
     private final MeetingChatMessageRepository meetingChatMessageRepository;
+    private final MeetingSttFileRepository meetingSttFileRepository;
+    private final MeetingSttSummaryRepository meetingSttSummaryRepository;
     private final ObjectMapper objectMapper;
     private final SfuProperties sfuProperties;
     private final LocalFileStorageService localFileStorageService;
@@ -96,8 +99,12 @@ public class MeetingService {
                         meeting.getEndedAt(),
                         meeting.getDurationSeconds(),
                         meeting.getParticipantCount(),
-                        meetingSummaryRepository.existsByMeetingId(meeting.getId()),
-                        meetingTranscriptRepository.existsByMeetingId(meeting.getId()),
+                        meetingSttSummaryRepository
+                                .existsByMeetingIdAndTrackTypeAndUserIdIsNull(meeting.getId(),
+                                        MeetingTextTrackType.MIXED),
+                        meetingSttFileRepository
+                                .existsByMeetingIdAndTrackTypeAndUserIdIsNull(meeting.getId(),
+                                        MeetingTextTrackType.MIXED),
                         meetingPhotoRepository.countByMeetingId(meeting.getId())
                 ));
     }
@@ -113,11 +120,14 @@ public class MeetingService {
                         participant.getLeftAt()))
                 .toList();
 
-        MeetingSummary summary = meetingSummaryRepository.findByMeetingId(meetingId).orElse(null);
+        MeetingSttSummary summary = meetingSttSummaryRepository
+                .findByMeetingIdAndTrackTypeAndUserIdIsNull(meetingId, MeetingTextTrackType.MIXED)
+                .orElse(null);
         SummaryStatus summaryStatus = resolveSummaryStatus(meeting);
+        String summaryText = summary == null ? null : readUploadedTextFile(summary.getFileUrl());
         MeetingSummaryResponse summaryResponse = summary == null ? null : new MeetingSummaryResponse(
                 summary.getId(),
-                summary.getSummary(),
+                summaryText,
                 parseActionItems(summary.getActionItemsJson()),
                 parseKeywords(summary.getKeywordsJson()),
                 summaryStatus.name(),
@@ -176,8 +186,6 @@ public class MeetingService {
         int participantCount = participants.size();
         meeting.end(endedAt, participantCount);
         meeting.updateSummaryStatus(SummaryStatus.PROCESSING);
-        meetingSummaryRepository.findByMeetingId(meetingId)
-                .orElseGet(() -> meetingSummaryRepository.save(MeetingSummary.createEmpty(meetingId)));
         return new MeetingEndResponse(meeting.getDurationSeconds(), meeting.getParticipantCount(),
                 meeting.getSummaryStatus().name());
     }
@@ -218,10 +226,12 @@ public class MeetingService {
     @Transactional(readOnly = true)
     public MeetingSummaryResponse getSummary(Long studyId, Long meetingId) {
         Meeting meeting = getMeetingOrThrow(studyId, meetingId);
-        MeetingSummary summary = meetingSummaryRepository.findByMeetingId(meetingId)
+        MeetingSttSummary summary = meetingSttSummaryRepository
+                .findByMeetingIdAndTrackTypeAndUserIdIsNull(meetingId, MeetingTextTrackType.MIXED)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "SUMMARY_NOT_READY"));
         SummaryStatus currentStatus = resolveSummaryStatus(meeting);
-        if (currentStatus == SummaryStatus.PENDING && summary.getSummary() != null) {
+        String summaryText = readUploadedTextFile(summary.getFileUrl());
+        if (currentStatus == SummaryStatus.PENDING && summaryText != null && !summaryText.isBlank()) {
             meeting.updateSummaryStatus(SummaryStatus.DONE);
         }
         if (resolveSummaryStatus(meeting) != SummaryStatus.DONE) {
@@ -229,30 +239,12 @@ public class MeetingService {
         }
         return new MeetingSummaryResponse(
                 summary.getId(),
-                summary.getSummary(),
+                summaryText,
                 parseActionItems(summary.getActionItemsJson()),
                 parseKeywords(summary.getKeywordsJson()),
                 resolveSummaryStatus(meeting).name(),
                 summary.getCreatedAt()
         );
-    }
-
-    @Transactional(readOnly = true)
-    public MeetingTranscriptPageResponse getTranscripts(Long studyId, Long meetingId, Pageable pageable) {
-        getMeetingOrThrow(studyId, meetingId);
-        Page<MeetingTranscript> page = meetingTranscriptRepository
-                .findByMeetingIdOrderByTimestampSecondsAsc(meetingId, pageable);
-        List<MeetingTranscriptItemResponse> content = page.stream()
-                .map(transcript -> new MeetingTranscriptItemResponse(
-                        transcript.getId(),
-                        new MeetingUserResponse(transcript.getUserId(), null),
-                        transcript.getContent(),
-                        transcript.getTimestampSeconds(),
-                        transcript.getStartMs(),
-                        transcript.getEndMs(),
-                        transcript.getCreatedAt()))
-                .toList();
-        return new MeetingTranscriptPageResponse(content, page.getTotalElements(), page.hasNext());
     }
 
     @Transactional(readOnly = true)
@@ -269,6 +261,37 @@ public class MeetingService {
                         message.getSentAt()))
                 .toList();
         return new MeetingChatMessagePageResponse(content, page.getTotalElements(), page.hasNext());
+    }
+
+    @Transactional(readOnly = true)
+    public List<MeetingAudioRecordingResponse> getAudioRecordings(Long studyId, Long meetingId,
+                                                                  MeetingAudioTrackType trackType,
+                                                                  Long userId) {
+        getMeetingOrThrow(studyId, meetingId);
+        List<MeetingAudioRecording> recordings;
+        if (trackType != null && userId != null) {
+            recordings = meetingAudioRecordingRepository
+                    .findByMeetingIdAndTrackTypeAndUserIdOrderByCreatedAtAsc(meetingId, trackType, userId);
+        } else if (trackType != null) {
+            recordings = meetingAudioRecordingRepository
+                    .findByMeetingIdAndTrackTypeOrderByCreatedAtAsc(meetingId, trackType);
+        } else if (userId != null) {
+            recordings = meetingAudioRecordingRepository
+                    .findByMeetingIdAndUserIdOrderByCreatedAtAsc(meetingId, userId);
+        } else {
+            recordings = meetingAudioRecordingRepository.findByMeetingIdOrderByCreatedAtAsc(meetingId);
+        }
+        return recordings.stream()
+                .map(recording -> new MeetingAudioRecordingResponse(
+                        recording.getId(),
+                        recording.getMeetingId(),
+                        recording.getUserId(),
+                        recording.getTrackType(),
+                        recording.getRecordingUrl(),
+                        recording.getFormat(),
+                        recording.getFileSize(),
+                        recording.getCreatedAt()))
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -299,9 +322,15 @@ public class MeetingService {
     @Transactional
     public void updateKeywords(Long studyId, Long meetingId, MeetingKeywordUpdateRequest request) {
         getMeetingOrThrow(studyId, meetingId);
-        MeetingSummary summary = meetingSummaryRepository.findByMeetingId(meetingId)
-                .orElseGet(() -> meetingSummaryRepository.save(MeetingSummary.createEmpty(meetingId)));
+        MeetingSttSummary summary = meetingSttSummaryRepository
+                .findByMeetingIdAndTrackTypeAndUserIdIsNull(meetingId, MeetingTextTrackType.MIXED)
+                .orElseGet(() -> meetingSttSummaryRepository.save(MeetingSttSummary.builder()
+                        .meetingId(meetingId)
+                        .trackType(MeetingTextTrackType.MIXED)
+                        .fileUrl("")
+                        .build()));
         summary.updateKeywordsJson(writeJson(request.keywords()));
+        meetingSttSummaryRepository.save(summary);
     }
 
     @Transactional
@@ -313,10 +342,17 @@ public class MeetingService {
     @Transactional
     public MeetingSummaryResponse upsertSummary(Long studyId, Long meetingId, MeetingSummaryUpdateRequest request) {
         Meeting meeting = getMeetingOrThrow(studyId, meetingId);
-        MeetingSummary summary = meetingSummaryRepository.findByMeetingId(meetingId)
-                .orElseGet(() -> meetingSummaryRepository.save(MeetingSummary.createEmpty(meetingId)));
+        MeetingSttSummary summary = meetingSttSummaryRepository
+                .findByMeetingIdAndTrackTypeAndUserIdIsNull(meetingId, MeetingTextTrackType.MIXED)
+                .orElseGet(() -> meetingSttSummaryRepository.save(MeetingSttSummary.builder()
+                        .meetingId(meetingId)
+                        .trackType(MeetingTextTrackType.MIXED)
+                        .fileUrl("")
+                        .build()));
         if (request.summary() != null) {
-            summary.updateSummary(request.summary());
+            String fileUrl = localFileStorageService.saveMeetingTextContent(
+                    meetingId, null, true, "summary.txt", request.summary());
+            summary.updateFileUrl(fileUrl);
         }
         if (request.actionItems() != null) {
             summary.updateActionItemsJson(writeJson(request.actionItems()));
@@ -331,9 +367,11 @@ public class MeetingService {
         if (status != null) {
             meeting.updateSummaryStatus(status);
         }
+        meetingSttSummaryRepository.save(summary);
+        String summaryText = readUploadedTextFile(summary.getFileUrl());
         return new MeetingSummaryResponse(
                 summary.getId(),
-                summary.getSummary(),
+                summaryText,
                 parseActionItems(summary.getActionItemsJson()),
                 parseKeywords(summary.getKeywordsJson()),
                 resolveSummaryStatus(meeting).name(),
@@ -347,34 +385,6 @@ public class MeetingService {
         MeetingParticipant participant = meetingParticipantRepository.findByMeetingIdAndUserId(meetingId, userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "NOT_IN_MEETING"));
         participant.updateMute(muted);
-    }
-
-    @Transactional
-    public MeetingTranscriptItemResponse addTranscript(Long studyId, Long meetingId, MeetingTranscriptRequest request) {
-        Meeting meeting = getMeetingOrThrow(studyId, meetingId);
-        MeetingTranscript saved = meetingTranscriptRepository.save(MeetingTranscript.builder()
-                .meetingId(meetingId)
-                .userId(request.userId())
-                .content(request.content())
-                .timestampSeconds(request.timestampSeconds())
-                .startMs(request.startMs())
-                .endMs(request.endMs())
-                .build());
-        if (meeting.getSttStatus() == SttStatus.PENDING) {
-            meeting.updateSttStatus(SttStatus.PROCESSING);
-        }
-        if (Boolean.TRUE.equals(request.isFinal())) {
-            meeting.updateSttStatus(SttStatus.DONE);
-        }
-        return new MeetingTranscriptItemResponse(
-                saved.getId(),
-                new MeetingUserResponse(saved.getUserId(), null),
-                saved.getContent(),
-                saved.getTimestampSeconds(),
-                saved.getStartMs(),
-                saved.getEndMs(),
-                saved.getCreatedAt()
-        );
     }
 
     @Transactional
@@ -395,10 +405,97 @@ public class MeetingService {
     }
 
     @Transactional
-    public MeetingTranscriptItemResponse addTranscript(Long studyId, Long meetingId, Long userId,
-                                                       String content, Integer timestampSeconds) {
-        MeetingTranscriptRequest request = new MeetingTranscriptRequest(userId, content, timestampSeconds, null, null, true);
-        return addTranscript(studyId, meetingId, request);
+    public MeetingAudioRecordingResponse uploadRecordingAudio(Long studyId, Long meetingId,
+                                                              MeetingAudioTrackType trackType,
+                                                              Long userId,
+                                                              MultipartFile audio) {
+        getMeetingOrThrow(studyId, meetingId);
+        if (audio == null || audio.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "AUDIO_REQUIRED");
+        }
+        if (trackType == MeetingAudioTrackType.INDIVIDUAL && userId == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "USER_ID_REQUIRED");
+        }
+        if (trackType == MeetingAudioTrackType.MIXED && userId != null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "USER_ID_NOT_ALLOWED");
+        }
+        boolean mixed = trackType == MeetingAudioTrackType.MIXED;
+        String recordingUrl = localFileStorageService.saveMeetingRecordingAudio(
+                meetingId, userId, mixed, audio);
+        String format = extractFileExtension(audio.getOriginalFilename());
+        MeetingAudioRecording saved = meetingAudioRecordingRepository.save(MeetingAudioRecording.builder()
+                .meetingId(meetingId)
+                .userId(userId)
+                .trackType(trackType)
+                .recordingUrl(recordingUrl)
+                .format(format)
+                .fileSize(audio.getSize())
+                .build());
+        return new MeetingAudioRecordingResponse(
+                saved.getId(),
+                saved.getMeetingId(),
+                saved.getUserId(),
+                saved.getTrackType(),
+                saved.getRecordingUrl(),
+                saved.getFormat(),
+                saved.getFileSize(),
+                saved.getCreatedAt());
+    }
+
+    @Transactional
+    public MeetingSttFileResponse uploadSttTextFile(Long studyId, Long meetingId,
+                                                    MeetingTextTrackType trackType,
+                                                    Long userId,
+                                                    MultipartFile file) {
+        return uploadSttFileInternal(studyId, meetingId, trackType, userId, file);
+    }
+
+    @Transactional
+    public MeetingSttSummaryResponse uploadSummaryTextFile(Long studyId, Long meetingId,
+                                                           MeetingTextTrackType trackType,
+                                                           Long userId,
+                                                           MultipartFile file) {
+        return uploadSummaryFileInternal(studyId, meetingId, trackType, userId, file);
+    }
+
+    @Transactional(readOnly = true)
+    public MeetingSttFileResponse getMeetingSttFile(Long studyId, Long meetingId,
+                                                    MeetingTextTrackType trackType,
+                                                    Long userId) {
+        getMeetingOrThrow(studyId, meetingId);
+        MeetingSttFile file = (userId == null
+                ? meetingSttFileRepository.findByMeetingIdAndTrackTypeAndUserIdIsNull(meetingId, trackType)
+                : meetingSttFileRepository.findByMeetingIdAndTrackTypeAndUserId(meetingId, trackType, userId))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "TEXT_FILE_NOT_FOUND"));
+        return new MeetingSttFileResponse(
+                file.getId(),
+                file.getMeetingId(),
+                file.getUserId(),
+                file.getTrackType(),
+                file.getFileUrl(),
+                file.getCreatedAt(),
+                file.getUpdatedAt()
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public MeetingSttSummaryResponse getMeetingSttSummary(Long studyId, Long meetingId,
+                                                          MeetingTextTrackType trackType,
+                                                          Long userId) {
+        getMeetingOrThrow(studyId, meetingId);
+        MeetingSttSummary file = (userId == null
+                ? meetingSttSummaryRepository.findByMeetingIdAndTrackTypeAndUserIdIsNull(meetingId, trackType)
+                : meetingSttSummaryRepository.findByMeetingIdAndTrackTypeAndUserId(meetingId, trackType, userId))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "TEXT_FILE_NOT_FOUND"));
+        return new MeetingSttSummaryResponse(
+                file.getId(),
+                file.getMeetingId(),
+                file.getUserId(),
+                file.getTrackType(),
+                file.getFileUrl(),
+                file.getCreatedAt(),
+                file.getUpdatedAt()
+        );
     }
 
     @Transactional
@@ -444,6 +541,45 @@ public class MeetingService {
         );
     }
 
+    @Transactional
+    public MeetingRecordingResponse uploadRecordingVideo(Long studyId, Long meetingId, MultipartFile video) {
+        Meeting meeting = getMeetingOrThrow(studyId, meetingId);
+        if (video == null || video.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "VIDEO_REQUIRED");
+        }
+        String recordingUrl = localFileStorageService.saveMeetingRecordingVideo(meetingId, video);
+        String format = extractFileExtension(video.getOriginalFilename());
+        Long fileSize = video.getSize();
+        MeetingRecording recording = meetingRecordingRepository.findByMeetingId(meetingId)
+                .orElseGet(() -> MeetingRecording.builder()
+                        .meetingId(meetingId)
+                        .recordingUrl(recordingUrl)
+                        .format(format)
+                        .fileSize(fileSize)
+                        .status(RecordingStatus.READY)
+                        .build());
+        if (recording.getId() == null) {
+            recording = meetingRecordingRepository.save(recording);
+        } else {
+            recording.updateDetails(recordingUrl, format, null, null, null, fileSize);
+            if (recording.getStatus() != RecordingStatus.READY) {
+                recording.updateStatus(RecordingStatus.READY);
+            }
+        }
+        meeting.updateRecordingStatus(RecordingStatus.READY);
+        return new MeetingRecordingResponse(
+                recording.getId(),
+                recording.getRecordingUrl(),
+                recording.getFormat(),
+                recording.getDurationSeconds(),
+                recording.getStartedAt(),
+                recording.getEndedAt(),
+                recording.getFileSize(),
+                recording.getStatus().name(),
+                recording.getCreatedAt()
+        );
+    }
+
     @Transactional(readOnly = true)
     public MeetingRecordingResponse getRecording(Long studyId, Long meetingId) {
         getMeetingOrThrow(studyId, meetingId);
@@ -460,44 +596,6 @@ public class MeetingService {
                 recording.getStatus().name(),
                 recording.getCreatedAt()
         );
-    }
-
-    @Transactional
-    public List<MeetingParticipantSummaryResponse> upsertParticipantSummaries(Long studyId, Long meetingId,
-                                                                              List<MeetingParticipantSummaryRequest> requests) {
-        getMeetingOrThrow(studyId, meetingId);
-        List<MeetingParticipantSummary> summaries = requests.stream()
-                .map(request -> meetingParticipantSummaryRepository.findByMeetingIdAndUserId(meetingId, request.userId())
-                        .map(existing -> {
-                            existing.updateSummary(request.summary());
-                            return existing;
-                        })
-                        .orElseGet(() -> meetingParticipantSummaryRepository.save(
-                                MeetingParticipantSummary.builder()
-                                        .meetingId(meetingId)
-                                        .userId(request.userId())
-                                        .summary(request.summary())
-                                        .build())))
-                .toList();
-        return summaries.stream()
-                .map(summary -> new MeetingParticipantSummaryResponse(
-                        summary.getId(),
-                        summary.getUserId(),
-                        summary.getSummary(),
-                        summary.getCreatedAt()))
-                .toList();
-    }
-
-    @Transactional(readOnly = true)
-    public List<MeetingParticipantSummaryResponse> getParticipantSummaries(Long studyId, Long meetingId) {
-        getMeetingOrThrow(studyId, meetingId);
-        return meetingParticipantSummaryRepository.findByMeetingId(meetingId).stream()
-                .map(summary -> new MeetingParticipantSummaryResponse(
-                        summary.getId(),
-                        summary.getUserId(),
-                        summary.getSummary(),
-                        summary.getCreatedAt()))
-                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -560,45 +658,42 @@ public class MeetingService {
     @Transactional(readOnly = true)
     public String exportMeetingMarkdown(Long studyId, Long meetingId) {
         Meeting meeting = getMeetingOrThrow(studyId, meetingId);
-        MeetingSummary summary = meetingSummaryRepository.findByMeetingId(meetingId).orElse(null);
+        MeetingSttSummary summary = meetingSttSummaryRepository
+                .findByMeetingIdAndTrackTypeAndUserIdIsNull(meetingId, MeetingTextTrackType.MIXED)
+                .orElse(null);
+        MeetingSttFile transcriptFile = meetingSttFileRepository
+                .findByMeetingIdAndTrackTypeAndUserIdIsNull(meetingId, MeetingTextTrackType.MIXED)
+                .orElse(null);
         StringBuilder builder = new StringBuilder();
         builder.append("# Meeting Summary").append("\n\n");
         builder.append("- Title: ").append(meeting.getTitle()).append("\n");
         builder.append("- Type: ").append(meeting.getMeetingType().name()).append("\n");
         builder.append("- Started At: ").append(meeting.getStartedAt()).append("\n");
         builder.append("- Ended At: ").append(meeting.getEndedAt()).append("\n\n");
-        if (summary != null && summary.getSummary() != null) {
-            builder.append("## Overall Summary").append("\n").append(summary.getSummary()).append("\n\n");
+        String summaryText = summary == null ? null : readUploadedTextFile(summary.getFileUrl());
+        if (summaryText != null && !summaryText.isBlank()) {
+            builder.append("## Overall Summary").append("\n").append(summaryText).append("\n\n");
         }
-        List<MeetingParticipantSummary> participantSummaries = meetingParticipantSummaryRepository.findByMeetingId(meetingId);
-        if (!participantSummaries.isEmpty()) {
-            builder.append("## Participant Summaries").append("\n");
-            for (MeetingParticipantSummary participantSummary : participantSummaries) {
-                builder.append("- User ").append(participantSummary.getUserId()).append(": ")
-                        .append(participantSummary.getSummary()).append("\n");
-            }
-            builder.append("\n");
-        }
-        List<MeetingActionItem> actionItems = meetingActionItemRepository.findByMeetingId(meetingId);
+        List<MeetingActionItemResponse> actionItems = parseActionItems(
+                summary == null ? null : summary.getActionItemsJson());
         if (!actionItems.isEmpty()) {
             builder.append("## Action Items").append("\n");
-            for (MeetingActionItem item : actionItems) {
-                builder.append("- [").append(item.getStatus().name()).append("] ")
-                        .append(item.getContent());
-                if (item.getAssigneeId() != null) {
-                    builder.append(" (assignee: ").append(item.getAssigneeId()).append(")");
+            for (MeetingActionItemResponse item : actionItems) {
+                builder.append("- [").append(item.status().name()).append("] ")
+                        .append(item.content());
+                if (item.assigneeId() != null) {
+                    builder.append(" (assignee: ").append(item.assigneeId()).append(")");
                 }
                 builder.append("\n");
             }
             builder.append("\n");
         }
-        builder.append("## Transcripts").append("\n");
-        List<MeetingTranscript> transcripts = meetingTranscriptRepository
-                .findByMeetingIdOrderByTimestampSecondsAsc(meetingId);
-        for (MeetingTranscript transcript : transcripts) {
-            builder.append("- [").append(transcript.getTimestampSeconds()).append("s] ")
-                    .append("User ").append(transcript.getUserId()).append(": ")
-                    .append(transcript.getContent()).append("\n");
+        if (transcriptFile != null) {
+            String transcriptText = readUploadedTextFile(transcriptFile.getFileUrl());
+            if (transcriptText != null && !transcriptText.isBlank()) {
+                builder.append("## Transcripts").append("\n");
+                builder.append(transcriptText).append("\n");
+            }
         }
         return builder.toString();
     }
@@ -685,5 +780,114 @@ public class MeetingService {
             return BaseFont.createFont(pdfFontPath, BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
         }
         return BaseFont.createFont(BaseFont.HELVETICA, BaseFont.WINANSI, BaseFont.NOT_EMBEDDED);
+    }
+
+    private String extractFileExtension(String filename) {
+        if (filename == null) {
+            return null;
+        }
+        int dotIndex = filename.lastIndexOf('.');
+        if (dotIndex == -1 || dotIndex == filename.length() - 1) {
+            return null;
+        }
+        String extension = filename.substring(dotIndex + 1).toLowerCase(Locale.ROOT);
+        return extension.isBlank() ? null : extension;
+    }
+
+    private MeetingSttFileResponse uploadSttFileInternal(Long studyId, Long meetingId,
+                                                         MeetingTextTrackType trackType,
+                                                         Long userId,
+                                                         MultipartFile file) {
+        getMeetingOrThrow(studyId, meetingId);
+        if (file == null || file.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "FILE_REQUIRED");
+        }
+        validateTextTrack(trackType, userId);
+        boolean mixed = trackType == MeetingTextTrackType.MIXED;
+        String fileUrl = localFileStorageService.saveMeetingTextFile(meetingId, userId, mixed, "stt.txt", file);
+        MeetingSttFile saved = (userId == null
+                ? meetingSttFileRepository.findByMeetingIdAndTrackTypeAndUserIdIsNull(meetingId, trackType)
+                : meetingSttFileRepository.findByMeetingIdAndTrackTypeAndUserId(meetingId, trackType, userId))
+                .map(existing -> {
+                    existing.updateFileUrl(fileUrl);
+                    return meetingSttFileRepository.save(existing);
+                })
+                .orElseGet(() -> meetingSttFileRepository.save(MeetingSttFile.builder()
+                        .meetingId(meetingId)
+                        .userId(userId)
+                        .trackType(trackType)
+                        .fileUrl(fileUrl)
+                        .build()));
+        return new MeetingSttFileResponse(
+                saved.getId(),
+                saved.getMeetingId(),
+                saved.getUserId(),
+                saved.getTrackType(),
+                saved.getFileUrl(),
+                saved.getCreatedAt(),
+                saved.getUpdatedAt()
+        );
+    }
+
+    private MeetingSttSummaryResponse uploadSummaryFileInternal(Long studyId, Long meetingId,
+                                                                MeetingTextTrackType trackType,
+                                                                Long userId,
+                                                                MultipartFile file) {
+        getMeetingOrThrow(studyId, meetingId);
+        if (file == null || file.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "FILE_REQUIRED");
+        }
+        validateTextTrack(trackType, userId);
+        boolean mixed = trackType == MeetingTextTrackType.MIXED;
+        String fileUrl = localFileStorageService.saveMeetingTextFile(meetingId, userId, mixed, "summary.txt", file);
+        MeetingSttSummary saved = (userId == null
+                ? meetingSttSummaryRepository.findByMeetingIdAndTrackTypeAndUserIdIsNull(meetingId, trackType)
+                : meetingSttSummaryRepository.findByMeetingIdAndTrackTypeAndUserId(meetingId, trackType, userId))
+                .map(existing -> {
+                    existing.updateFileUrl(fileUrl);
+                    return meetingSttSummaryRepository.save(existing);
+                })
+                .orElseGet(() -> meetingSttSummaryRepository.save(MeetingSttSummary.builder()
+                        .meetingId(meetingId)
+                        .userId(userId)
+                        .trackType(trackType)
+                        .fileUrl(fileUrl)
+                        .build()));
+        return new MeetingSttSummaryResponse(
+                saved.getId(),
+                saved.getMeetingId(),
+                saved.getUserId(),
+                saved.getTrackType(),
+                saved.getFileUrl(),
+                saved.getCreatedAt(),
+                saved.getUpdatedAt()
+        );
+    }
+
+    private void validateTextTrack(MeetingTextTrackType trackType, Long userId) {
+        if (trackType == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "TRACK_TYPE_REQUIRED");
+        }
+        if (trackType == MeetingTextTrackType.INDIVIDUAL && userId == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "USER_ID_REQUIRED");
+        }
+        if (trackType == MeetingTextTrackType.MIXED && userId != null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "USER_ID_NOT_ALLOWED");
+        }
+    }
+
+    private String readUploadedTextFile(String fileUrl) {
+        if (fileUrl == null || fileUrl.isBlank()) {
+            return null;
+        }
+        Path path = localFileStorageService.resolveUploadedPath(fileUrl);
+        if (path == null || !Files.exists(path)) {
+            return null;
+        }
+        try {
+            return Files.readString(path);
+        } catch (IOException e) {
+            return null;
+        }
     }
 }

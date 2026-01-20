@@ -1,0 +1,357 @@
+﻿{
+  "info": {
+    "name": "Meeting API Tests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Create meeting",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"test meeting\",\n  \"sessionId\": 1,\n  \"channelId\": 1,\n  \"meetingType\": \"ONLINE\",\n  \"autoShareSummary\": false,\n  \"shareChannelId\": null\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/studies/{{studyId}}/meetings",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "studies", "{{studyId}}", "meetings"]
+        }
+      }
+    },
+    {
+      "name": "2. List meetings",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/studies/{{studyId}}/meetings",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "studies", "{{studyId}}", "meetings"]
+        }
+      }
+    },
+    {
+      "name": "3. Meeting detail",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/studies/{{studyId}}/meetings/{{meetingId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "studies", "{{studyId}}", "meetings", "{{meetingId}}"]
+        }
+      }
+    },
+    {
+      "name": "4. End meeting",
+      "request": {
+        "method": "PUT",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/studies/{{studyId}}/meetings/{{meetingId}}/end",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "studies", "{{studyId}}", "meetings", "{{meetingId}}", "end"]
+        }
+      }
+    },
+    {
+      "name": "5. Get summary",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/studies/{{studyId}}/meetings/{{meetingId}}/summary",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "studies", "{{studyId}}", "meetings", "{{meetingId}}", "summary"]
+        }
+      }
+    },
+    {
+      "name": "6. Update summary",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"summary\": \"요약 내용\",\n  \"actionItems\": [\n    {\"content\": \"할 일1\", \"assigneeId\": 1, \"status\": \"OPEN\"}\n  ],\n  \"keywords\": [\"키워드1\", \"키워드2\"],\n  \"status\": \"READY\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/studies/{{studyId}}/meetings/{{meetingId}}/summary",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "studies", "{{studyId}}", "meetings", "{{meetingId}}", "summary"]
+        }
+      }
+    },
+    {
+      "name": "7. Update keywords",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"keywords\": [\"k1\", \"k2\"]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/studies/{{studyId}}/meetings/{{meetingId}}/keywords",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "studies", "{{studyId}}", "meetings", "{{meetingId}}", "keywords"]
+        }
+      }
+    },
+    {
+      "name": "8. Get action items",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/studies/{{studyId}}/meetings/{{meetingId}}/action-items",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "studies", "{{studyId}}", "meetings", "{{meetingId}}", "action-items"]
+        }
+      }
+    },
+    {
+      "name": "9. Add action item",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"content\": \"할 일1\",\n  \"assigneeId\": 1,\n  \"status\": \"OPEN\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/studies/{{studyId}}/meetings/{{meetingId}}/action-items",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "studies", "{{studyId}}", "meetings", "{{meetingId}}", "action-items"]
+        }
+      }
+    },
+    {
+      "name": "10. Get chat history",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/studies/{{studyId}}/meetings/{{meetingId}}/chat?page=0&size=20",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "studies", "{{studyId}}", "meetings", "{{meetingId}}", "chat"],
+          "query": [
+            { "key": "page", "value": "0" },
+            { "key": "size", "value": "20" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "11. Get recording (meta)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/studies/{{studyId}}/meetings/{{meetingId}}/recording",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "studies", "{{studyId}}", "meetings", "{{meetingId}}", "recording"]
+        }
+      }
+    },
+    {
+      "name": "12. Update recording (meta)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"recordingUrl\": \"/uploads/meetings/{{meetingId}}/recordings/video/sample.mp4\",\n  \"format\": \"mp4\",\n  \"durationSeconds\": 120,\n  \"startedAt\": \"2026-01-20T09:00:00\",\n  \"endedAt\": \"2026-01-20T09:02:00\",\n  \"fileSize\": 123456,\n  \"status\": \"READY\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/studies/{{studyId}}/meetings/{{meetingId}}/recording",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "studies", "{{studyId}}", "meetings", "{{meetingId}}", "recording"]
+        }
+      }
+    },
+    {
+      "name": "13. Upload recording video",
+      "request": {
+        "method": "POST",
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "video", "type": "file", "src": "" }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/studies/{{studyId}}/meetings/{{meetingId}}/recording/video",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "studies", "{{studyId}}", "meetings", "{{meetingId}}", "recording", "video"]
+        }
+      }
+    },
+    {
+      "name": "14. Upload recording audio",
+      "request": {
+        "method": "POST",
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "trackType", "type": "text", "value": "MIXED" },
+            { "key": "userId", "type": "text", "value": "{{userId}}" },
+            { "key": "audio", "type": "file", "src": "" }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/studies/{{studyId}}/meetings/{{meetingId}}/recording/audio",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "studies", "{{studyId}}", "meetings", "{{meetingId}}", "recording", "audio"]
+        }
+      }
+    },
+    {
+      "name": "15. Get recording audio",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/studies/{{studyId}}/meetings/{{meetingId}}/recording/audio?trackType=MIXED",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "studies", "{{studyId}}", "meetings", "{{meetingId}}", "recording", "audio"],
+          "query": [
+            { "key": "trackType", "value": "MIXED" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "16. Upload STT text file",
+      "request": {
+        "method": "POST",
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "trackType", "type": "text", "value": "MIXED" },
+            { "key": "userId", "type": "text", "value": "{{userId}}" },
+            { "key": "file", "type": "file", "src": "" }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/studies/{{studyId}}/meetings/{{meetingId}}/stt/file",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "studies", "{{studyId}}", "meetings", "{{meetingId}}", "stt", "file"]
+        }
+      }
+    },
+    {
+      "name": "17. Get STT text file",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/studies/{{studyId}}/meetings/{{meetingId}}/stt/file?trackType=MIXED",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "studies", "{{studyId}}", "meetings", "{{meetingId}}", "stt", "file"],
+          "query": [
+            { "key": "trackType", "value": "MIXED" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "18. Upload summary text file",
+      "request": {
+        "method": "POST",
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "trackType", "type": "text", "value": "MIXED" },
+            { "key": "userId", "type": "text", "value": "{{userId}}" },
+            { "key": "file", "type": "file", "src": "" }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/studies/{{studyId}}/meetings/{{meetingId}}/summary/file",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "studies", "{{studyId}}", "meetings", "{{meetingId}}", "summary", "file"]
+        }
+      }
+    },
+    {
+      "name": "19. Get summary text file",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/studies/{{studyId}}/meetings/{{meetingId}}/summary/file?trackType=MIXED",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "studies", "{{studyId}}", "meetings", "{{meetingId}}", "summary", "file"],
+          "query": [
+            { "key": "trackType", "value": "MIXED" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "20. Get photos",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/studies/{{studyId}}/meetings/{{meetingId}}/photos",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "studies", "{{studyId}}", "meetings", "{{meetingId}}", "photos"]
+        }
+      }
+    },
+    {
+      "name": "21. Upload photo",
+      "request": {
+        "method": "POST",
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "image", "type": "file", "src": "" }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/studies/{{studyId}}/meetings/{{meetingId}}/photos",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "studies", "{{studyId}}", "meetings", "{{meetingId}}", "photos"]
+        }
+      }
+    },
+    {
+      "name": "22. Export markdown",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/studies/{{studyId}}/meetings/{{meetingId}}/export?format=MARKDOWN",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "studies", "{{studyId}}", "meetings", "{{meetingId}}", "export"],
+          "query": [
+            { "key": "format", "value": "MARKDOWN" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "23. Export PDF",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/studies/{{studyId}}/meetings/{{meetingId}}/export?format=PDF",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "studies", "{{studyId}}", "meetings", "{{meetingId}}", "export"],
+          "query": [
+            { "key": "format", "value": "PDF" }
+          ]
+        }
+      }
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "studyId", "value": "1" },
+    { "key": "meetingId", "value": "1" },
+    { "key": "userId", "value": "1" }
+  ]
+}

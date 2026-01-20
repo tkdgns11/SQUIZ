@@ -7,11 +7,9 @@ import com.ssafy.common.response.PageResponse;
 import com.ssafy.domain.meeting.dto.request.MeetingActionItemRequest;
 import com.ssafy.domain.meeting.dto.request.MeetingKeywordUpdateRequest;
 import com.ssafy.domain.meeting.dto.request.MeetingMuteRequest;
-import com.ssafy.domain.meeting.dto.request.MeetingParticipantSummaryRequest;
 import com.ssafy.domain.meeting.dto.request.MeetingRecordingRequest;
 import com.ssafy.domain.meeting.dto.request.MeetingRequest;
 import com.ssafy.domain.meeting.dto.request.MeetingSummaryUpdateRequest;
-import com.ssafy.domain.meeting.dto.request.MeetingTranscriptRequest;
 import com.ssafy.domain.meeting.dto.response.*;
 import com.ssafy.domain.meeting.entity.MeetingType;
 import com.ssafy.domain.meeting.service.MeetingService;
@@ -41,7 +39,6 @@ public class MeetingController {
     private final MeetingService meetingService;
 
     @GetMapping
-    @Operation(summary = "미팅 목록", description = "스터디 미팅 기록 목록을 페이지 단위로 조회한다.")
     public ResponseEntity<PageResponse<MeetingListItemResponse>> list(
             @PathVariable Long studyId,
             @RequestParam(required = false) MeetingType meetingType,
@@ -54,7 +51,6 @@ public class MeetingController {
     }
 
     @GetMapping("/{meetingId}")
-    @Operation(summary = "미팅 상세", description = "미팅 상세 정보 및 참가자, 요약 정보를 조회한다.")
     public ResponseEntity<ApiResponse<MeetingDetailResponse>> detail(
             @PathVariable Long studyId,
             @PathVariable Long meetingId
@@ -63,7 +59,6 @@ public class MeetingController {
     }
 
     @PostMapping
-    @Operation(summary = "미팅 시작", description = "미팅을 시작하고 화상회의 룸 토큰을 반환한다.")
     public ResponseEntity<ApiResponse<MeetingResponse>> start(
             @PathVariable Long studyId,
             @Valid @RequestBody MeetingRequest request
@@ -73,7 +68,6 @@ public class MeetingController {
     }
 
     @PutMapping("/{meetingId}/end")
-    @Operation(summary = "미팅 종료", description = "미팅을 종료하고 요약 생성 상태를 반환한다.")
     public ResponseEntity<ApiResponse<MeetingEndResponse>> end(
             @PathVariable Long studyId,
             @PathVariable Long meetingId
@@ -82,7 +76,6 @@ public class MeetingController {
     }
 
     @PostMapping("/{meetingId}/join")
-    @Operation(summary = "미팅 참여", description = "미팅에 참여하고 WebRTC 접속 정보를 반환한다.")
     public ResponseEntity<ApiResponse<MeetingJoinResponse>> join(
             @PathVariable Long studyId,
             @PathVariable Long meetingId,
@@ -93,7 +86,6 @@ public class MeetingController {
     }
 
     @PostMapping("/{meetingId}/leave")
-    @Operation(summary = "미팅 퇴장", description = "미팅에서 퇴장 처리한다.")
     public ResponseEntity<ApiResponse<MessageResponse>> leave(
             @PathVariable Long studyId,
             @PathVariable Long meetingId,
@@ -105,7 +97,6 @@ public class MeetingController {
     }
 
     @GetMapping("/{meetingId}/summary")
-    @Operation(summary = "미팅 요약 조회", description = "요약 생성 완료된 미팅의 요약을 조회한다.")
     public ResponseEntity<ApiResponse<MeetingSummaryResponse>> summary(
             @PathVariable Long studyId,
             @PathVariable Long meetingId
@@ -114,7 +105,6 @@ public class MeetingController {
     }
 
     @PutMapping("/{meetingId}/summary")
-    @Operation(summary = "미팅 요약 업데이트", description = "요약/키워드/액션아이템/상태를 저장한다.")
     public ResponseEntity<ApiResponse<MeetingSummaryResponse>> upsertSummary(
             @PathVariable Long studyId,
             @PathVariable Long meetingId,
@@ -123,18 +113,10 @@ public class MeetingController {
         return ResponseEntity.ok(ApiResponse.success(meetingService.upsertSummary(studyId, meetingId, request)));
     }
 
-    @GetMapping("/{meetingId}/transcript")
-    @Operation(summary = "미팅 전사 조회", description = "미팅 전사 로그를 페이지 단위로 조회한다.")
-    public ResponseEntity<ApiResponse<MeetingTranscriptPageResponse>> transcript(
-            @PathVariable Long studyId,
-            @PathVariable Long meetingId,
-            Pageable pageable
-    ) {
-        return ResponseEntity.ok(ApiResponse.success(meetingService.getTranscripts(studyId, meetingId, pageable)));
-    }
+ 
 
     @GetMapping("/{meetingId}/chat")
-    @Operation(summary = "誘명똿 梨꾪똿 議고쉶", description = "誘명똿 梨꾪똿 湲곕줉???섏씠吏 ?⑥쐞濡?議고쉶?쒕떎.")
+    @Operation(summary = "미팅 채팅 조회", description = "미팅 채팅 히스토리를 페이지 형태로 조회합니다.")
     public ResponseEntity<ApiResponse<MeetingChatMessagePageResponse>> chatHistory(
             @PathVariable Long studyId,
             @PathVariable Long meetingId,
@@ -143,19 +125,7 @@ public class MeetingController {
         return ResponseEntity.ok(ApiResponse.success(meetingService.getChatMessages(studyId, meetingId, pageable)));
     }
 
-    @PostMapping("/{meetingId}/transcript")
-    @Operation(summary = "미팅 전사 저장", description = "전사 한 건을 저장한다.")
-    public ResponseEntity<ApiResponse<MeetingTranscriptItemResponse>> addTranscript(
-            @PathVariable Long studyId,
-            @PathVariable Long meetingId,
-            @Valid @RequestBody MeetingTranscriptRequest request
-    ) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(meetingService.addTranscript(studyId, meetingId, request)));
-    }
-
     @GetMapping("/{meetingId}/recording")
-    @Operation(summary = "미팅 녹음 조회", description = "미팅 녹음 메타데이터를 조회한다.")
     public ResponseEntity<ApiResponse<MeetingRecordingResponse>> getRecording(
             @PathVariable Long studyId,
             @PathVariable Long meetingId
@@ -164,7 +134,6 @@ public class MeetingController {
     }
 
     @PutMapping("/{meetingId}/recording")
-    @Operation(summary = "미팅 녹음 저장", description = "미팅 녹음 메타데이터를 저장한다.")
     public ResponseEntity<ApiResponse<MeetingRecordingResponse>> upsertRecording(
             @PathVariable Long studyId,
             @PathVariable Long meetingId,
@@ -173,8 +142,97 @@ public class MeetingController {
         return ResponseEntity.ok(ApiResponse.success(meetingService.upsertRecording(studyId, meetingId, request)));
     }
 
+    @PostMapping("/{meetingId}/recording/video")
+    @Operation(summary = "Meeting recording video upload", description = "Upload meeting recording video file.")
+    public ResponseEntity<ApiResponse<MeetingRecordingResponse>> uploadRecordingVideo(
+            @PathVariable Long studyId,
+            @PathVariable Long meetingId,
+            @RequestPart("video") MultipartFile video
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(meetingService.uploadRecordingVideo(studyId, meetingId, video)));
+    }
+
+    @PostMapping("/{meetingId}/recording/audio")
+    @Operation(summary = "Meeting recording audio upload", description = "Upload meeting recording audio file.")
+    public ResponseEntity<ApiResponse<MeetingAudioRecordingResponse>> uploadRecordingAudio(
+            @PathVariable Long studyId,
+            @PathVariable Long meetingId,
+            @RequestParam("trackType") com.ssafy.domain.meeting.entity.MeetingAudioTrackType trackType,
+            @RequestParam(value = "userId", required = false) Long userId,
+            @RequestPart("audio") MultipartFile audio
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(
+                        meetingService.uploadRecordingAudio(studyId, meetingId, trackType, userId, audio)));
+    }
+
+    @GetMapping("/{meetingId}/recording/audio")
+    @Operation(summary = "Meeting recording audio list", description = "List uploaded audio recordings.")
+    public ResponseEntity<ApiResponse<List<MeetingAudioRecordingResponse>>> getAudioRecordings(
+            @PathVariable Long studyId,
+            @PathVariable Long meetingId,
+            @RequestParam(value = "trackType", required = false)
+            com.ssafy.domain.meeting.entity.MeetingAudioTrackType trackType,
+            @RequestParam(value = "userId", required = false) Long userId
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(
+                meetingService.getAudioRecordings(studyId, meetingId, trackType, userId)));
+    }
+
+    @PostMapping("/{meetingId}/stt/file")
+    @Operation(summary = "Meeting STT text upload", description = "Upload STT text file (stt.txt).")
+    public ResponseEntity<ApiResponse<MeetingSttFileResponse>> uploadSttTextFile(
+            @PathVariable Long studyId,
+            @PathVariable Long meetingId,
+            @RequestParam("trackType") com.ssafy.domain.meeting.entity.MeetingTextTrackType trackType,
+            @RequestParam(value = "userId", required = false) Long userId,
+            @RequestPart("file") MultipartFile file
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(
+                        meetingService.uploadSttTextFile(studyId, meetingId, trackType, userId, file)));
+    }
+
+    @PostMapping("/{meetingId}/summary/file")
+    @Operation(summary = "Meeting summary text upload", description = "Upload summary text file (summary.txt).")
+    public ResponseEntity<ApiResponse<MeetingSttSummaryResponse>> uploadSummaryTextFile(
+            @PathVariable Long studyId,
+            @PathVariable Long meetingId,
+            @RequestParam("trackType") com.ssafy.domain.meeting.entity.MeetingTextTrackType trackType,
+            @RequestParam(value = "userId", required = false) Long userId,
+            @RequestPart("file") MultipartFile file
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(
+                        meetingService.uploadSummaryTextFile(studyId, meetingId, trackType, userId, file)));
+    }
+
+    @GetMapping("/{meetingId}/stt/file")
+    @Operation(summary = "Meeting STT text file info", description = "Get STT text file metadata.")
+    public ResponseEntity<ApiResponse<MeetingSttFileResponse>> getSttTextFile(
+            @PathVariable Long studyId,
+            @PathVariable Long meetingId,
+            @RequestParam("trackType") com.ssafy.domain.meeting.entity.MeetingTextTrackType trackType,
+            @RequestParam(value = "userId", required = false) Long userId
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(
+                meetingService.getMeetingSttFile(studyId, meetingId, trackType, userId)));
+    }
+
+    @GetMapping("/{meetingId}/summary/file")
+    @Operation(summary = "Meeting summary text file info", description = "Get summary text file metadata.")
+    public ResponseEntity<ApiResponse<MeetingSttSummaryResponse>> getSummaryTextFile(
+            @PathVariable Long studyId,
+            @PathVariable Long meetingId,
+            @RequestParam("trackType") com.ssafy.domain.meeting.entity.MeetingTextTrackType trackType,
+            @RequestParam(value = "userId", required = false) Long userId
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(
+                meetingService.getMeetingSttSummary(studyId, meetingId, trackType, userId)));
+    }
+
     @GetMapping("/{meetingId}/photos")
-    @Operation(summary = "미팅 사진 목록", description = "미팅 스냅샷 목록을 조회한다.")
     public ResponseEntity<ApiResponse<List<MeetingPhotoResponse>>> photos(
             @PathVariable Long studyId,
             @PathVariable Long meetingId
@@ -183,7 +241,6 @@ public class MeetingController {
     }
 
     @PostMapping("/{meetingId}/photos")
-    @Operation(summary = "미팅 사진 등록", description = "미팅 스냅샷 이미지를 저장한다.")
     public ResponseEntity<ApiResponse<MeetingPhotoResponse>> addPhoto(
             @PathVariable Long studyId,
             @PathVariable Long meetingId,
@@ -194,7 +251,6 @@ public class MeetingController {
     }
 
     @PutMapping("/{meetingId}/keywords")
-    @Operation(summary = "미팅 키워드 업데이트", description = "미팅 키워드 목록을 저장한다.")
     public ResponseEntity<ApiResponse<MessageResponse>> updateKeywords(
             @PathVariable Long studyId,
             @PathVariable Long meetingId,
@@ -205,7 +261,7 @@ public class MeetingController {
     }
 
     @PutMapping("/{meetingId}/participants/{userId}/mute")
-    @Operation(summary = "참가자 음소거", description = "미팅 참가자의 음소거 상태를 변경한다.")
+    @Operation(summary = "참여자 음소거 변경", description = "미팅 참여자의 음소거 상태를 변경합니다.")
     public ResponseEntity<ApiResponse<MessageResponse>> muteParticipant(
             @PathVariable Long studyId,
             @PathVariable Long meetingId,
@@ -216,28 +272,8 @@ public class MeetingController {
         return ResponseEntity.ok(ApiResponse.success("Participant updated"));
     }
 
-    @GetMapping("/{meetingId}/participant-summaries")
-    @Operation(summary = "참가자 요약 조회", description = "미팅 참가자별 요약을 조회한다.")
-    public ResponseEntity<ApiResponse<List<MeetingParticipantSummaryResponse>>> participantSummaries(
-            @PathVariable Long studyId,
-            @PathVariable Long meetingId
-    ) {
-        return ResponseEntity.ok(ApiResponse.success(meetingService.getParticipantSummaries(studyId, meetingId)));
-    }
-
-    @PutMapping("/{meetingId}/participant-summaries")
-    @Operation(summary = "참가자 요약 저장", description = "미팅 참가자별 요약을 저장한다.")
-    public ResponseEntity<ApiResponse<List<MeetingParticipantSummaryResponse>>> upsertParticipantSummaries(
-            @PathVariable Long studyId,
-            @PathVariable Long meetingId,
-            @RequestBody List<MeetingParticipantSummaryRequest> requests
-    ) {
-        return ResponseEntity.ok(ApiResponse.success(
-                meetingService.upsertParticipantSummaries(studyId, meetingId, requests)));
-    }
-
     @GetMapping("/{meetingId}/action-items")
-    @Operation(summary = "액션 아이템 목록", description = "미팅 액션 아이템을 조회한다.")
+    @Operation(summary = "액션아이템 조회", description = "미팅 액션아이템 목록을 조회합니다.")
     public ResponseEntity<ApiResponse<List<MeetingActionItemResponse>>> actionItems(
             @PathVariable Long studyId,
             @PathVariable Long meetingId
@@ -246,7 +282,7 @@ public class MeetingController {
     }
 
     @PostMapping("/{meetingId}/action-items")
-    @Operation(summary = "액션 아이템 생성", description = "미팅 액션 아이템을 추가한다.")
+    @Operation(summary = "액션아이템 추가", description = "미팅 액션아이템을 추가합니다.")
     public ResponseEntity<ApiResponse<MeetingActionItemResponse>> addActionItem(
             @PathVariable Long studyId,
             @PathVariable Long meetingId,
@@ -257,7 +293,7 @@ public class MeetingController {
     }
 
     @PutMapping("/{meetingId}/action-items/{actionItemId}")
-    @Operation(summary = "액션 아이템 수정", description = "담당자, 상태, 내용을 수정한다.")
+    @Operation(summary = "액션아이템 수정", description = "액션아이템 내용을 수정합니다.")
     public ResponseEntity<ApiResponse<MeetingActionItemResponse>> updateActionItem(
             @PathVariable Long studyId,
             @PathVariable Long meetingId,
@@ -269,7 +305,6 @@ public class MeetingController {
     }
 
     @GetMapping("/{meetingId}/export")
-    @Operation(summary = "미팅 내보내기", description = "미팅 기록을 Markdown 또는 PDF로 내보낸다.")
     public ResponseEntity<byte[]> export(
             @PathVariable Long studyId,
             @PathVariable Long meetingId,
@@ -300,3 +335,4 @@ public class MeetingController {
         return userId;
     }
 }
+

@@ -10,6 +10,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
+import com.ssafy.domain.user.dto.response.StatsResponse;
+import java.time.LocalDateTime;
+
 
 @Service
 @RequiredArgsConstructor
@@ -118,5 +121,33 @@ public class UserServiceImpl implements UserService {
         } catch (Exception e) {
             return "[]";
         }
+    }
+
+    /**
+     * 서비스 통계 조회
+     */
+    @Override
+    public StatsResponse getServiceStats() {
+        // 전체 사용자 수
+        long totalUsers = userRepository.count();
+
+        // 활성 사용자 수
+        long activeUsers = userRepository.countByIsActive(true);
+
+        // 오늘 가입자 수
+        LocalDateTime todayStart = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0);
+        long todayNewUsers = userRepository.countByCreatedAtAfter(todayStart);
+
+        // TODO: 스터디 관련 통계 (Study 도메인 구현 후 추가)
+        long totalStudies = 0L;
+        long activeStudies = 0L;
+
+        return StatsResponse.builder()
+                .totalUsers(totalUsers)
+                .activeUsers(activeUsers)
+                .todayNewUsers(todayNewUsers)
+                .totalStudies(totalStudies)
+                .activeStudies(activeStudies)
+                .build();
     }
 }

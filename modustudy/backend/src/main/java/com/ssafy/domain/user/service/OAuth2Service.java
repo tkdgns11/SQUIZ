@@ -71,32 +71,17 @@ public class OAuth2Service {
         // 2. Access Token으로 사용자 정보 받기
         OAuth2UserInfo userInfo = getKakaoUserInfo(kakaoAccessToken);
 
-        // 3. 기존 회원 확인 또는 신규 회원 생성
-        Optional<UserSocialAccount> existingSocial = socialAccountRepository
-                .findByProviderAndProviderUserId(SocialProvider.KAKAO, userInfo.getProviderId());
+        // 3. 이메일 기반 User 찾기 또는 생성 + 소셜 계정 연동
+        User user = findOrCreateUserWithSocial(userInfo, SocialProvider.KAKAO);
 
-        User user;
-        boolean isNewUser;
+        // 4. 신규 유저 여부 판단 (nickname이 없으면 추가 정보 입력 필요)
+        boolean isNewUser = (user.getNickname() == null);
 
-        if (existingSocial.isPresent()) {
-            user = existingSocial.get().getUser();
-            user.setLastLoginAt(LocalDateTime.now());
-            user.setIsOnline(true);
-            isNewUser = false;
-            log.info("기존 회원 로그인: userId={}", user.getId());
-        } else {
-            user = createNewUserForKakao(userInfo);
-            isNewUser = true;
-            log.info("신규 회원 가입: userId={}", user.getId());
-        }
-
-        userRepository.save(user);
-
-        // 4. JWT 토큰 발급
+        // 5. JWT 토큰 발급
         String accessToken = jwtTokenUtil.createAccessToken(String.valueOf(user.getId()));
         String refreshToken = jwtTokenUtil.createRefreshToken(String.valueOf(user.getId()));
 
-        // 5. Refresh Token 저장
+        // 6. Refresh Token 저장
         saveRefreshToken(user, refreshToken);
 
         return AuthResponse.builder()
@@ -152,42 +137,6 @@ public class OAuth2Service {
         return OAuth2UserInfo.fromKakao(response.getBody());
     }
 
-    /**
-     * 신규 회원 생성 (카카오)
-     */
-    private User createNewUserForKakao(OAuth2UserInfo userInfo) {
-        User user = User.builder()
-                .email(userInfo.getEmail())
-                .name(userInfo.getName())
-                .nickname(null)
-                .profileImage(userInfo.getProfileImageUrl())
-                .role(Role.USER)
-                .isActive(true)
-                .lastLoginAt(LocalDateTime.now())
-                .isOnline(true)
-                .isSearchable(true)
-                .totalExp(0)
-                .currentPoints(0)
-                .currentLevel(1)
-                .levelName("새싹")
-                .build();
-
-        User savedUser = userRepository.save(user);
-
-        UserSocialAccount socialAccount = UserSocialAccount.builder()
-                .user(savedUser)
-                .provider(SocialProvider.KAKAO)
-                .providerUserId(userInfo.getProviderId())
-                .email(userInfo.getEmail())
-                .isPrimary(true)
-                .linkedAt(LocalDateTime.now())
-                .build();
-
-        socialAccountRepository.save(socialAccount);
-
-        return savedUser;
-    }
-
     // ==================== 네이버 ====================
 
     @Value("${spring.security.oauth2.client.registration.naver.client-id}")
@@ -222,32 +171,17 @@ public class OAuth2Service {
         // 2. Access Token으로 사용자 정보 받기
         OAuth2UserInfo userInfo = getNaverUserInfo(naverAccessToken);
 
-        // 3. 기존 회원 확인 또는 신규 회원 생성
-        Optional<UserSocialAccount> existingSocial = socialAccountRepository
-                .findByProviderAndProviderUserId(SocialProvider.NAVER, userInfo.getProviderId());
+        // 3. 이메일 기반 User 찾기 또는 생성 + 소셜 계정 연동
+        User user = findOrCreateUserWithSocial(userInfo, SocialProvider.NAVER);
 
-        User user;
-        boolean isNewUser;
+        // 4. 신규 유저 여부 판단 (nickname이 없으면 추가 정보 입력 필요)
+        boolean isNewUser = (user.getNickname() == null);
 
-        if (existingSocial.isPresent()) {
-            user = existingSocial.get().getUser();
-            user.setLastLoginAt(LocalDateTime.now());
-            user.setIsOnline(true);
-            isNewUser = false;
-            log.info("기존 회원 로그인: userId={}", user.getId());
-        } else {
-            user = createNewUserForNaver(userInfo);
-            isNewUser = true;
-            log.info("신규 회원 가입: userId={}", user.getId());
-        }
-
-        userRepository.save(user);
-
-        // 4. JWT 토큰 발급
+        // 5. JWT 토큰 발급
         String accessToken = jwtTokenUtil.createAccessToken(String.valueOf(user.getId()));
         String refreshToken = jwtTokenUtil.createRefreshToken(String.valueOf(user.getId()));
 
-        // 5. Refresh Token 저장
+        // 6. Refresh Token 저장
         saveRefreshToken(user, refreshToken);
 
         return AuthResponse.builder()
@@ -309,42 +243,6 @@ public class OAuth2Service {
         return OAuth2UserInfo.fromNaver(response.getBody());
     }
 
-    /**
-     * 신규 회원 생성 (네이버)
-     */
-    private User createNewUserForNaver(OAuth2UserInfo userInfo) {
-        User user = User.builder()
-                .email(userInfo.getEmail())
-                .name(userInfo.getName())
-                .nickname(null)
-                .profileImage(userInfo.getProfileImageUrl())
-                .role(Role.USER)
-                .isActive(true)
-                .lastLoginAt(LocalDateTime.now())
-                .isOnline(true)
-                .isSearchable(true)
-                .totalExp(0)
-                .currentPoints(0)
-                .currentLevel(1)
-                .levelName("새싹")
-                .build();
-
-        User savedUser = userRepository.save(user);
-
-        UserSocialAccount socialAccount = UserSocialAccount.builder()
-                .user(savedUser)
-                .provider(SocialProvider.NAVER)
-                .providerUserId(userInfo.getProviderId())
-                .email(userInfo.getEmail())
-                .isPrimary(true)
-                .linkedAt(LocalDateTime.now())
-                .build();
-
-        socialAccountRepository.save(socialAccount);
-
-        return savedUser;
-    }
-
     // ==================== 구글 ====================
 
     @Value("${spring.security.oauth2.client.registration.google.client-id}")
@@ -381,32 +279,17 @@ public class OAuth2Service {
         // 2. Access Token으로 사용자 정보 받기
         OAuth2UserInfo userInfo = getGoogleUserInfo(googleAccessToken);
 
-        // 3. 기존 회원 확인 또는 신규 회원 생성
-        Optional<UserSocialAccount> existingSocial = socialAccountRepository
-                .findByProviderAndProviderUserId(SocialProvider.GOOGLE, userInfo.getProviderId());
+        // 3. 이메일 기반 User 찾기 또는 생성 + 소셜 계정 연동
+        User user = findOrCreateUserWithSocial(userInfo, SocialProvider.GOOGLE);
 
-        User user;
-        boolean isNewUser;
+        // 4. 신규 유저 여부 판단 (nickname이 없으면 추가 정보 입력 필요)
+        boolean isNewUser = (user.getNickname() == null);
 
-        if (existingSocial.isPresent()) {
-            user = existingSocial.get().getUser();
-            user.setLastLoginAt(LocalDateTime.now());
-            user.setIsOnline(true);
-            isNewUser = false;
-            log.info("기존 회원 로그인: userId={}", user.getId());
-        } else {
-            user = createNewUserForGoogle(userInfo);
-            isNewUser = true;
-            log.info("신규 회원 가입: userId={}", user.getId());
-        }
-
-        userRepository.save(user);
-
-        // 4. JWT 토큰 발급
+        // 5. JWT 토큰 발급
         String accessToken = jwtTokenUtil.createAccessToken(String.valueOf(user.getId()));
         String refreshToken = jwtTokenUtil.createRefreshToken(String.valueOf(user.getId()));
 
-        // 5. Refresh Token 저장
+        // 6. Refresh Token 저장
         saveRefreshToken(user, refreshToken);
 
         return AuthResponse.builder()
@@ -468,43 +351,91 @@ public class OAuth2Service {
         return OAuth2UserInfo.fromGoogle(response.getBody());
     }
 
+    // ==================== 공통 헬퍼 메서드 ====================
+
     /**
-     * 신규 회원 생성 (구글)
+     * 이메일로 User 찾기 또는 생성 + 소셜 계정 연동
+     *
+     * 핵심 로직:
+     * 1. 이메일로 기존 User 찾기
+     * 2. User 있으면 → 해당 provider로 소셜 계정 추가
+     * 3. User 없으면 → 신규 User + 소셜 계정 생성
      */
-    private User createNewUserForGoogle(OAuth2UserInfo userInfo) {
-        User user = User.builder()
-                .email(userInfo.getEmail())
-                .name(userInfo.getName())
-                .nickname(null)
-                .profileImage(userInfo.getProfileImageUrl())
-                .role(Role.USER)
-                .isActive(true)
-                .lastLoginAt(LocalDateTime.now())
-                .isOnline(true)
-                .isSearchable(true)
-                .totalExp(0)
-                .currentPoints(0)
-                .currentLevel(1)
-                .levelName("새싹")
-                .build();
+    private User findOrCreateUserWithSocial(OAuth2UserInfo userInfo, SocialProvider provider) {
 
-        User savedUser = userRepository.save(user);
+        // 1. 이메일로 기존 User 찾기
+        Optional<User> existingUser = userRepository.findByEmail(userInfo.getEmail());
 
-        UserSocialAccount socialAccount = UserSocialAccount.builder()
-                .user(savedUser)
-                .provider(SocialProvider.GOOGLE)
-                .providerUserId(userInfo.getProviderId())
-                .email(userInfo.getEmail())
-                .isPrimary(true)
-                .linkedAt(LocalDateTime.now())
-                .build();
+        User user;
 
-        socialAccountRepository.save(socialAccount);
+        if (existingUser.isPresent()) {
+            // ===== 기존 User 있음 =====
+            user = existingUser.get();
 
-        return savedUser;
+            log.info("기존 회원 발견: userId={}, email={}", user.getId(), user.getEmail());
+
+            // 해당 provider로 이미 연동되었는지 확인
+            Optional<UserSocialAccount> existingSocial = socialAccountRepository
+                    .findByProviderAndProviderUserId(provider, userInfo.getProviderId());
+
+            if (existingSocial.isEmpty()) {
+                // 새로운 소셜 계정 추가!
+                UserSocialAccount newSocial = UserSocialAccount.builder()
+                        .user(user)
+                        .provider(provider)
+                        .providerUserId(userInfo.getProviderId())
+                        .email(userInfo.getEmail())
+                        .isPrimary(false)  // 추가 연동이므로 primary 아님
+                        .linkedAt(LocalDateTime.now())
+                        .build();
+
+                socialAccountRepository.save(newSocial);
+                log.info("소셜 계정 추가 연동: userId={}, provider={}", user.getId(), provider);
+            } else {
+                log.info("이미 연동된 소셜 계정: userId={}, provider={}", user.getId(), provider);
+            }
+
+        } else {
+            // ===== 신규 User 생성 =====
+            user = User.builder()
+                    .email(userInfo.getEmail())
+                    .name(userInfo.getName())
+                    .nickname(null)  // 추가 정보 입력 필요
+                    .profileImage(userInfo.getProfileImageUrl())
+                    .role(Role.USER)
+                    .isActive(true)
+                    .lastLoginAt(LocalDateTime.now())
+                    .isOnline(true)
+                    .isSearchable(true)
+                    .totalExp(0)
+                    .currentPoints(0)
+                    .currentLevel(1)
+                    .levelName("새싹")
+                    .build();
+
+            user = userRepository.save(user);
+
+            // 소셜 계정 생성
+            UserSocialAccount socialAccount = UserSocialAccount.builder()
+                    .user(user)
+                    .provider(provider)
+                    .providerUserId(userInfo.getProviderId())
+                    .email(userInfo.getEmail())
+                    .isPrimary(true)  // 첫 연동이므로 primary
+                    .linkedAt(LocalDateTime.now())
+                    .build();
+
+            socialAccountRepository.save(socialAccount);
+            log.info("신규 회원 가입: userId={}, provider={}", user.getId(), provider);
+        }
+
+        // 로그인 상태 업데이트
+        user.setLastLoginAt(LocalDateTime.now());
+        user.setIsOnline(true);
+        userRepository.save(user);
+
+        return user;
     }
-
-    // ==================== 공통 ====================
 
     /**
      * Refresh Token 저장

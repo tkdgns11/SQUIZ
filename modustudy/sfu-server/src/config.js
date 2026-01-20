@@ -12,8 +12,9 @@ const config = {
     || path.resolve(__dirname, '..', 'certs', 'key.pem'),
   sslCertPath: process.env.SFU_SSL_CERT_PATH
     || path.resolve(__dirname, '..', 'certs', 'cert.pem'),
+  // Wider UDP port range to support more concurrent transports locally.
   rtcMinPort: Number(process.env.RTC_MIN_PORT || 20000),
-  rtcMaxPort: Number(process.env.RTC_MAX_PORT || 20100),
+  rtcMaxPort: Number(process.env.RTC_MAX_PORT || 22000),
   mediaCodecs: [
     {
       kind: 'audio',

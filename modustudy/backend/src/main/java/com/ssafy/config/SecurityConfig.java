@@ -28,6 +28,8 @@ public class SecurityConfig {
                 // Swagger
                 .requestMatchers("/swagger-ui/**", "/api-docs/**", "/swagger-resources/**").permitAll()
                 .requestMatchers("/ws/**").permitAll()
+                // SFU config for WebRTC clients
+                .requestMatchers("/api/v1/sfu/**").permitAll()
                 // 인증 없이 접근 가능
                 .requestMatchers("/api/v1/auth/**").permitAll()
                 .requestMatchers("/api/v1/users").permitAll()

@@ -10,6 +10,7 @@ import com.ssafy.domain.meeting.dto.request.MeetingRequest;
 import com.ssafy.domain.meeting.dto.request.MeetingSummaryUpdateRequest;
 import com.ssafy.domain.meeting.dto.request.MeetingTranscriptRequest;
 import com.ssafy.domain.meeting.dto.response.*;
+import com.ssafy.config.SfuProperties;
 import com.ssafy.domain.meeting.entity.ActionItemStatus;
 import com.ssafy.domain.meeting.entity.Meeting;
 import com.ssafy.domain.meeting.entity.MeetingActionItem;
@@ -70,6 +71,7 @@ public class MeetingService {
     private final MeetingParticipantSummaryRepository meetingParticipantSummaryRepository;
     private final MeetingActionItemRepository meetingActionItemRepository;
     private final ObjectMapper objectMapper;
+    private final SfuProperties sfuProperties;
     @Value("${meeting.pdf.font-path:}")
     private String pdfFontPath;
 
@@ -187,7 +189,15 @@ public class MeetingService {
         }
         meetingParticipantRepository.save(participant);
         meeting.updateParticipantCount(meetingParticipantRepository.countByMeetingId(meetingId));
-        return new MeetingJoinResponse(buildRoomToken(meeting), Collections.emptyList());
+        // Provide ICE servers for WebRTC clients to connect to the SFU.
+        List<MeetingIceServerResponse> iceServers = sfuProperties.getIceServers().stream()
+                .filter(server -> server.getUrls() != null && !server.getUrls().isBlank())
+                .map(server -> new MeetingIceServerResponse(
+                        server.getUrls(),
+                        server.getUsername(),
+                        server.getCredential()))
+                .toList();
+        return new MeetingJoinResponse(buildRoomToken(meeting), iceServers);
     }
 
     @Transactional

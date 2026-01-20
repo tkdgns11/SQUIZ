@@ -1,3 +1,4 @@
+const http = require('http');
 const https = require('https');
 const express = require('express');
 const { Server } = require('socket.io');
@@ -6,19 +7,25 @@ const config = require('./config');
 const fs = require('fs');
 
 const app = express();
-if (!fs.existsSync(config.sslKeyPath) || !fs.existsSync(config.sslCertPath)) {
-  // eslint-disable-next-line no-console
-  console.error('Missing SSL files for SFU server', {
-    key: config.sslKeyPath,
-    cert: config.sslCertPath
-  });
-  process.exit(1);
+const useHttps = String(process.env.SFU_USE_HTTPS ?? 'true').toLowerCase() !== 'false';
+let server;
+if (useHttps) {
+  if (!fs.existsSync(config.sslKeyPath) || !fs.existsSync(config.sslCertPath)) {
+    // eslint-disable-next-line no-console
+    console.error('Missing SSL files for SFU server', {
+      key: config.sslKeyPath,
+      cert: config.sslCertPath
+    });
+    process.exit(1);
+  }
+  // Use HTTPS in production; local dev can opt-out with SFU_USE_HTTPS=false.
+  server = https.createServer({
+    key: fs.readFileSync(config.sslKeyPath),
+    cert: fs.readFileSync(config.sslCertPath)
+  }, app);
+} else {
+  server = http.createServer(app);
 }
-
-const server = https.createServer({
-  key: fs.readFileSync(config.sslKeyPath),
-  cert: fs.readFileSync(config.sslCertPath)
-}, app);
 const corsOrigins = config.corsOrigins.includes('*') ? '*' : config.corsOrigins;
 const io = new Server(server, {
   cors: {

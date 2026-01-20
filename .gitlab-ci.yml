@@ -6,6 +6,7 @@ stages:
 variables:
   GRADLE_OPTS: "-Dorg.gradle.daemon=false"
   DEPLOY_PATH: "/home/ubuntu/squiz"
+  COMPOSE_HTTP_TIMEOUT: "300"
 
 # ===========================================
 # Build Stage

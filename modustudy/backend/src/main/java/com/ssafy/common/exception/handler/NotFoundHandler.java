@@ -19,17 +19,17 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
 /*
- * 
+ *
  * SPA처리를 위한 ControllerAdvice.
  * 요청에 해당하는 Request Mapping이 존재하지 않을 경우 Default로 index.html을 렌더링한다.
- * 
+ *
  */
 
 @ControllerAdvice
 public class NotFoundHandler {
 	@Value("${spa.default-file}")
 	String defaultFile;
-	 
+
 	@ExceptionHandler(NoHandlerFoundException.class)
 	public ResponseEntity<String> renderDefaultPage(NoHandlerFoundException ex) {
 		String url = ex.getRequestURL();
@@ -38,16 +38,16 @@ public class NotFoundHandler {
 			return ResponseEntity.notFound().build();
 		}
 		// 정적 리소스 경로는 404 반환 (리소스 핸들러가 처리해야 함)
-		if(url.startsWith("/assets/") || 
-		   url.startsWith("/css/") || 
-		   url.startsWith("/js/") || 
-		   url.startsWith("/img/") || 
-		   url.startsWith("/fonts/") || 
-		   url.startsWith("/icons/") || 
-		   url.startsWith("/resources/") ||
-		   url.startsWith("/dist/") ||
-		   url.startsWith("/upload/") ||
-		   url.equals("/favicon.ico")) {
+		if(url.startsWith("/assets/") ||
+				url.startsWith("/css/") ||
+				url.startsWith("/js/") ||
+				url.startsWith("/img/") ||
+				url.startsWith("/fonts/") ||
+				url.startsWith("/icons/") ||
+				url.startsWith("/resources/") ||
+				url.startsWith("/dist/") ||
+				url.startsWith("/upload/") ||
+				url.equals("/favicon.ico")) {
 			return ResponseEntity.notFound().build();
 		}
 		// 그 외의 경로는 SPA 라우팅을 위해 index.html 반환

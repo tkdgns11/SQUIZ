@@ -29,7 +29,8 @@ test:
   stage: test
   script:
     - cd modustudy/backend
-    - ./gradlew test
+    - chmod +x gradlew
+    - source /etc/environment && export SPRING_PROFILES_ACTIVE=test && ./gradlew test
   only:
     - master
     - main

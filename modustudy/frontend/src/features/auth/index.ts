@@ -1,4 +1,4 @@
-export * from './LoginPage';
-export * from './SignupPage';
-export * from './LoginCallbackPage';
-export { default as AuthLayout } from './AuthLayout';
+export * from './components/LoginPage';
+export * from './components/SignupPage';
+export * from './components/LoginCallbackPage';
+export { default as AuthLayout } from './components/AuthLayout';

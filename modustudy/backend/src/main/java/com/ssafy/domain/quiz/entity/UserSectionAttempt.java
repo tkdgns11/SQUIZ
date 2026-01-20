@@ -1,14 +1,17 @@
 package com.ssafy.domain.quiz.entity;
 
 import com.ssafy.common.entity.BaseEntity;
+import com.ssafy.domain.quiz.entity.enums.AttemptStatus;
 import com.ssafy.domain.user.entity.User;
 import jakarta.persistence.*;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 사용자별 섹션 시도 기록 엔티티.
@@ -19,7 +22,9 @@ import lombok.NoArgsConstructor;
  * DDL 참조: docs/sql/ERD.sql - user_section_attempt
  */
 @Entity
-@Table(name = "user_section_attempt")
+@Table(name = "user_section_attempt", indexes = {
+        @Index(name = "idx_attempt_user_section_status", columnList = "user_id, quiz_course_id, section_number, status")
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserSectionAttempt extends BaseEntity {
@@ -32,11 +37,21 @@ public class UserSectionAttempt extends BaseEntity {
     private User user;
 
     /**
-     * 시도한 섹션.
+     * 시도한 섹션 (복합 FK: section_number + quiz_course_id).
      */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "section_id", nullable = false)
+    @JoinColumns({
+            @JoinColumn(name = "section_number", referencedColumnName = "section_number", nullable = false),
+            @JoinColumn(name = "quiz_course_id", referencedColumnName = "quiz_course_id", nullable = false)
+    })
     private QuizCourseSection section;
+
+    /**
+     * 시도 상태.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private AttemptStatus status = AttemptStatus.IN_PROGRESS;
 
     /**
      * 획득 점수 (%).
@@ -51,7 +66,7 @@ public class UserSectionAttempt extends BaseEntity {
     private Integer correctCount = 0;
 
     /**
-     * 총 문제 수.
+     * 총 문제 수 (이 시도에 할당된 문제 수).
      */
     @Column(name = "total_questions")
     private Integer totalQuestions = 0;
@@ -62,14 +77,61 @@ public class UserSectionAttempt extends BaseEntity {
     @Column(name = "is_passed")
     private Boolean isPassed = false;
 
+    /**
+     * 시도 완료 시각.
+     */
+    @Column(name = "completed_at")
+    private LocalDateTime completedAt;
+
+    /**
+     * 이 시도에 할당된 문제 목록 (셔플된 순서로 저장).
+     */
+    @OneToMany(mappedBy = "attempt", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("orderIndex ASC")
+    private List<UserSectionAttemptQuestion> attemptQuestions = new ArrayList<>();
+
     @Builder
-    public UserSectionAttempt(User user, QuizCourseSection section, Integer score,
-                               Integer correctCount, Integer totalQuestions, Boolean isPassed) {
+    public UserSectionAttempt(User user, QuizCourseSection section, Integer totalQuestions) {
         this.user = user;
         this.section = section;
-        this.score = score;
+        this.status = AttemptStatus.IN_PROGRESS;
+        this.totalQuestions = totalQuestions != null ? totalQuestions : 0;
+    }
+
+    /**
+     * 시도에 문제를 추가한다.
+     */
+    public void addAttemptQuestion(UserSectionAttemptQuestion attemptQuestion) {
+        this.attemptQuestions.add(attemptQuestion);
+        attemptQuestion.setAttempt(this);
+    }
+
+    /**
+     * 시도를 완료 처리한다.
+     *
+     * @param correctCount 맞힌 문제 수
+     * @param passScore    통과 기준 점수 (%)
+     */
+    public void complete(int correctCount, int passScore) {
         this.correctCount = correctCount;
-        this.totalQuestions = totalQuestions;
-        this.isPassed = isPassed;
+        this.score = totalQuestions > 0 ? (correctCount * 100) / totalQuestions : 0;
+        this.isPassed = this.score >= passScore;
+        this.status = AttemptStatus.COMPLETED;
+        this.completedAt = LocalDateTime.now();
+    }
+
+    /**
+     * 시도를 포기 처리한다.
+     */
+    public void abandon() {
+        this.status = AttemptStatus.ABANDONED;
+        this.completedAt = LocalDateTime.now();
+    }
+
+    /**
+     * 진행 중인 시도인지 확인한다.
+     */
+    public boolean isInProgress() {
+        return this.status == AttemptStatus.IN_PROGRESS;
     }
 }

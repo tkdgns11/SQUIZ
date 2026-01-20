@@ -22,4 +22,6 @@ public class NotFoundException extends BusinessException {
     public static NotFoundException user() {
         return new NotFoundException("USER_NOT_FOUND", "사용자를 찾을 수 없습니다.");
     }
+
+    public static NotFoundException attempt() { return new NotFoundException("ATTEMPT_NOT_FOUND", "시도를 찾을 수 없습니다."); }
 }

@@ -588,8 +588,8 @@ CREATE TABLE `quiz_contest_state` (
     `phase` ENUM('WAITING', 'QUESTION', 'RESULT', 'ENDED') DEFAULT 'WAITING',
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`contest_id`),
-    FOREIGN KEY (`contest_id`) REFERENCES `quiz_contest`(`id`) ON DELETE CASCADE,
-    FOREIGN KEY (`current_question_pool_id`) REFERENCES `quiz_question_pool`(`id`),
+    FOREIGN KEY (`contest_id`) REFERENCES `quiz_contest`(`contest_id`) ON DELETE CASCADE,
+    FOREIGN KEY (`current_question_pool_id`) REFERENCES `quiz_question_pool`(`question_pool_id`),
     UNIQUE KEY `uk_contest` (`contest_id`)
 );
 
@@ -787,18 +787,16 @@ CREATE TABLE `quiz_course` (
 );
 
 CREATE TABLE `quiz_course_section` (
-    `id` BIGINT AUTO_INCREMENT,
     `course_id` BIGINT NOT NULL,
-    `section_number` INT NOT NULL,               -- 순서
+    `section_number` INT NOT NULL,               -- 순서 (course_id별로 1부터 시작)
     `name` VARCHAR(100) NOT NULL,                -- 기본 문법, 객체지향 등
     `description` TEXT,
     `total_questions` INT DEFAULT 0,
     `pass_score` INT DEFAULT 70,                 -- 통과 점수 (%)
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (`id`, `course_id`),
-    FOREIGN KEY (`course_id`) REFERENCES `quiz_course`(`id`) ON DELETE CASCADE,
-    UNIQUE KEY `uk_quiz_course_section_id` (`id`),
-    UNIQUE KEY `uk_course_section` (`course_id`, `section_number`)
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`course_id`, `section_number`),
+    FOREIGN KEY (`course_id`) REFERENCES `quiz_course`(`id`) ON DELETE CASCADE
 );
 
 CREATE TABLE `quiz_course_question` (
@@ -806,7 +804,7 @@ CREATE TABLE `quiz_course_question` (
     `section_id` BIGINT NOT NULL,
     `question_number` INT NOT NULL,
     `question_text` TEXT NOT NULL,
-    `question_type` ENUM('MULTIPLE_CHOICE', 'SHORT_ANSWER', 'MULTIPLE_CHOICE') DEFAULT 'MULTIPLE_CHOICE',
+    `question_type` ENUM('MULTIPLE_CHOICE', 'SHORT_ANSWER', 'MULTIPLE_CHOICE_MULTIPLE') DEFAULT 'MULTIPLE_CHOICE',
     `options` JSON,                              -- 객관식 보기
     `correct_answer` VARCHAR(500) NOT NULL,
     `explanation` TEXT,

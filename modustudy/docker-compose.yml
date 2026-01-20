@@ -61,6 +61,11 @@ services:
       - "40000-40100:40000-40100/udp"  # RTC UDP ports
     environment:
       - NODE_ENV=production
+      - SFU_SSL_KEY_PATH=/ssl/sfu-key.pem
+      - SFU_SSL_CERT_PATH=/ssl/sfu-cert.pem
+      - SFU_ANNOUNCED_IP=i14d106.p.ssafy.io
+    volumes:
+      - ./ssl:/ssl:ro
     restart: unless-stopped
     networks:
       - squiz-network

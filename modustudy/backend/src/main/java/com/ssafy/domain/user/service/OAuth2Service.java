@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -34,6 +35,7 @@ public class OAuth2Service {
     private final RefreshTokenRepository refreshTokenRepository;
     private final JwtTokenUtil jwtTokenUtil;
     private final RestTemplate restTemplate;
+    private final PasswordEncoder passwordEncoder;
 
     // ==================== 카카오 ====================
 
@@ -544,5 +546,53 @@ public class OAuth2Service {
         user.setLastSeenAt(LocalDateTime.now());
 
         userRepository.save(user);
+    }
+
+    /**
+     * 일반 로그인 (이메일 + 비밀번호)
+     */
+    public AuthResponse login(String email, String password) {
+        // 1. 이메일로 사용자 찾기
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("이메일 또는 비밀번호가 잘못되었습니다."));
+
+        // 2. 비밀번호 검증
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new IllegalArgumentException("이메일 또는 비밀번호가 잘못되었습니다.");
+        }
+
+        // 3. 계정 활성화 확인
+        if (!user.getIsActive()) {
+            throw new IllegalStateException("비활성화된 계정입니다.");
+        }
+
+        // 4. 로그인 상태 업데이트
+        user.setLastLoginAt(LocalDateTime.now());
+        user.setIsOnline(true);
+        userRepository.save(user);
+
+        // 5. JWT 토큰 발급
+        String accessToken = jwtTokenUtil.createAccessToken(String.valueOf(user.getId()));
+        String refreshToken = jwtTokenUtil.createRefreshToken(String.valueOf(user.getId()));
+
+        // 6. Refresh Token 저장
+        saveRefreshToken(user, refreshToken);
+
+        // 7. UserDTO 생성 (loginProvider는 일반 로그인이므로 "EMAIL")
+        UserDTO userDTO = UserDTO.builder()
+                .id(user.getId())
+                .email(user.getEmail())
+                .nickname(user.getNickname())
+                .profileImage(user.getProfileImage())
+                .loginProvider("EMAIL")  // 일반 로그인
+                .build();
+
+        return AuthResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .expiresIn(3600)
+                .isNewUser(false)  // 기존 회원
+                .user(userDTO)
+                .build();
     }
 }

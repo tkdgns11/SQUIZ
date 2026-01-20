@@ -25,3 +25,14 @@ export interface OAuth2CallbackRequest {
 export interface AuthUrlResponse {
     authUrl: string;
 }
+
+export interface OAuthTempData {
+    email: string;
+    name: string;
+    profileImage: string | null;
+    provider: string;
+    providerId: string;
+    accessToken?: string;
+    refreshToken?: string;
+    loginProvider?: string;
+}

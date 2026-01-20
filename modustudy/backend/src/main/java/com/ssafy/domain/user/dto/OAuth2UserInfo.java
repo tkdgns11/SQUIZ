@@ -29,4 +29,26 @@ public class OAuth2UserInfo {
                 .provider(SocialProvider.KAKAO)
                 .build();
     }
+
+    public static OAuth2UserInfo fromNaver(Map<String, Object> attributes) {
+        Map<String, Object> response = (Map<String, Object>) attributes.get("response");
+
+        return OAuth2UserInfo.builder()
+                .providerId((String) response.get("id"))
+                .email((String) response.get("email"))
+                .name((String) response.get("name"))
+                .profileImageUrl((String) response.get("profile_image"))
+                .build();
+    }
+    /**
+     * Google 사용자 정보 파싱
+     */
+    public static OAuth2UserInfo fromGoogle(Map<String, Object> attributes) {
+        return OAuth2UserInfo.builder()
+                .providerId((String) attributes.get("sub"))  // Google의 고유 ID
+                .email((String) attributes.get("email"))
+                .name((String) attributes.get("name"))
+                .profileImageUrl((String) attributes.get("picture"))
+                .build();
+    }
 }

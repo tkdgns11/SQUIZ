@@ -83,6 +83,14 @@ public class User extends BaseEntity {
     @Column(length = 50)
     private String levelName = "Bronze";
 
+    @Column(length = 500)
+    private String profileImage;  // 프로필 이미지 URL
+
+    // ========== 소셜 계정 연동 ==========
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<UserSocialAccount> socialAccounts = new ArrayList<>();
+
     // ======= 퀴즈 관련 =======
     /**
      * 사용자의 코스 진행 목록.

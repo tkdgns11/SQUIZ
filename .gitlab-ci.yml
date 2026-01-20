@@ -46,10 +46,9 @@ deploy:
   script:
     # 프로젝트 파일 배포 경로로 복사
     - rsync -av --delete --exclude '.git' --exclude 'node_modules' --exclude '.gradle' --exclude 'build' --exclude '.env' --exclude 'ssl' --exclude 'init.sql' modustudy/ $DEPLOY_PATH/
-    # Docker Compose로 서비스 재시작
+    # Docker Compose로 서비스 재시작 (무중단 배포)
     - cd $DEPLOY_PATH
-    - docker-compose down || true
-    - docker-compose up -d --build
+    - docker-compose up -d --build --force-recreate --remove-orphans
     - docker image prune -f
     # 배포 결과 확인
     - docker-compose ps

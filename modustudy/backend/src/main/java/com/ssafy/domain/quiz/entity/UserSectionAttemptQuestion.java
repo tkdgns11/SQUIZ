@@ -24,18 +24,11 @@ import java.time.LocalDateTime;
  * DDL 참조: docs/sql/ERD.sql - user_section_attempt_question
  */
 @Entity
-@Table(
-    name = "user_section_attempt_question",
-    uniqueConstraints = {
-        @UniqueConstraint(
-            name = "uk_attempt_question",
-            columnNames = {"attempt_id", "question_id"}
-        )
-    },
-    indexes = {
-        @Index(name = "idx_attempt_question_order", columnNames = {"attempt_id", "order_index"})
-    }
-)
+@Table(name = "user_section_attempt_question", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_attempt_question", columnNames = { "attempt_id", "question_id" })
+}, indexes = {
+        @Index(name = "idx_attempt_question_order", columnList = "attempt_id, order_index")
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserSectionAttemptQuestion extends BaseEntity {
@@ -90,8 +83,7 @@ public class UserSectionAttemptQuestion extends BaseEntity {
     public UserSectionAttemptQuestion(
             UserSectionAttempt attempt,
             QuizCourseQuestion question,
-            Integer orderIndex
-    ) {
+            Integer orderIndex) {
         this.attempt = attempt;
         this.question = question;
         this.orderIndex = orderIndex;

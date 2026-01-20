@@ -77,7 +77,7 @@ public class QuizCourseService {
         Map<String, String> badgeNameByCode = badgeCodes.isEmpty()
                 ? Map.of()
                 : badgeRepository.findByCodeIn(badgeCodes).stream()
-                    .collect(Collectors.toMap(Badge::getCode, Badge::getName, (first, ignored) -> first));
+                        .collect(Collectors.toMap(Badge::getCode, Badge::getName, (first, ignored) -> first));
 
         List<QuizCourseListItem> items = courses.stream()
                 .map(course -> new QuizCourseListItem(
@@ -87,8 +87,7 @@ public class QuizCourseService {
                         course.getDescription(),
                         course.getTotalSections(),
                         course.getBadgeCode(),
-                        course.getBadgeCode() == null ? null : badgeNameByCode.get(course.getBadgeCode())
-                ))
+                        course.getBadgeCode() == null ? null : badgeNameByCode.get(course.getBadgeCode())))
                 .toList();
 
         return new QuizCourseListResponse(items);
@@ -128,8 +127,8 @@ public class QuizCourseService {
         }
 
         // 섹션 엔티티 목록을 응답용 요약 DTO 목록으로 변환
-            // 섹션 하나를 SectionSummary로 매핑 map()
-            // List로 수집 .toList()
+        // 섹션 하나를 SectionSummary로 매핑 map()
+        // List로 수집 .toList()
         List<SectionSummary> sections = course.getSections().stream()
                 .map(section -> toSectionSummary(section))
                 .toList();
@@ -142,8 +141,7 @@ public class QuizCourseService {
                 course.getDescription(),
                 course.getTotalSections(),
                 badgeInfo,
-                sections
-        );
+                sections);
     }
 
     private SectionSummary toSectionSummary(QuizCourseSection section) {
@@ -152,61 +150,62 @@ public class QuizCourseService {
                 section.getName(),
                 section.getDescription(),
                 section.getTotalQuestions(),
-                section.getPassScore()
-        );
+                section.getPassScore());
     }
 
     /**
      * 섹션 문제 목록을 조회한다.
      *
-     * <p>퀴즈 코스는 순차적 학습 시스템으로, 이전 섹션을 통과해야 다음 섹션이 해금된다.
+     * <p>
+     * 퀴즈 코스는 순차적 학습 시스템으로, 이전 섹션을 통과해야 다음 섹션이 해금된다.
      * 이 메서드는 사용자가 특정 섹션의 문제를 풀기 위해 호출하며,
-     * 해금 여부를 검증한 후 문제 목록을 반환한다.</p>
+     * 해금 여부를 검증한 후 문제 목록을 반환한다.
+     * </p>
      *
      * <h3>해금 규칙</h3>
      * <ul>
-     *   <li>섹션 1: 항상 해금 (코스 시작점)</li>
-     *   <li>섹션 N (N > 1): 사용자의 currentSection이 N 이상이면 해금</li>
+     * <li>섹션 1: 항상 해금 (코스 시작점)</li>
+     * <li>섹션 N (N > 1): 사용자의 currentSection이 N 이상이면 해금</li>
      * </ul>
      *
      * <h3>처리 흐름</h3>
      * <ol>
-     *   <li>섹션 존재 여부 확인 (문제 목록 fetch join)</li>
-     *   <li>코스 활성화 상태 확인</li>
-     *   <li>섹션 해금 여부 확인</li>
-     *   <li>문제 목록을 응답 DTO로 변환</li>
+     * <li>섹션 존재 여부 확인 (문제 목록 fetch join)</li>
+     * <li>코스 활성화 상태 확인</li>
+     * <li>섹션 해금 여부 확인</li>
+     * <li>문제 목록을 응답 DTO로 변환</li>
      * </ol>
      *
-     * @param courseId 코스 ID (URL path variable)
+     * @param courseId      코스 ID (URL path variable)
      * @param sectionNumber 섹션 번호 (URL path variable)
-     * @param userId 인증된 사용자 ID (JWT에서 추출)
+     * @param userId        인증된 사용자 ID (JWT에서 추출)
      * @return 섹션 정보 및 문제 목록을 담은 응답 DTO
-     * @throws NotFoundException 코스 또는 섹션을 찾을 수 없거나 비활성 상태인 경우
+     * @throws NotFoundException      코스 또는 섹션을 찾을 수 없거나 비활성 상태인 경우
      * @throws SectionLockedException 이전 섹션을 완료하지 않아 잠긴 섹션에 접근한 경우
      */
     public SectionQuestionsResponse getSectionQuestions(Long courseId, Integer sectionNumber, Long userId) {
         // 1. 섹션 조회: N+1 문제 방지를 위해 문제 목록을 fetch join으로 함께 조회
-        //    - courseId와 sectionNumber 모두 일치하는 섹션만 조회 (잘못된 코스-섹션 조합 방지)
+        // - courseId와 sectionNumber 모두 일치하는 섹션만 조회 (잘못된 코스-섹션 조합 방지)
         QuizCourseSection section = quizCourseSectionRepository
-                .findByIdWithQuestions(courseId, sectionNumber)
+                .findByIdWithCourseAndQuestions(courseId, sectionNumber)
                 .orElseThrow(NotFoundException::section);
 
         // 2. 코스 활성화 상태 확인: 비활성 코스는 관리자가 숨긴 것이므로 404 처리
-        //    - 예: 시즌 종료된 이벤트 코스, 준비 중인 신규 코스 등
+        // - 예: 시즌 종료된 이벤트 코스, 준비 중인 신규 코스 등
         QuizCourse course = section.getCourse();
         if (!Boolean.TRUE.equals(course.getIsActive())) {
             throw NotFoundException.course();
         }
 
         // 3. 섹션 해금 여부 확인: 순차 학습을 강제하기 위한 잠금 체크
-        //    - 해금되지 않은 섹션 접근 시 403 Forbidden 응답
+        // - 해금되지 않은 섹션 접근 시 403 Forbidden 응답
         if (!isSectionUnlocked(userId, courseId, section.getSectionNumber())) {
             throw new SectionLockedException();
         }
 
         // 4. 엔티티를 응답 DTO로 변환
-        //    - 정답(correctAnswer)과 해설(explanation)은 제외하여 클라이언트에 노출하지 않음
-        //    - 채점 시에만 정답을 사용하므로 보안상 필요한 조치
+        // - 정답(correctAnswer)과 해설(explanation)은 제외하여 클라이언트에 노출하지 않음
+        // - 채점 시에만 정답을 사용하므로 보안상 필요한 조치
         List<QuestionItem> questions = section.getQuestions().stream()
                 .map(this::toQuestionItem)
                 .toList();
@@ -216,30 +215,33 @@ public class QuizCourseService {
                 section.getName(),
                 section.getTotalQuestions(),
                 section.getPassScore(),
-                questions
-        );
+                questions);
     }
 
     /**
      * 섹션이 해금되었는지 확인한다.
      *
-     * <p>퀴즈 코스의 핵심 규칙인 순차 학습을 구현하는 메서드이다.
-     * 사용자는 이전 섹션을 70% 이상 통과해야 다음 섹션이 해금된다.</p>
+     * <p>
+     * 퀴즈 코스의 핵심 규칙인 순차 학습을 구현하는 메서드이다.
+     * 사용자는 이전 섹션을 70% 이상 통과해야 다음 섹션이 해금된다.
+     * </p>
      *
      * <h3>해금 판단 로직</h3>
      * <ul>
-     *   <li>섹션 1: 무조건 true 반환 (모든 사용자의 시작점)</li>
-     *   <li>섹션 N (N > 1): UserCourseProgress.currentSection >= N 이면 해금</li>
-     *   <li>진행 기록이 없는 경우: false 반환 (아직 코스를 시작하지 않음)</li>
+     * <li>섹션 1: 무조건 true 반환 (모든 사용자의 시작점)</li>
+     * <li>섹션 N (N > 1): UserCourseProgress.currentSection >= N 이면 해금</li>
+     * <li>진행 기록이 없는 경우: false 반환 (아직 코스를 시작하지 않음)</li>
      * </ul>
      *
      * <h3>currentSection의 의미</h3>
-     * <p>currentSection은 "현재 도전 가능한 가장 높은 섹션 번호"를 의미한다.
+     * <p>
+     * currentSection은 "현재 도전 가능한 가장 높은 섹션 번호"를 의미한다.
      * 예를 들어 currentSection=3이면 섹션 1, 2, 3 모두 접근 가능하다.
-     * (이미 통과한 섹션도 복습을 위해 다시 풀 수 있음)</p>
+     * (이미 통과한 섹션도 복습을 위해 다시 풀 수 있음)
+     * </p>
      *
-     * @param userId 사용자 ID
-     * @param courseId 코스 ID
+     * @param userId        사용자 ID
+     * @param courseId      코스 ID
      * @param sectionNumber 접근하려는 섹션 번호 (1부터 시작)
      * @return 해금 여부 (true: 접근 가능, false: 잠김)
      */
@@ -260,8 +262,10 @@ public class QuizCourseService {
     /**
      * 문제 엔티티를 클라이언트 응답용 DTO로 변환한다.
      *
-     * <p>보안상 정답(correctAnswer)과 해설(explanation)은 포함하지 않는다.
-     * 이 정보들은 답안 제출 API에서 채점 후에만 클라이언트에 전달된다.</p>
+     * <p>
+     * 보안상 정답(correctAnswer)과 해설(explanation)은 포함하지 않는다.
+     * 이 정보들은 답안 제출 API에서 채점 후에만 클라이언트에 전달된다.
+     * </p>
      *
      * @param question 문제 엔티티 (DB에서 조회한 원본 데이터)
      * @return 클라이언트에 전달할 문제 DTO (정답 제외)
@@ -271,23 +275,25 @@ public class QuizCourseService {
         List<OptionItem> options = parseOptions(question.getOptions());
 
         return new QuestionItem(
-                question.getQuestionNumber(),  // 문제 순서 (1, 2, 3, ...)
-                question.getQuestionText(),    // 문제 내용
-                question.getQuestionType(),    // MULTIPLE_CHOICE 또는 SHORT_ANSWER
-                options                        // 객관식 보기 (단답형은 빈 리스트)
+                question.getQuestionNumber(), // 문제 순서 (1, 2, 3, ...)
+                question.getQuestionText(), // 문제 내용
+                question.getQuestionType(), // MULTIPLE_CHOICE 또는 SHORT_ANSWER
+                options // 객관식 보기 (단답형은 빈 리스트)
         );
     }
 
     /**
      * JSON 형태의 보기 문자열을 OptionItem 목록으로 파싱한다.
      *
-     * <p>DB에는 보기가 JSON 문자열로 저장되어 있다.
-     * 예: [{"id": "A", "text": "int"}, {"id": "B", "text": "integer"}]</p>
+     * <p>
+     * DB에는 보기가 JSON 문자열로 저장되어 있다.
+     * 예: [{"id": "A", "text": "int"}, {"id": "B", "text": "integer"}]
+     * </p>
      *
      * <h3>예외 처리</h3>
      * <ul>
-     *   <li>null 또는 빈 문자열: 빈 리스트 반환 (단답형 문제)</li>
-     *   <li>잘못된 JSON 형식: 경고 로그 후 빈 리스트 반환 (서비스 중단 방지)</li>
+     * <li>null 또는 빈 문자열: 빈 리스트 반환 (단답형 문제)</li>
+     * <li>잘못된 JSON 형식: 경고 로그 후 빈 리스트 반환 (서비스 중단 방지)</li>
      * </ul>
      *
      * @param optionsJson DB에 저장된 보기 JSON 문자열
@@ -304,8 +310,8 @@ public class QuizCourseService {
             // TypeReference를 통해 제네릭 타입 정보를 런타임에 유지
             List<Map<String, String>> optionMaps = objectMapper.readValue(
                     optionsJson,
-                    new TypeReference<List<Map<String, String>>>() {}
-            );
+                    new TypeReference<List<Map<String, String>>>() {
+                    });
 
             // Map을 OptionItem DTO로 변환
             // - id: 보기 식별자 (A, B, C, D 등)

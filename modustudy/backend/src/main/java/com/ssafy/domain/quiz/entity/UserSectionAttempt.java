@@ -22,13 +22,9 @@ import java.util.List;
  * DDL 참조: docs/sql/ERD.sql - user_section_attempt
  */
 @Entity
-@Table(
-    name = "user_section_attempt",
-    indexes = {
-        @Index(name = "idx_attempt_user_section_status",
-               columnNames = {"user_id", "quiz_course_id", "section_number", "status"})
-    }
-)
+@Table(name = "user_section_attempt", indexes = {
+        @Index(name = "idx_attempt_user_section_status", columnList = "user_id, quiz_course_id, section_number, status")
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserSectionAttempt extends BaseEntity {
@@ -45,8 +41,8 @@ public class UserSectionAttempt extends BaseEntity {
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumns({
-        @JoinColumn(name = "section_number", referencedColumnName = "section_number", nullable = false),
-        @JoinColumn(name = "quiz_course_id", referencedColumnName = "quiz_course_id", nullable = false)
+            @JoinColumn(name = "section_number", referencedColumnName = "section_number", nullable = false),
+            @JoinColumn(name = "quiz_course_id", referencedColumnName = "quiz_course_id", nullable = false)
     })
     private QuizCourseSection section;
 
@@ -114,7 +110,7 @@ public class UserSectionAttempt extends BaseEntity {
      * 시도를 완료 처리한다.
      *
      * @param correctCount 맞힌 문제 수
-     * @param passScore 통과 기준 점수 (%)
+     * @param passScore    통과 기준 점수 (%)
      */
     public void complete(int correctCount, int passScore) {
         this.correctCount = correctCount;

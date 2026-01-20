@@ -72,8 +72,7 @@ class QuizCourseControllerTest {
                             .contentType(MediaType.APPLICATION_JSON))
                     .andDo(print())
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.status").value(200))
-                    .andExpect(jsonPath("$.message").value("Success"))
+                    .andExpect(jsonPath("$.success").value(true))
                     .andExpect(jsonPath("$.data.courses").isArray())
                     .andExpect(jsonPath("$.data.courses.length()").value(3))
                     .andExpect(jsonPath("$.data.courses[0].id").value(1))
@@ -97,7 +96,7 @@ class QuizCourseControllerTest {
                             .contentType(MediaType.APPLICATION_JSON))
                     .andDo(print())
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.status").value(200))
+                    .andExpect(jsonPath("$.success").value(true))
                     .andExpect(jsonPath("$.data.courses").isArray())
                     .andExpect(jsonPath("$.data.courses").isEmpty());
         }
@@ -167,8 +166,7 @@ class QuizCourseControllerTest {
                             .contentType(MediaType.APPLICATION_JSON))
                     .andDo(print())
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.status").value(200))
-                    .andExpect(jsonPath("$.message").value("Success"))
+                    .andExpect(jsonPath("$.success").value(true))
                     .andExpect(jsonPath("$.data.id").value(1))
                     .andExpect(jsonPath("$.data.code").value("JAVA"))
                     .andExpect(jsonPath("$.data.name").value("Java 마스터"))

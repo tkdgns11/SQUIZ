@@ -174,6 +174,8 @@ export const LoginPage = () => {
                         className="social-circle-btn kakao"
                         onClick={async () => {
                             try {
+                                console.log('[INFO] 카카오 로그인 시도');
+                                sessionStorage.setItem('oauth_provider', 'kakao');
                                 const { authUrl } = await authApi.getKakaoAuthUrl();
                                 window.location.href = authUrl;
                             } catch (error) {
@@ -192,9 +194,16 @@ export const LoginPage = () => {
                     <button
                         type="button"
                         className="social-circle-btn google"
-                        onClick={() => {
-                            // TODO: 구글 로그인 구현
-                            alert('구글 로그인은 준비 중입니다.');
+                        onClick={async () => {
+                            try {
+                                console.log('[INFO] 구글 로그인 시도');
+                                sessionStorage.setItem('oauth_provider', 'google');
+                                const { authUrl } = await authApi.getGoogleAuthUrl();
+                                window.location.href = authUrl;
+                            } catch (error) {
+                                console.error('Failed to get Google Auth URL:', error);
+                                alert('구글 로그인 페이지를 불러오는데 실패했습니다.');
+                            }
                         }}
                         title="구글 로그인"
                     >
@@ -210,9 +219,16 @@ export const LoginPage = () => {
                     <button
                         type="button"
                         className="social-circle-btn naver"
-                        onClick={() => {
-                            // TODO: 네이버 로그인 구현
-                            alert('네이버 로그인은 준비 중입니다.');
+                        onClick={async () => {
+                            try {
+                                console.log('[INFO] 네이버 로그인 시도');
+                                sessionStorage.setItem('oauth_provider', 'naver');
+                                const { authUrl } = await authApi.getNaverAuthUrl();
+                                window.location.href = authUrl;
+                            } catch (error) {
+                                console.error('Failed to get Naver Auth URL:', error);
+                                alert('네이버 로그인 페이지를 불러오는데 실패했습니다.');
+                            }
                         }}
                         title="네이버 로그인"
                     >

@@ -63,6 +63,25 @@ export const authApi = {
     },
 
     /**
+     * 구글 로그인 URL 가져오기
+     */
+    getGoogleAuthUrl: async () => {
+        const response = await api.get<any>('/api/v1/auth/oauth/google');
+        // 백엔드에서 ApiResponse<AuthUrlResponse> 반환함
+        return response.data.data as AuthUrlResponse;
+    },
+
+    /**
+     * 구글 로그인 콜백 처리 (인가 코드를 JWT로 교환)
+     */
+    handleGoogleCallback: async (code: string) => {
+        const request: OAuth2CallbackRequest = { code };
+        const response = await api.post<any>('/api/v1/auth/oauth/google/callback', request);
+        // 백엔드에서 ApiResponse<AuthResponse> 반환함
+        return response.data.data as AuthResponse;
+    },
+
+    /**
      * OAuth 회원가입 완료 (추가 정보 입력)
      * POST /api/v1/users/me/profile
      */

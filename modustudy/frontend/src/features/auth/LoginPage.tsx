@@ -1,4 +1,5 @@
 import AuthLayout from './AuthLayout';
+import { authApi } from '@/api/endpoints/authApi';
 
 export const LoginPage = () => {
     return (
@@ -29,6 +30,27 @@ export const LoginPage = () => {
 
                 <button type="submit" className="btn-primary">
                     로그인
+                </button>
+
+                <div className="auth-divider">
+                    <span>또는</span>
+                </div>
+
+                <button
+                    type="button"
+                    className="btn-kakao"
+                    onClick={async () => {
+                        try {
+                            const { authUrl } = await authApi.getKakaoAuthUrl();
+                            window.location.href = authUrl;
+                        } catch (error) {
+                            console.error('Failed to get Kakao Auth URL:', error);
+                            alert('카카오 로그인 페이지를 불러오는데 실패했습니다.');
+                        }
+                    }}
+                >
+                    <span className="social-logo">💬</span>
+                    카카오 로그인
                 </button>
             </form>
 

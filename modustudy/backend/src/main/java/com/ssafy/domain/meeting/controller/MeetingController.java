@@ -133,6 +133,16 @@ public class MeetingController {
         return ResponseEntity.ok(ApiResponse.success(meetingService.getTranscripts(studyId, meetingId, pageable)));
     }
 
+    @GetMapping("/{meetingId}/chat")
+    @Operation(summary = "誘명똿 梨꾪똿 議고쉶", description = "誘명똿 梨꾪똿 湲곕줉???섏씠吏 ?⑥쐞濡?議고쉶?쒕떎.")
+    public ResponseEntity<ApiResponse<MeetingChatMessagePageResponse>> chatHistory(
+            @PathVariable Long studyId,
+            @PathVariable Long meetingId,
+            Pageable pageable
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(meetingService.getChatMessages(studyId, meetingId, pageable)));
+    }
+
     @PostMapping("/{meetingId}/transcript")
     @Operation(summary = "미팅 전사 저장", description = "전사 한 건을 저장한다.")
     public ResponseEntity<ApiResponse<MeetingTranscriptItemResponse>> addTranscript(

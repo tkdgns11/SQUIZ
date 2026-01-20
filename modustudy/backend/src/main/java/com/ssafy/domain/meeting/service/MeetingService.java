@@ -10,10 +10,12 @@ import com.ssafy.domain.meeting.dto.request.MeetingRequest;
 import com.ssafy.domain.meeting.dto.request.MeetingSummaryUpdateRequest;
 import com.ssafy.domain.meeting.dto.request.MeetingTranscriptRequest;
 import com.ssafy.domain.meeting.dto.response.*;
+import com.ssafy.common.storage.LocalFileStorageService;
 import com.ssafy.config.SfuProperties;
 import com.ssafy.domain.meeting.entity.ActionItemStatus;
 import com.ssafy.domain.meeting.entity.Meeting;
 import com.ssafy.domain.meeting.entity.MeetingActionItem;
+import com.ssafy.domain.meeting.entity.MeetingChatMessage;
 import com.ssafy.domain.meeting.entity.MeetingParticipant;
 import com.ssafy.domain.meeting.entity.MeetingParticipantSummary;
 import com.ssafy.domain.meeting.entity.MeetingPhoto;
@@ -26,6 +28,7 @@ import com.ssafy.domain.meeting.entity.RecordingStatus;
 import com.ssafy.domain.meeting.entity.SttStatus;
 import com.ssafy.domain.meeting.entity.SummaryStatus;
 import com.ssafy.domain.meeting.repository.MeetingActionItemRepository;
+import com.ssafy.domain.meeting.repository.MeetingChatMessageRepository;
 import com.ssafy.domain.meeting.repository.MeetingParticipantRepository;
 import com.ssafy.domain.meeting.repository.MeetingParticipantSummaryRepository;
 import com.ssafy.domain.meeting.repository.MeetingPhotoRepository;
@@ -52,9 +55,10 @@ import org.springframework.beans.factory.annotation.Value;
 
 import java.io.IOException;
 import java.io.ByteArrayOutputStream;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Collections;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Objects;
 
@@ -70,8 +74,10 @@ public class MeetingService {
     private final MeetingRecordingRepository meetingRecordingRepository;
     private final MeetingParticipantSummaryRepository meetingParticipantSummaryRepository;
     private final MeetingActionItemRepository meetingActionItemRepository;
+    private final MeetingChatMessageRepository meetingChatMessageRepository;
     private final ObjectMapper objectMapper;
     private final SfuProperties sfuProperties;
+    private final LocalFileStorageService localFileStorageService;
     @Value("${meeting.pdf.font-path:}")
     private String pdfFontPath;
 
@@ -250,6 +256,22 @@ public class MeetingService {
     }
 
     @Transactional(readOnly = true)
+    public MeetingChatMessagePageResponse getChatMessages(Long studyId, Long meetingId, Pageable pageable) {
+        getMeetingOrThrow(studyId, meetingId);
+        Page<MeetingChatMessage> page = meetingChatMessageRepository
+                .findByMeetingIdOrderBySentAtAsc(meetingId, pageable);
+        List<MeetingChatMessageResponse> content = page.stream()
+                .map(message -> new MeetingChatMessageResponse(
+                        message.getId(),
+                        message.getUserId(),
+                        message.getSenderName(),
+                        message.getContent(),
+                        message.getSentAt()))
+                .toList();
+        return new MeetingChatMessagePageResponse(content, page.getTotalElements(), page.hasNext());
+    }
+
+    @Transactional(readOnly = true)
     public List<MeetingPhotoResponse> getPhotos(Long studyId, Long meetingId) {
         getMeetingOrThrow(studyId, meetingId);
         return meetingPhotoRepository.findByMeetingIdOrderByCapturedAtDesc(meetingId).stream()
@@ -267,9 +289,8 @@ public class MeetingService {
         if (image == null || image.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "IMAGE_REQUIRED");
         }
-        String originalFilename = image.getOriginalFilename();
-        String safeName = originalFilename == null ? "photo" : originalFilename.replace("\\", "_").replace("/", "_");
-        String imageUrl = "meeting/" + meetingId + "/" + safeName;
+        // Save to local filesystem and return a public URL path.
+        String imageUrl = localFileStorageService.saveMeetingPhoto(meetingId, image);
         MeetingPhoto saved = meetingPhotoRepository.save(
                 MeetingPhoto.capture(meetingId, imageUrl, LocalDateTime.now()));
         return new MeetingPhotoResponse(saved.getId(), saved.getImageUrl(), saved.getCapturedAt(), saved.getIsSelected());
@@ -354,6 +375,23 @@ public class MeetingService {
                 saved.getEndMs(),
                 saved.getCreatedAt()
         );
+    }
+
+    @Transactional
+    public void addChatMessage(Long meetingId, Long userId, String senderName, String content, Instant sentAt) {
+        if (meetingRepository.findById(meetingId).isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "MEETING_NOT_FOUND");
+        }
+        LocalDateTime sentAtTime = sentAt == null
+                ? LocalDateTime.now()
+                : LocalDateTime.ofInstant(sentAt, ZoneId.systemDefault());
+        meetingChatMessageRepository.save(MeetingChatMessage.builder()
+                .meetingId(meetingId)
+                .userId(userId)
+                .senderName(senderName)
+                .content(content)
+                .sentAt(sentAtTime)
+                .build());
     }
 
     @Transactional

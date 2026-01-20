@@ -30,9 +30,12 @@ public class SecurityConfig {
                 .requestMatchers("/ws/**").permitAll()
                 // SFU config for WebRTC clients
                 .requestMatchers("/api/v1/sfu/**").permitAll()
+                .requestMatchers("/uploads/**").permitAll()
                 // 인증 없이 접근 가능
                 .requestMatchers("/api/v1/auth/**").permitAll()
                 .requestMatchers("/api/v1/users").permitAll()
+                // Temporary: allow meeting APIs without auth for local testing
+                .requestMatchers("/api/v1/studies/*/meetings/**").permitAll()
                 // 나머지는 인증 필요
                 .anyRequest().authenticated()
             )

@@ -9,17 +9,22 @@ import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.SimpMessageType;
 import org.springframework.stereotype.Controller;
+import com.ssafy.domain.meeting.service.MeetingService;
+import java.util.Optional;
 
 @Controller
 public class MeetingRoomWebSocketController {
     // Handles room join/chat/presenter events over STOMP.
     private final MeetingRoomStateService roomStateService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final MeetingService meetingService;
 
     public MeetingRoomWebSocketController(MeetingRoomStateService roomStateService,
-                                          SimpMessagingTemplate messagingTemplate) {
+                                          SimpMessagingTemplate messagingTemplate,
+                                          MeetingService meetingService) {
         this.roomStateService = roomStateService;
         this.messagingTemplate = messagingTemplate;
+        this.meetingService = meetingService;
     }
 
     @MessageMapping("/rooms/{roomId}/join")
@@ -58,6 +63,13 @@ public class MeetingRoomWebSocketController {
     @MessageMapping("/rooms/{roomId}/chat")
     public void sendChat(@DestinationVariable String roomId, @Valid MeetingRoomChatMessage chatMessage) {
         roomStateService.addChatMessage(roomId, chatMessage);
+        parseMeetingId(roomId).ifPresent(meetingId -> meetingService.addChatMessage(
+                meetingId,
+                chatMessage.getUserId(),
+                chatMessage.getSender(),
+                chatMessage.getText(),
+                chatMessage.getSentAt()
+        ));
         MeetingRoomEvent event = new MeetingRoomEvent(MeetingRoomEvent.Type.CHAT, roomId);
         event.setChat(chatMessage);
         messagingTemplate.convertAndSend("/topic/rooms/" + roomId + "/events", event);
@@ -91,5 +103,17 @@ public class MeetingRoomWebSocketController {
         accessor.setSessionId(sessionId);
         accessor.setLeaveMutable(true);
         return accessor.getMessageHeaders();
+    }
+
+    private Optional<Long> parseMeetingId(String roomId) {
+        if (roomId == null || !roomId.startsWith("meeting-")) {
+            return Optional.empty();
+        }
+        String rawId = roomId.substring("meeting-".length());
+        try {
+            return Optional.of(Long.parseLong(rawId));
+        } catch (NumberFormatException ex) {
+            return Optional.empty();
+        }
     }
 }

@@ -4,6 +4,8 @@ import jakarta.validation.constraints.NotBlank;
 import java.time.Instant;
 
 public class MeetingRoomChatMessage {
+    // Optional userId for persisted chat messages.
+    private Long userId;
     @NotBlank
     private String sender;
     @NotBlank
@@ -17,6 +19,14 @@ public class MeetingRoomChatMessage {
 
     public void setSender(String sender) {
         this.sender = sender;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 
     public String getText() {

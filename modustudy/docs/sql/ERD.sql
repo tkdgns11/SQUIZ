@@ -493,8 +493,8 @@ CREATE TABLE `quiz_contest_state` (
     `phase` ENUM('WAITING', 'QUESTION', 'RESULT', 'ENDED') DEFAULT 'WAITING',
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`contest_id`),
-    FOREIGN KEY (`contest_id`) REFERENCES `quiz_contest`(`id`) ON DELETE CASCADE,
-    FOREIGN KEY (`current_question_pool_id`) REFERENCES `quiz_question_pool`(`id`),
+    FOREIGN KEY (`contest_id`) REFERENCES `quiz_contest`(`contest_id`) ON DELETE CASCADE,
+    FOREIGN KEY (`current_question_pool_id`) REFERENCES `quiz_question_pool`(`question_pool_id`),
     UNIQUE KEY `uk_contest` (`contest_id`)
 );
 

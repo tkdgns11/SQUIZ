@@ -23,11 +23,7 @@ public interface UserCourseProgressRepository extends JpaRepository<UserCoursePr
      * @param courseId 코스 ID
      * @return 진행 상황
      */
-    @Query("SELECT p FROM UserCourseProgress p " +
-           "WHERE p.userId = :userId AND p.courseId = :courseId")
-    Optional<UserCourseProgress> findByUserIdAndCourseId(
-            @Param("userId") Long userId,
-            @Param("courseId") Long courseId);
+    Optional<UserCourseProgress> findByUserIdAndCourseId(Long userId, Long courseId);
 
     /**
      * 사용자 ID로 모든 진행 상황을 조회한다.
@@ -56,4 +52,8 @@ public interface UserCourseProgressRepository extends JpaRepository<UserCoursePr
     @Query("SELECT p FROM UserCourseProgress p " +
            "WHERE p.userId = :userId AND p.isCompleted = true")
     List<UserCourseProgress> findCompletedByUserId(@Param("userId") Long userId);
+
+    List<UserCourseProgress> findByCourseId(Long courseId);
+
+    boolean existsByUserIdAndCourseId(Long userId, Long courseId);
 }

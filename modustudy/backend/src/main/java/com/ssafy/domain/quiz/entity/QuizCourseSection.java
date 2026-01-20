@@ -17,29 +17,32 @@ import java.util.List;
  * 코스 내 학습 단계를 나타내며, 각 섹션은 여러 문제를 포함한다.
  * 사용자는 이전 섹션을 통과해야 다음 섹션을 해금할 수 있다.
  *
- * PK: (section_number, quiz_course_id) - 복합키
+ * PK: (course_id, section_number) - 복합키
  *
  * DDL 참조: docs/sql/ERD.sql - quiz_course_section
  */
 @Entity
 @Table(name = "quiz_course_section")
+@IdClass(QuizCourseSectionId.class)
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class QuizCourseSection {
 
-    /**
-     * 복합키 (section_number + quiz_course_id).
-     */
-    @EmbeddedId
-    private QuizCourseSectionId id;
+    @Id
+    @Column(name = "quiz_course_id")
+    private Long quizCourseId;
+
+    @Id
+    @Column(name = "section_number")
+    private Integer sectionNumber;
 
     /**
      * 소속 코스.
      */
     @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("quizCourseId") // 외래 키(FK)로 받아온 컬럼을 이 엔티티의 기본 키(PK)로도 쓰겠다
-    @JoinColumn(name = "quiz_course_id", nullable = false)
+    @MapsId("quizCourseId")
+    @JoinColumn(name = "quiz_course_id", nullable = false)  // ✅ DDL 컬럼명: course_id
     private QuizCourse course;
 
     /**
@@ -98,18 +101,12 @@ public class QuizCourseSection {
             Integer passScore
     ) {
         QuizCourseSection section = new QuizCourseSection();
-        section.id = new QuizCourseSectionId(sectionNumber, course.getId());
+        section.quizCourseId = course.getId();  // courseId 직접 설정
+        section.sectionNumber = sectionNumber;
         section.course = course;
         section.name = name;
         section.description = description;
         section.passScore = passScore != null ? passScore : 70;
         return section;
-    }
-
-    /**
-     * 섹션 번호 반환 (편의 메서드).
-     */
-    public Integer getSectionNumber() {
-        return this.id != null ? this.id.getSectionNumber() : null;
     }
 }

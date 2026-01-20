@@ -3,21 +3,20 @@ package com.ssafy.domain.quiz.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ssafy.common.exception.BadRequestException;
+import com.ssafy.common.exception.BusinessException;
 import com.ssafy.common.exception.NotFoundException;
 import com.ssafy.common.exception.SectionLockedException;
-import com.ssafy.domain.gamification.entity.Badge;
 import com.ssafy.domain.gamification.repository.BadgeRepository;
 import com.ssafy.domain.quiz.dto.request.SaveAnswerRequest;
 import com.ssafy.domain.quiz.dto.response.*;
 import com.ssafy.domain.quiz.entity.*;
-import com.ssafy.domain.quiz.entity.enums.AttemptStatus;
 import com.ssafy.domain.quiz.repository.*;
 import com.ssafy.domain.user.entity.User;
 import com.ssafy.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -122,12 +121,20 @@ public class QuizSectionAttemptService {
 
         // 본인 시도인지 확인
         if (!attempt.getUser().getId().equals(userId)) {
-            throw new BadRequestException("본인의 시도만 수정할 수 있습니다.");
+            throw new BusinessException(
+                    HttpStatus.FORBIDDEN,
+                    "NOT_ATTEMPT_OWNER",
+                    "본인의 시도만 수정할 수 있습니다."
+            );
         }
 
         // 진행 중인 시도인지 확인
         if (!attempt.isInProgress()) {
-            throw new BadRequestException("완료된 시도는 수정할 수 없습니다.");
+            throw new BusinessException(
+                    HttpStatus.BAD_REQUEST,
+                    "ATTEMPT_ALREADY_COMPLETED",
+                    "완료된 시도는 수정할 수 없습니다."
+            );
         }
 
         // 답안 저장
@@ -159,12 +166,20 @@ public class QuizSectionAttemptService {
 
         // 본인 시도인지 확인
         if (!attempt.getUser().getId().equals(userId)) {
-            throw new BadRequestException("본인의 시도만 제출할 수 있습니다.");
+            throw new BusinessException(
+                    HttpStatus.FORBIDDEN,
+                    "NOT_ATTEMPT_OWNER",
+                    "본인의 시도만 제출할 수 있습니다."
+            );
         }
 
         // 진행 중인 시도인지 확인
         if (!attempt.isInProgress()) {
-            throw new BadRequestException("이미 완료된 시도입니다.");
+            throw new BusinessException(
+                    HttpStatus.BAD_REQUEST,
+                    "ATTEMPT_ALREADY_COMPLETED",
+                    "이미 완료된 시도입니다."
+            );
         }
 
         // 채점
@@ -211,11 +226,19 @@ public class QuizSectionAttemptService {
                 .orElseThrow(NotFoundException::attempt);
 
         if (!attempt.getUser().getId().equals(userId)) {
-            throw new BadRequestException("본인의 시도만 포기할 수 있습니다.");
+            throw new BusinessException(
+                    HttpStatus.FORBIDDEN,
+                    "NOT_ATTEMPT_OWNER",
+                    "본인의 시도만 포기할 수 있습니다."
+            );
         }
 
         if (!attempt.isInProgress()) {
-            throw new BadRequestException("이미 완료된 시도입니다.");
+            throw new BusinessException(
+                    HttpStatus.BAD_REQUEST,
+                    "ATTEMPT_ALREADY_COMPLETED",
+                    "이미 완료된 시도입니다."
+            );
         }
 
         attempt.abandon();
@@ -283,6 +306,7 @@ public class QuizSectionAttemptService {
             UserCourseProgress progress = existingProgress.get();
             if (progress.getCurrentSection() <= completedSectionNumber) {
                 progress.advanceToSection(completedSectionNumber + 1);
+                progressRepository.save(progress);  // ✅ 명시적으로 save 추가
                 return true;
             }
             return false;
@@ -292,9 +316,13 @@ public class QuizSectionAttemptService {
             QuizCourse course = courseRepository.getReferenceById(courseId);
 
             UserCourseProgress progress = UserCourseProgress.builder()
-                    .user(user)
-                    .course(course)
+                    .userId(userId)          // @Id 필드 직접 설정
+                    .courseId(courseId)      // @Id 필드 직접 설정
+                    .user(user)              // 연관관계 (조회용)
+                    .course(course)          // 연관관계 (조회용)
                     .currentSection(completedSectionNumber + 1)
+                    .completedSections(1)    // 완료된 섹션 수 초기화
+                    .isCompleted(false)      // 완료 여부 초기화
                     .build();
             progressRepository.save(progress);
             return true;

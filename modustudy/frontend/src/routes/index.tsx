@@ -28,18 +28,7 @@ export const AppRouter = () => {
                 <Route path="/recruitment" element={<RecruitmentPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/test-sidebar" element={<TestSidebarPage />} />
-                <Route path="/" element={
-                    <div style={{ textAlign: "center", marginTop: "50px" }}>
-                        <h1>Home</h1>
-                        <a href="/startpage" className="text-study-blue hover:underline">Go to Start Page</a>
-                        <br />
-                        <a href="/dashboard" className="text-study-blue hover:underline">Go to Dashboard</a>
-                        <br />
-                        <a href="/test-sidebar" className="text-study-blue hover:underline">Test Sidebar</a>
-                        <br />
-                        <a href="/calendar-expand" className="text-study-blue hover:underline">Calendar (Expanded)</a>
-                    </div>
-                } />
+                <Route path="/" element={<StartPage />} />
             </Routes>
         </BrowserRouter>
     );

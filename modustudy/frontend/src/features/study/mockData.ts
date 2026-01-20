@@ -33,6 +33,22 @@ export const mockUsers = [
         nickname: 'ssafy_choi',
         role: 'USER',
         isActive: true
+    },
+    {
+        id: 5,
+        email: 'user5@ssafy.com',
+        name: '정싸피',
+        nickname: 'ssafy_jung',
+        role: 'USER',
+        isActive: true
+    },
+    {
+        id: 6,
+        email: 'user6@ssafy.com',
+        name: '강싸피',
+        nickname: 'ssafy_kang',
+        role: 'USER',
+        isActive: true
     }
 ];
 
@@ -340,15 +356,274 @@ export const mockStudies = [
         },
         isBookmarked: false,
         createdAt: '2025-01-19T00:00:00.000Z'
+    },
+    {
+        id: 10,
+        leaderId: 2,
+        name: '자바스크립트 딥다이브',
+        description: '자바스크립트의 내부 원리를 파헤치는 스터디입니다',
+        topic: '프론트엔드',
+        format: '독서',
+        studyType: 'PLANNED',
+        meetingType: 'ONLINE',
+        status: 'RECRUITING',
+        isPublic: true,
+        maxMembers: 5,
+        currentMembers: 3,
+        difficulty: 'INTERMEDIATE',
+        scheduleDays: 'TUE,THU',
+        recruitStartDate: '2025-01-20',
+        recruitEndDate: '2025-01-30',
+        startDate: '2025-02-01',
+        leader: {
+            id: 2,
+            nickname: 'ssafy_lee',
+            profileImage: null,
+            leaderRating: 4.8,
+            leaderReviewCount: 15
+        },
+        isBookmarked: false,
+        createdAt: '2025-01-20T10:00:00.000Z'
+    },
+    {
+        id: 11,
+        leaderId: 3,
+        name: '테라폼으로 배우는 IaC',
+        description: 'Terraform을 활용한 클라우드 인프라 구축 실습',
+        topic: '인프라',
+        format: '프로젝트',
+        studyType: 'PLANNED',
+        meetingType: 'HYBRID',
+        regionId: 1,
+        status: 'RECRUITING',
+        isPublic: true,
+        maxMembers: 4,
+        currentMembers: 1,
+        difficulty: 'ADVANCED',
+        scheduleDays: 'SAT',
+        recruitStartDate: '2025-01-21',
+        recruitEndDate: '2025-02-01',
+        startDate: '2025-02-10',
+        leader: {
+            id: 3,
+            nickname: 'ssafy_park',
+            profileImage: null,
+            leaderRating: 4.3,
+            leaderReviewCount: 8
+        },
+        isBookmarked: false,
+        createdAt: '2025-01-21T15:00:00.000Z'
+    },
+    {
+        id: 12,
+        leaderId: 4,
+        name: 'Vue.js 기초 스터디',
+        description: 'Vue 3 Composition API 기반으로 시작하기',
+        topic: '프론트엔드',
+        format: '강의수강',
+        studyType: 'LIGHTNING',
+        meetingType: 'ONLINE',
+        status: 'RECRUITING',
+        isPublic: true,
+        maxMembers: 6,
+        currentMembers: 2,
+        difficulty: 'BEGINNER',
+        scheduleDays: 'WED',
+        recruitStartDate: '2025-01-22',
+        recruitEndDate: '2025-01-28',
+        startDate: '2025-02-01',
+        leader: {
+            id: 4,
+            nickname: 'ssafy_choi',
+            profileImage: null,
+            leaderRating: 4.6,
+            leaderReviewCount: 12
+        },
+        isBookmarked: false,
+        createdAt: '2025-01-22T09:00:00.000Z'
+    },
+    {
+        id: 13,
+        leaderId: 1,
+        name: '코틀린 맛보기',
+        description: '자바 개발자를 위한 코틀린 핵심 문법',
+        topic: '안드로이드',
+        format: '문제풀이',
+        studyType: 'PLANNED',
+        meetingType: 'OFFLINE',
+        regionId: 2,
+        status: 'RECRUITING',
+        isPublic: true,
+        maxMembers: 4,
+        currentMembers: 4,
+        difficulty: 'INTERMEDIATE',
+        scheduleDays: 'MON,FRI',
+        recruitStartDate: '2025-01-23',
+        recruitEndDate: '2025-02-10',
+        startDate: '2025-02-15',
+        leader: {
+            id: 1,
+            nickname: 'ssafy_kim',
+            profileImage: null,
+            leaderRating: 4.5,
+            leaderReviewCount: 10
+        },
+        isBookmarked: false,
+        createdAt: '2025-01-23T14:00:00.000Z'
+    },
+    {
+        id: 14,
+        leaderId: 2,
+        name: '네트워크 면접 대비',
+        description: '신입 개발자 면접을 위한 네트워크 총정리',
+        topic: 'CS',
+        format: '문제풀이',
+        studyType: 'PLANNED',
+        meetingType: 'ONLINE',
+        status: 'RECRUITING',
+        isPublic: true,
+        maxMembers: 8,
+        currentMembers: 5,
+        difficulty: 'ADVANCED',
+        scheduleDays: 'WED,SUN',
+        recruitStartDate: '2025-01-24',
+        recruitEndDate: '2025-02-05',
+        startDate: '2025-02-15',
+        leader: {
+            id: 2,
+            nickname: 'ssafy_lee',
+            profileImage: null,
+            leaderRating: 4.8,
+            leaderReviewCount: 15
+        },
+        isBookmarked: false,
+        createdAt: '2025-01-24T11:00:00.000Z'
+    },
+    {
+        id: 15,
+        leaderId: 3,
+        name: '타입스크립트 시작하기',
+        description: '점진화된 프로젝트를 위한 타입스크립트 스터디',
+        topic: '프론트엔드',
+        format: '프로젝트',
+        studyType: 'LIGHTNING',
+        meetingType: 'ONLINE',
+        status: 'RECRUITING',
+        isPublic: true,
+        maxMembers: 10,
+        currentMembers: 9,
+        difficulty: 'BEGINNER',
+        scheduleDays: 'THU',
+        recruitStartDate: '2025-01-25',
+        recruitEndDate: '2025-01-29',
+        startDate: '2025-02-01',
+        leader: {
+            id: 3,
+            nickname: 'ssafy_park',
+            profileImage: null,
+            leaderRating: 4.3,
+            leaderReviewCount: 8
+        },
+        isBookmarked: false,
+        createdAt: '2025-01-25T16:00:00.000Z'
+    }
+];
+
+export interface Applicant {
+    id: number;
+    studyId: number;
+    userId: number;
+    nickname: string;
+    message: string;
+    status: 'PENDING' | 'APPROVED' | 'REJECTED';
+    createdAt: string;
+}
+
+export interface StudyMember {
+    id: number;
+    studyId: number;
+    userId: number;
+    nickname: string;
+    role: 'LEADER' | 'SUB_LEADER' | 'MEMBER';
+    joinedAt: string;
+    attendanceRate: number;
+}
+
+export const mockApplicants: Applicant[] = [
+    {
+        id: 1,
+        studyId: 1,
+        userId: 2,
+        nickname: 'ssafy_lee',
+        message: '안녕하세요! 알고리즘에 관심이 많아 신청합니다. 정말 열심히 하겠습니다!',
+        status: 'PENDING',
+        createdAt: '2025-01-20T10:00:00.000Z'
+    },
+    {
+        id: 2,
+        studyId: 1,
+        userId: 3,
+        nickname: 'ssafy_park',
+        message: '알고리즘 골드 티어가 목표입니다. 꼭 뽑아주세요!',
+        status: 'PENDING',
+        createdAt: '2025-01-21T11:30:00.000Z'
+    },
+    {
+        id: 3,
+        studyId: 2,
+        userId: 4,
+        nickname: 'ssafy_choi',
+        message: 'CS 기초를 탄탄히 다지고 싶습니다.',
+        status: 'PENDING',
+        createdAt: '2025-01-19T09:00:00.000Z'
+    },
+    {
+        id: 4,
+        studyId: 1,
+        userId: 5,
+        nickname: 'ssafy_jung',
+        message: '안녕하세요! 파이썬 개발자인데 알고리즘 보완하고 싶어서 신청합니다.',
+        status: 'PENDING',
+        createdAt: '2025-01-22T14:20:00.000Z'
+    },
+    {
+        id: 5,
+        studyId: 1,
+        userId: 6,
+        nickname: 'ssafy_kang',
+        message: '매일 참여 가능합니다! 꼭 같이 공부하고 싶어요.',
+        status: 'PENDING',
+        createdAt: '2025-01-23T09:15:00.000Z'
+    }
+];
+
+export const mockMembers: StudyMember[] = [
+    {
+        id: 1,
+        studyId: 1,
+        userId: 1,
+        nickname: 'ssafy_kim',
+        role: 'LEADER',
+        joinedAt: '2025-01-15T10:00:00.000Z',
+        attendanceRate: 100
+    },
+    {
+        id: 2,
+        studyId: 1,
+        userId: 4,
+        nickname: 'ssafy_choi',
+        role: 'SUB_LEADER',
+        joinedAt: '2025-01-16T11:00:00.000Z',
+        attendanceRate: 90
     }
 ];
 
 // 유틸리티 함수들
-export const getStudyById = (id) => {
+export const getStudyById = (id: number) => {
     return mockStudies.find(study => study.id === id);
 };
 
-export const getStudiesByStatus = (status) => {
+export const getStudiesByStatus = (status: string) => {
     return mockStudies.filter(study => study.status === status);
 };
 
@@ -356,23 +631,23 @@ export const getRecruitingStudies = () => {
     return getStudiesByStatus('RECRUITING');
 };
 
-export const getStudiesByTopic = (topic) => {
+export const getStudiesByTopic = (topic: string) => {
     return mockStudies.filter(study => study.topic === topic);
 };
 
-export const searchStudies = (keyword) => {
+export const searchStudies = (keyword: string) => {
     const lowerKeyword = keyword.toLowerCase();
     return mockStudies.filter(study =>
         study.name.toLowerCase().includes(lowerKeyword) ||
         study.description.toLowerCase().includes(lowerKeyword) ||
-        study.topic.toLowerCase().includes(lowerKeyword)
+        study.topic.toLowerCase().includes(keyword.toLowerCase())
     );
 };
 
-export const getRegionById = (id) => {
+export const getRegionById = (id: number) => {
     return mockRegions.find(region => region.id === id);
 };
 
-export const getUserById = (id) => {
+export const getUserById = (id: number) => {
     return mockUsers.find(user => user.id === id);
 };

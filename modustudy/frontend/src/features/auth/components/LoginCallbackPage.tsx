@@ -32,24 +32,54 @@ export const LoginCallbackPage = () => {
             isProcessingRef.current = true;
 
             try {
-                console.log('[INFO] 카카오 로그인 처리 시작');
-                const data = await authApi.handleKakaoCallback(code);
+                const provider = sessionStorage.getItem('oauth_provider') || 'kakao'; // 기본값은 kakao (하위 호환)
+                console.log(`[INFO] ${provider} 로그인 처리 시작`);
 
-                // localStorage에 토큰 저장
-                localStorage.setItem('accessToken', data.accessToken);
-                localStorage.setItem('refreshToken', data.refreshToken);
+                let data;
+                if (provider === 'naver') {
+                    const state = searchParams.get('state') || '';
+                    data = await authApi.handleNaverCallback(code, state);
+                } else if (provider === 'google') {
+                    data = await authApi.handleGoogleCallback(code);
+                } else {
+                    data = await authApi.handleKakaoCallback(code);
+                }
 
-                // authStore 업데이트
-                login({
-                    id: String(data.user.id),
-                    name: data.user.name,
-                    email: data.user.email,
-                    avatar: data.user.profileImage || undefined
-                });
+                console.log('[DEBUG] Server Response Data:', data);
 
-                console.log('[INFO] 로그인 성공!');
-                // 대시보드로 리다이렉트
-                navigate('/dashboard', { replace: true });
+                // authStore 업데이트 (이 과정은 로그인이 완료된 경우에만 의미가 있음)
+                // 신규 유저인 경우 아직 닉네임 등이 없어 추가 정보 입력이 필요함
+                if (data.isNewUser) {
+                    console.log('[INFO] 신규 소셜 유저 - 추가 정보 입력 페이지로 이동');
+
+                    // 임시 데이터 저장 (SignupPage에서 사용)
+                    localStorage.setItem('oauthTempData', JSON.stringify({
+                        accessToken: data.accessToken,
+                        refreshToken: data.refreshToken,
+                        email: data.user.email,
+                        name: data.user.name,
+                        loginProvider: provider.toUpperCase()
+                    }));
+
+                    navigate('/signup?oauth=true', { replace: true });
+                } else {
+                    // 기존 유저인 경우 바로 로그인 처리 및 대시보드 이동
+                    localStorage.setItem('accessToken', data.accessToken);
+                    localStorage.setItem('refreshToken', data.refreshToken);
+
+                    login({
+                        id: String(data.user.id),
+                        name: data.user.name,
+                        email: data.user.email,
+                        avatar: data.user.profileImage || undefined
+                    });
+
+                    console.log('[INFO] 기존 소셜 유저 로그인 성공!');
+                    navigate('/dashboard', { replace: true });
+                }
+
+                // 처리 완료 후 provider 삭제
+                sessionStorage.removeItem('oauth_provider');
             } catch (error) {
                 console.error('Login callback error:', error);
 

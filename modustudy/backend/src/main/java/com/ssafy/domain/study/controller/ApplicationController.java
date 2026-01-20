@@ -17,9 +17,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@Slf4j
-@RequiredArgsConstructor
 @RequestMapping("/api/v1")
+@RequiredArgsConstructor
+@Slf4j
 public class ApplicationController {
 
     private final ApplicationService applicationService;
@@ -46,14 +46,38 @@ public class ApplicationController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    // ============================================================
+    // 신청 목록 조회
+    // ============================================================
+
+    /**
+     * 스터디별 신청 목록 조회
+     */
+    @GetMapping("/study/{studyId}/applications")
+    public ResponseEntity<Page<ApplicationResponse>> getApplicationsByStudy(
+            @PathVariable Long studyId,
+            @RequestParam(required = false) ApplicationStatus status,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+
+        log.info("API 호출 - 스터디별 신청 목록 조회: studyId={}, status={}, page={}, size={}",
+                studyId, status, pageable.getPageNumber(), pageable.getPageSize());
+
+        Page<ApplicationResponse> response = applicationService.getApplicationByStudy(studyId, status, pageable);
+
+        log.info("API 응답 - 신청 목록: totalElements={}, totalPages={}",
+                response.getTotalElements(), response.getTotalPages());
+
+        return ResponseEntity.ok(response);
+    }
+
     /**
      * 사용자별 신청 내역 조회
      */
     @GetMapping("/user/{userId}/applications")
-    public ResponseEntity<Page<ApplicationResponse>> getApplicationByUser(
+    public ResponseEntity<Page<ApplicationResponse>> getApplicationsByUser(
             @PathVariable Long userId,
-            @RequestParam(required = false)ApplicationStatus status,
-            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC)Pageable pageable) {
+            @RequestParam(required = false) ApplicationStatus status,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
 
         log.info("API 호출 - 사용자별 신청 내역 조회: userId={}, status={}, page={}, size={}",
                 userId, status, pageable.getPageNumber(), pageable.getPageSize());

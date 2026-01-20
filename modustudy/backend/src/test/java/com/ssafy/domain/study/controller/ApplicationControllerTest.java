@@ -181,9 +181,10 @@ class ApplicationControllerTest {
                 .status(ApplicationStatus.PENDING)
                 .build();
         applicationRepository.save(existingApp);
+        applicationRepository.flush();  // 👈 추가! 즉시 DB 반영
 
         ApplicationCreateRequest request = ApplicationCreateRequest.builder()
-                .message("다시 신청합니다!")
+                .message("다시 신청합니다!다시신청합니다")  // 👈 10자 이상으로 수정
                 .build();
 
         // when & then

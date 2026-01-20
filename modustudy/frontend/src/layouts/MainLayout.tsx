@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { Sidebar } from './components/Sidebar';
+import { RightSideBar } from './components/RightSideBar';
 import { useUIStore } from '@/store/uiStore';
 import { useAuthStore } from '@/store/authStore';
 import { SquizLogo } from '@/shared/components/SquizLogo';
@@ -12,13 +13,13 @@ interface MainLayoutProps {
 }
 
 export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
-    const { isSidebarOpen, toggleSidebar } = useUIStore();
+    const { isSidebarOpen, toggleSidebar, activeRightTab } = useUIStore();
     const { isLoggedIn, user, logout } = useAuthStore();
 
     return (
         <div className="flex flex-col h-screen bg-study-bg overflow-hidden">
             {/* 헤더 - 상단 100% 너비 */}
-            <header className="h-16 w-full bg-study-bg flex items-center justify-between px-6 flex-shrink-0">
+            <header className="h-16 w-full bg-study-bg flex items-center justify-between px-6 flex-shrink-0 z-50">
                 <div className="flex items-center gap-4">
                     {/* 사이드바 토글 버튼 */}
                     <button
@@ -37,18 +38,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                     </Link>
                 </div>
 
-                {/* 우측 네비게이션 및 인증 영역 */}
-                <div className="flex items-center gap-3">
-                    <button className="flex items-center gap-2 p-2 px-3 rounded-google hover:bg-study-blue/10 text-study-text transition-colors">
-                        <span className="material-icons text-study-blue text-xl">group</span>
-                        <span className="text-sm font-medium">친구</span>
-                    </button>
-                    <button className="flex items-center gap-2 p-2 px-3 rounded-google hover:bg-study-blue/10 text-study-text transition-colors">
-                        <span className="material-icons text-study-blue text-xl">forum</span>
-                        <span className="text-sm font-medium">DM</span>
-                        <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse ml-[-4px] mt-[-12px]"></div>
-                    </button>
-
+                {/* 우측 인증 영역 (친구, DM 버튼 삭제됨) */}
+                <div className="flex items-center gap-3 pr-14 h-full">
                     <div className="w-px h-6 bg-study-blue/20 mx-1" />
 
                     {isLoggedIn ? (
@@ -77,9 +68,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 </div>
             </header>
 
-            {/* 사이드바 + 메인 콘텐츠 (헤더 아래) */}
-            <div className="flex flex-1 overflow-hidden">
-                {/* 사이드바 */}
+            {/* 사이드바 + 메인 콘텐츠 + 우측 사이드바 */}
+            <div className="flex flex-1 overflow-hidden relative">
+                {/* 왼쪽 사이드바 */}
                 <Sidebar />
 
                 {/* 메인 콘텐츠 영역 */}
@@ -89,10 +80,15 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                     transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                 >
                     {/* 페이지 콘텐츠 */}
-                    <div className={`flex-1 overflow-auto pt-2 pb-6 bg-study-bg ${isSidebarOpen ? 'px-6' : 'px-0'}`}>
+                    <div className={`flex-1 overflow-auto pt-2 pb-6 bg-study-bg transition-all duration-300 ${isSidebarOpen ? 'pl-6' : 'pl-0'
+                        } ${activeRightTab ? 'pr-80' : 'pr-14'
+                        }`}>
                         {children}
                     </div>
                 </motion.main>
+
+                {/* 우측 사이드바 (아이콘바 + 패널) */}
+                <RightSideBar />
             </div>
         </div>
     );

@@ -1,14 +1,14 @@
 package com.ssafy.domain.user.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ssafy.domain.user.dto.request.ProfileSetupRequest;
 import com.ssafy.domain.user.dto.request.UserUpdateRequest;
 import com.ssafy.domain.user.entity.User;
 import com.ssafy.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;  // ← import 추가!
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.Optional;
 
 @Service
@@ -58,6 +58,16 @@ public class UserServiceImpl implements UserService {
             user.setPassword(encodedPassword);
         }
 
+        // 관심 분야 설정 (선택) ← 추가!
+        if (request.getInterests() != null && !request.getInterests().isEmpty()) {
+            user.setInterests(convertToJson(request.getInterests()));
+        }
+
+        // 기술 스택 설정 (선택) ← 추가!
+        if (request.getTechStacks() != null && !request.getTechStacks().isEmpty()) {
+            user.setTechStacks(convertToJson(request.getTechStacks()));
+        }
+
         return userRepository.save(user);
     }
 
@@ -94,5 +104,19 @@ public class UserServiceImpl implements UserService {
         user.getSocialAccounts().size();
 
         return user;
+    }
+
+    // ========== 헬퍼 메서드 ========== ← 추가!
+
+    /**
+     * List를 JSON 문자열로 변환
+     */
+    private String convertToJson(Object obj) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.writeValueAsString(obj);
+        } catch (Exception e) {
+            return "[]";
+        }
     }
 }

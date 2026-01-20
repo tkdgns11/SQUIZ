@@ -11,6 +11,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.ssafy.domain.user.dto.request.LoginRequest;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -105,6 +106,22 @@ public class AuthController {
     @AllArgsConstructor
     private static class AuthUrlResponse {
         private String authUrl;
+    }
+
+    /**
+     * 일반 로그인 (이메일 + 비밀번호)
+     * POST /api/v1/auth/login
+     */
+    @PostMapping("/login")
+    public ResponseEntity<ApiResponse<AuthResponse>> login(
+            @RequestBody LoginRequest request) {
+
+        AuthResponse response = oAuth2Service.login(
+                request.getEmail(),
+                request.getPassword()
+        );
+
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
 }

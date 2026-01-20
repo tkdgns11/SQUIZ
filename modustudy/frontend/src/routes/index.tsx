@@ -7,6 +7,7 @@ import { LoginPage, SignupPage, LoginCallbackPage } from '../features/auth/index
 import { RecruitmentPage } from '../features/recruitment/RecruitmentPage';
 import { StudyPage, StudyCreatePage, StudyDetailPage, StudyManagementPage } from '../features/study';
 import { TestSidebarPage } from '../features/test/TestSidebarPage';
+import { ProfilePage } from '../features/profile';
 
 export const AppRouter = () => {
     return (
@@ -25,6 +26,7 @@ export const AppRouter = () => {
                 <Route path="/study/:id" element={<StudyDetailPage />} />
                 <Route path="/study/manage/:id" element={<StudyManagementPage />} />
                 <Route path="/recruitment" element={<RecruitmentPage />} />
+                <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/test-sidebar" element={<TestSidebarPage />} />
                 <Route path="/" element={
                     <div style={{ textAlign: "center", marginTop: "50px" }}>

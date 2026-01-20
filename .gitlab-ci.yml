@@ -1,0 +1,59 @@
+stages:
+  - build
+  - test
+  - deploy
+
+variables:
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+  DEPLOY_PATH: "/home/ubuntu/squiz"
+
+# ===========================================
+# Build Stage
+# ===========================================
+build:
+  stage: build
+  script:
+    - cd modustudy/backend
+    - chmod +x gradlew
+    - ./gradlew build -x test
+  only:
+    - master
+    - main
+  tags:
+    - docker
+
+# ===========================================
+# Test Stage
+# ===========================================
+test:
+  stage: test
+  script:
+    - cd modustudy/backend
+    - chmod +x gradlew
+    - export SPRING_PROFILES_ACTIVE=test && ./gradlew test
+  only:
+    - master
+    - main
+  tags:
+    - docker
+
+# ===========================================
+# Deploy Stage (자동 배포)
+# ===========================================
+deploy:
+  stage: deploy
+  script:
+    # 프로젝트 파일 배포 경로로 복사
+    - rsync -av --delete --exclude '.git' --exclude 'node_modules' --exclude '.gradle' --exclude 'build' modustudy/ $DEPLOY_PATH/
+    # Docker Compose로 서비스 재시작
+    - cd $DEPLOY_PATH
+    - docker-compose down || true
+    - docker-compose up -d --build
+    - docker image prune -f
+    # 배포 결과 확인
+    - docker-compose ps
+  only:
+    - master
+    - main
+  tags:
+    - docker

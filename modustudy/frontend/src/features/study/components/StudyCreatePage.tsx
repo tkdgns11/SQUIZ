@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Info, Settings } from 'lucide-react';
-import StudyListContainer from './components/StudyListContainer';
+import StudyListContainer from './StudyListContainer';
 import { MainLayout } from '@/layouts/MainLayout';
-import './styles/StudyCreatePage.css';
+import '../styles/StudyCreatePage.css';
 
 const StudyCreatePage: React.FC = () => {
     const navigate = useNavigate();

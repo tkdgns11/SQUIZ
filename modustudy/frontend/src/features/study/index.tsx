@@ -1,7 +1,7 @@
 // 스터디 피처의 모든 컴포넌트와 서비스를 외부로 노출하는 인덱스 파일
-export { default as StudyPage } from './StudyPage';
-export { default as StudyCreatePage } from './StudyCreatePage';
-export { default as StudyDetailPage } from './StudyDetailPage';
+export { default as StudyPage } from './components/StudyPage';
+export { default as StudyCreatePage } from './components/StudyCreatePage';
+export { default as StudyDetailPage } from './components/StudyDetailPage';
 export { StudyManagementPage } from './manage';
 export { default as StudyCardContent } from './components/StudyCardContent';
 export { default as StudyFilter } from './components/StudyFilter';

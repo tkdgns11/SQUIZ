@@ -1,6 +1,6 @@
 import React from 'react';
 import { Sparkles } from 'lucide-react';
-import './AuthLayout.css';
+import '../styles/AuthLayout.css';
 
 interface AuthLayoutProps {
     children: React.ReactNode;

@@ -6,6 +6,8 @@ import com.ssafy.domain.user.dto.request.TokenRefreshRequest;
 import com.ssafy.domain.user.dto.response.AuthResponse;
 import com.ssafy.domain.user.dto.response.TokenRefreshResponse;
 import com.ssafy.domain.user.service.OAuth2Service;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,16 +27,25 @@ public class AuthController {
     public ResponseEntity<ApiResponse<AuthUrlResponse>> getAuthorizationUrl(
             @PathVariable String provider) {
 
-        // 현재는 카카오만 지원
-        if (!"kakao".equalsIgnoreCase(provider)) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(ApiResponse.error("INVALID_PROVIDER", "지원하지 않는 OAuth 제공자입니다."));
+        String authUrl;
+
+        switch (provider.toLowerCase()) {
+            case "kakao":
+                authUrl = oAuth2Service.getKakaoAuthUrl();
+                break;
+            case "naver":
+                authUrl = oAuth2Service.getNaverAuthUrl();
+                break;
+            case "google":
+                authUrl = oAuth2Service.getGoogleAuthUrl();
+                break;
+            default:
+                return ResponseEntity
+                        .badRequest()
+                        .body(ApiResponse.error("INVALID_PROVIDER", "지원하지 않는 OAuth 제공자입니다."));
         }
 
-        String authUrl = oAuth2Service.getKakaoAuthUrl();
         AuthUrlResponse response = new AuthUrlResponse(authUrl);
-
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
@@ -45,16 +56,26 @@ public class AuthController {
     @PostMapping("/oauth/{provider}/callback")
     public ResponseEntity<ApiResponse<AuthResponse>> handleCallback(
             @PathVariable String provider,
-            @RequestBody OAuth2CallbackRequest request) {
+            @RequestBody OAuth2CallbackRequest request,
+            @RequestParam(required = false) String state) {  // 네이버용 state 파라미터
 
-        // 현재는 카카오만 지원
-        if (!"kakao".equalsIgnoreCase(provider)) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(ApiResponse.error("INVALID_PROVIDER", "지원하지 않는 OAuth 제공자입니다."));
+        AuthResponse response;
+
+        switch (provider.toLowerCase()) {
+            case "kakao":
+                response = oAuth2Service.processKakaoCallback(request.getCode());
+                break;
+            case "naver":
+                response = oAuth2Service.processNaverCallback(request.getCode(), state);
+                break;
+            case "google":
+                response = oAuth2Service.processGoogleCallback(request.getCode());
+                break;
+            default:
+                return ResponseEntity
+                        .badRequest()
+                        .body(ApiResponse.error("INVALID_PROVIDER", "지원하지 않는 OAuth 제공자입니다."));
         }
-
-        AuthResponse response = oAuth2Service.processKakaoCallback(request.getCode());
 
         return ResponseEntity.ok(ApiResponse.success(response));
     }
@@ -77,10 +98,13 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    // 내부 클래스: AuthUrlResponse
-    @lombok.Getter
-    @lombok.AllArgsConstructor
+    /**
+     * 내부 클래스: AuthUrlResponse
+     */
+    @Getter
+    @AllArgsConstructor
     private static class AuthUrlResponse {
         private String authUrl;
     }
+
 }

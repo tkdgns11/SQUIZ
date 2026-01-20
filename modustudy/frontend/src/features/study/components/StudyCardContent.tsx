@@ -27,7 +27,7 @@ interface StudyCardContentProps {
         leader: {
             id: number;
             nickname: string;
-            profileImage?: string;
+            profileImage?: string | null;
             leaderRating: number;
             leaderReviewCount: number;
         };

@@ -14,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+
+
 /**
  * 사용자 API Controller
  */
@@ -77,6 +79,7 @@ public class UserController {
                 ApiResponse.success(UserDTO.from(updatedUser))
         );
     }
+
     /**
      * 로그아웃
      * POST /api/v1/auth/logout

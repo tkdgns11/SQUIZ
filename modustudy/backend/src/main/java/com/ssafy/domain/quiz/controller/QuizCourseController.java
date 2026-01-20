@@ -64,17 +64,17 @@ public class QuizCourseController {
      * - 섹션 N은 섹션 N-1을 70% 이상 통과해야 해금
      *
      * @param courseId 코스 ID
-     * @param sectionId 섹션 ID
+     * @param sectionNumber 섹션 번호
      * @param userDetails 인증된 사용자 정보
      * @return 섹션 문제 응답
      */
     @Operation(summary = "섹션 문제 조회", description = "해금된 섹션의 문제 목록을 조회합니다. 인증 필요.")
-    @GetMapping("/{courseId}/sections/{sectionId}")
+    @GetMapping("/{courseId}/sections/{sectionNumber}")
     public ApiResponse<SectionQuestionsResponse> getSectionQuestions(
             @Parameter(description = "코스 ID") @PathVariable Long courseId,
-            @Parameter(description = "섹션 ID") @PathVariable Long sectionId,
+            @Parameter(description = "섹션 번호") @PathVariable Integer sectionNumber,
             @AuthenticationPrincipal SsafyUserDetails userDetails) {
         Long userId = userDetails.getUser().getId();
-        return ApiResponse.success(quizCourseService.getSectionQuestions(courseId, sectionId, userId));
+        return ApiResponse.success(quizCourseService.getSectionQuestions(courseId, sectionNumber, userId));
     }
 }

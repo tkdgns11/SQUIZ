@@ -32,10 +32,13 @@ public class UserSectionAttempt extends BaseEntity {
     private User user;
 
     /**
-     * 시도한 섹션.
+     * 시도한 섹션 (복합 FK: section_number + quiz_course_id).
      */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "section_id", nullable = false)
+    @JoinColumns({
+        @JoinColumn(name = "section_number", referencedColumnName = "section_number", nullable = false),
+        @JoinColumn(name = "quiz_course_id", referencedColumnName = "quiz_course_id", nullable = false)
+    })
     private QuizCourseSection section;
 
     /**

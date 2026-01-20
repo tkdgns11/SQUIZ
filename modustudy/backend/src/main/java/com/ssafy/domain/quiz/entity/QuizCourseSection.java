@@ -4,6 +4,10 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,22 +17,29 @@ import java.util.List;
  * 코스 내 학습 단계를 나타내며, 각 섹션은 여러 문제를 포함한다.
  * 사용자는 이전 섹션을 통과해야 다음 섹션을 해금할 수 있다.
  *
+ * PK: (section_number, quiz_course_id) - 복합키
+ *
  * DDL 참조: docs/sql/ERD.sql - quiz_course_section
  */
 @Entity
 @Table(name = "quiz_course_section")
+@EntityListeners(AuditingEntityListener.class)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class QuizCourseSection {
 
+    /**
+     * 복합키 (section_number + quiz_course_id).
+     */
     @EmbeddedId
     private QuizCourseSectionId id;
+
     /**
      * 소속 코스.
      */
     @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("courseId")  // QuizCourseSectionId의 courseId와 매핑
-    @JoinColumn(name = "course_id", nullable = false)
+    @MapsId("quizCourseId") // 외래 키(FK)로 받아온 컬럼을 이 엔티티의 기본 키(PK)로도 쓰겠다
+    @JoinColumn(name = "quiz_course_id", nullable = false)
     private QuizCourse course;
 
     /**
@@ -56,6 +67,13 @@ public class QuizCourseSection {
     private Integer passScore = 70;
 
     /**
+     * 생성 일시.
+     */
+    @CreatedDate
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    /**
      * 섹션에 속한 문제 목록.
      */
     @OneToMany(mappedBy = "section", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -63,35 +81,35 @@ public class QuizCourseSection {
     private List<QuizCourseQuestion> questions = new ArrayList<>();
 
     /**
-     * 정적 팩토리 메서드 - section_number는 자동 할당.
+     * 정적 팩토리 메서드.
+     *
+     * @param course 소속 코스
+     * @param sectionNumber 섹션 순서 번호 (Service에서 계산하여 전달)
+     * @param name 섹션 이름
+     * @param description 섹션 설명
+     * @param passScore 통과 점수 (null이면 기본값 70)
+     * @return 새 섹션 인스턴스
      */
     public static QuizCourseSection create(
             QuizCourse course,
+            Integer sectionNumber,
             String name,
             String description,
             Integer passScore
     ) {
         QuizCourseSection section = new QuizCourseSection();
+        section.id = new QuizCourseSectionId(sectionNumber, course.getId());
         section.course = course;
         section.name = name;
         section.description = description;
         section.passScore = passScore != null ? passScore : 70;
-        // section_number는 @PrePersist에서 자동 할당
         return section;
     }
 
     /**
-     * 저장 전에 section_number를 자동으로 할당.
-     * 같은 course_id를 가진 섹션 중 최대값 + 1로 설정.
+     * 섹션 번호 반환 (편의 메서드).
      */
-    @PrePersist
-    public void prePersist() {
-        if (this.id == null && this.course != null) {
-            // Repository를 통해 다음 section_number를 조회해야 함
-            // 이 부분은 Service 레이어에서 처리하는 것이 더 안전
-            throw new IllegalStateException(
-                    "section_number must be set before persisting. Use Service layer to create sections."
-            );
-        }
+    public Integer getSectionNumber() {
+        return this.id != null ? this.id.getSectionNumber() : null;
     }
 }

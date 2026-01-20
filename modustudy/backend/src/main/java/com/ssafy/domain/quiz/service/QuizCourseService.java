@@ -35,6 +35,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
+ * QuizCourseService - 조회(읽기) 중심
  * 퀴즈 코스 조회 비즈니스 로직.
  *
  * 호출자: {@link com.ssafy.domain.quiz.controller.QuizCourseController}
@@ -177,17 +178,17 @@ public class QuizCourseService {
      * </ol>
      *
      * @param courseId 코스 ID (URL path variable)
-     * @param sectionId 섹션 ID (URL path variable)
+     * @param sectionNumber 섹션 번호 (URL path variable)
      * @param userId 인증된 사용자 ID (JWT에서 추출)
      * @return 섹션 정보 및 문제 목록을 담은 응답 DTO
      * @throws NotFoundException 코스 또는 섹션을 찾을 수 없거나 비활성 상태인 경우
      * @throws SectionLockedException 이전 섹션을 완료하지 않아 잠긴 섹션에 접근한 경우
      */
-    public SectionQuestionsResponse getSectionQuestions(Long courseId, Long sectionId, Long userId) {
+    public SectionQuestionsResponse getSectionQuestions(Long courseId, Integer sectionNumber, Long userId) {
         // 1. 섹션 조회: N+1 문제 방지를 위해 문제 목록을 fetch join으로 함께 조회
-        //    - courseId와 sectionId 모두 일치하는 섹션만 조회 (잘못된 코스-섹션 조합 방지)
+        //    - courseId와 sectionNumber 모두 일치하는 섹션만 조회 (잘못된 코스-섹션 조합 방지)
         QuizCourseSection section = quizCourseSectionRepository
-                .findByIdAndCourseIdWithQuestions(sectionId, courseId)
+                .findByIdWithQuestions(courseId, sectionNumber)
                 .orElseThrow(NotFoundException::section);
 
         // 2. 코스 활성화 상태 확인: 비활성 코스는 관리자가 숨긴 것이므로 404 처리
@@ -211,7 +212,7 @@ public class QuizCourseService {
                 .toList();
 
         return new SectionQuestionsResponse(
-                section.getId(),
+                section.getSectionNumber(),
                 section.getName(),
                 section.getTotalQuestions(),
                 section.getPassScore(),

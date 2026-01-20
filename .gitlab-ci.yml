@@ -29,6 +29,7 @@ test:
   stage: test
   script:
     - cd modustudy/backend
+    - chmod +x gradlew
     - ./gradlew test
   only:
     - master

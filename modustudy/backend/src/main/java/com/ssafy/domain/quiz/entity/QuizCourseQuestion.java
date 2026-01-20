@@ -26,10 +26,13 @@ import org.hibernate.type.SqlTypes;
 public class QuizCourseQuestion extends BaseEntity {
 
     /**
-     * 소속 섹션.
+     * 소속 섹션 (복합 FK: section_number + quiz_course_id).
      */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "section_id", nullable = false)
+    @JoinColumns({
+        @JoinColumn(name = "section_number", referencedColumnName = "section_number", nullable = false),
+        @JoinColumn(name = "quiz_course_id", referencedColumnName = "quiz_course_id", nullable = false)
+    })
     private QuizCourseSection section;
 
     /**

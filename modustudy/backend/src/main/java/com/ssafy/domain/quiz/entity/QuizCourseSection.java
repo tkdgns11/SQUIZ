@@ -21,6 +21,8 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class QuizCourseSection {
 
+    @EmbeddedId
+    private QuizCourseSectionId id;
     /**
      * 소속 코스.
      */

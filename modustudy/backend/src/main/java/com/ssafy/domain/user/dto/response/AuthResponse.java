@@ -11,4 +11,5 @@ public class AuthResponse {
     private Integer expiresIn;
     private Boolean isNewUser;
     private UserDTO user;
+    private String loginProvider;
 }

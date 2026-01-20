@@ -1,0 +1,417 @@
+package com.ssafy.domain.quiz.service;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ssafy.common.exception.BadRequestException;
+import com.ssafy.common.exception.NotFoundException;
+import com.ssafy.common.exception.SectionLockedException;
+import com.ssafy.domain.gamification.entity.Badge;
+import com.ssafy.domain.gamification.repository.BadgeRepository;
+import com.ssafy.domain.quiz.dto.request.SaveAnswerRequest;
+import com.ssafy.domain.quiz.dto.response.*;
+import com.ssafy.domain.quiz.entity.*;
+import com.ssafy.domain.quiz.entity.enums.AttemptStatus;
+import com.ssafy.domain.quiz.repository.*;
+import com.ssafy.domain.user.entity.User;
+import com.ssafy.domain.user.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+/**
+ * 퀴즈 섹션 시도 서비스.
+ *
+ * 섹션 문제 풀이와 관련된 비즈니스 로직을 처리한다.
+ * - 시도 시작/재개 (문제 셔플)
+ * - 임시 저장
+ * - 제출 및 채점
+ * - 배지 수여
+ */
+@Slf4j
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class QuizSectionAttemptService {
+
+    private final UserRepository userRepository;
+    private final QuizCourseSectionRepository sectionRepository;
+    private final QuizCourseRepository courseRepository;
+    private final UserSectionAttemptRepository attemptRepository;
+    private final UserSectionAttemptQuestionRepository attemptQuestionRepository;
+    private final UserCourseProgressRepository progressRepository;
+    private final BadgeRepository badgeRepository;
+    private final ObjectMapper objectMapper;
+
+    /**
+     * 시도당 출제할 문제 수.
+     * 섹션의 총 문제 수가 이보다 적으면 전체 출제.
+     */
+    @Value("${quiz.course.questions-per-attempt:30}")
+    private int questionsPerAttempt;
+
+    /**
+     * 섹션 시도를 시작하거나 재개한다.
+     *
+     * <h3>처리 흐름</h3>
+     * <ol>
+     *   <li>섹션 해금 여부 확인</li>
+     *   <li>진행 중인 시도가 있으면 재개 (기존 순서 유지)</li>
+     *   <li>없으면 새 시도 생성 (문제 셔플)</li>
+     * </ol>
+     *
+     * @param courseId 코스 ID
+     * @param sectionNumber 섹션 번호
+     * @param userId 사용자 ID
+     * @return 시도 응답 (문제 목록 포함)
+     */
+    @Transactional
+    public SectionAttemptResponse startOrResumeAttempt(Long courseId, Integer sectionNumber, Long userId) {
+        // 1. 섹션 조회 (코스 포함)
+        QuizCourseSection section = sectionRepository
+                .findByIdWithCourseAndQuestions(courseId, sectionNumber)
+                .orElseThrow(NotFoundException::section);
+
+        // 2. 코스 활성화 상태 확인
+        QuizCourse course = section.getCourse();
+        if (!Boolean.TRUE.equals(course.getIsActive())) {
+            throw NotFoundException.course();
+        }
+
+        // 3. 섹션 해금 여부 확인
+        if (!isSectionUnlocked(userId, courseId, sectionNumber)) {
+            throw new SectionLockedException();
+        }
+
+        // 4. 진행 중인 시도 확인
+        Optional<UserSectionAttempt> existingAttempt = attemptRepository
+                .findInProgressAttemptWithQuestions(userId, courseId, sectionNumber);
+
+        UserSectionAttempt attempt;
+        if (existingAttempt.isPresent()) {
+            // 기존 시도 재개
+            attempt = existingAttempt.get();
+        } else {
+            // 새 시도 생성
+            User user = userRepository.getReferenceById(userId);
+            attempt = createNewAttempt(user, section);
+        }
+
+        return buildAttemptResponse(attempt, section);
+    }
+
+    /**
+     * 답안을 임시 저장한다.
+     *
+     * 진행 중인 시도에만 저장 가능하다.
+     *
+     * @param attemptId 시도 ID
+     * @param request 저장할 답안 목록
+     * @param userId 사용자 ID
+     */
+    @Transactional
+    public void saveAnswers(Long attemptId, SaveAnswerRequest request, Long userId) {
+        UserSectionAttempt attempt = attemptRepository.findById(attemptId)
+                .orElseThrow(NotFoundException::attempt);
+
+        // 본인 시도인지 확인
+        if (!attempt.getUser().getId().equals(userId)) {
+            throw new BadRequestException("본인의 시도만 수정할 수 있습니다.");
+        }
+
+        // 진행 중인 시도인지 확인
+        if (!attempt.isInProgress()) {
+            throw new BadRequestException("완료된 시도는 수정할 수 없습니다.");
+        }
+
+        // 답안 저장
+        Map<Long, UserSectionAttemptQuestion> questionMap = attempt.getAttemptQuestions().stream()
+                .collect(Collectors.toMap(
+                        aq -> aq.getQuestion().getId(),
+                        aq -> aq
+                ));
+
+        for (SaveAnswerRequest.AnswerItem answer : request.answers()) {
+            UserSectionAttemptQuestion aq = questionMap.get(answer.questionId());
+            if (aq != null) {
+                aq.saveAnswer(answer.answer());
+            }
+        }
+    }
+
+    /**
+     * 시도를 제출하고 채점한다.
+     *
+     * @param attemptId 시도 ID
+     * @param userId 사용자 ID
+     * @return 채점 결과
+     */
+    @Transactional
+    public AttemptResultResponse submitAttempt(Long attemptId, Long userId) {
+        UserSectionAttempt attempt = attemptRepository.findById(attemptId)
+                .orElseThrow(NotFoundException::attempt);
+
+        // 본인 시도인지 확인
+        if (!attempt.getUser().getId().equals(userId)) {
+            throw new BadRequestException("본인의 시도만 제출할 수 있습니다.");
+        }
+
+        // 진행 중인 시도인지 확인
+        if (!attempt.isInProgress()) {
+            throw new BadRequestException("이미 완료된 시도입니다.");
+        }
+
+        // 채점
+        attemptQuestionRepository.gradeAllByAttemptId(attemptId);
+        int correctCount = attemptQuestionRepository.countCorrectByAttemptId(attemptId);
+
+        // 시도 완료 처리
+        QuizCourseSection section = attempt.getSection();
+        attempt.complete(correctCount, section.getPassScore());
+
+        // 통과 시 다음 섹션 해금
+        boolean isNextSectionUnlocked = false;
+        BadgeInfo earnedBadge = null;
+
+        if (attempt.getIsPassed()) {
+            isNextSectionUnlocked = updateProgress(
+                    userId,
+                    section.getCourse().getId(),
+                    section.getSectionNumber()
+            );
+
+            // 코스 완료 시 배지 수여
+            if (isCoursCompleted(userId, section.getCourse())) {
+                earnedBadge = awardCourseBadge(userId, section.getCourse());
+            }
+        }
+
+        // 결과 조회 및 응답 생성
+        List<UserSectionAttemptQuestion> results = attemptQuestionRepository
+                .findByAttemptIdWithQuestionOrderByOrderIndex(attemptId);
+
+        return buildResultResponse(attempt, results, isNextSectionUnlocked, earnedBadge);
+    }
+
+    /**
+     * 시도를 포기한다.
+     *
+     * @param attemptId 시도 ID
+     * @param userId 사용자 ID
+     */
+    @Transactional
+    public void abandonAttempt(Long attemptId, Long userId) {
+        UserSectionAttempt attempt = attemptRepository.findById(attemptId)
+                .orElseThrow(NotFoundException::attempt);
+
+        if (!attempt.getUser().getId().equals(userId)) {
+            throw new BadRequestException("본인의 시도만 포기할 수 있습니다.");
+        }
+
+        if (!attempt.isInProgress()) {
+            throw new BadRequestException("이미 완료된 시도입니다.");
+        }
+
+        attempt.abandon();
+    }
+
+    // ========== Private Methods ==========
+
+    /**
+     * 섹션 해금 여부를 확인한다.
+     */
+    private boolean isSectionUnlocked(Long userId, Long courseId, Integer sectionNumber) {
+        if (sectionNumber == 1) {
+            return true;
+        }
+
+        return progressRepository.findByUserIdAndCourseId(userId, courseId)
+                .map(progress -> progress.getCurrentSection() >= sectionNumber)
+                .orElse(false);
+    }
+
+    /**
+     * 새 시도를 생성한다.
+     * 문제를 셔플하여 할당한다.
+     */
+    private UserSectionAttempt createNewAttempt(User user, QuizCourseSection section) {
+        List<QuizCourseQuestion> allQuestions = section.getQuestions();
+
+        // 출제할 문제 수 결정
+        int questionCount = Math.min(questionsPerAttempt, allQuestions.size());
+
+        // 문제 셔플
+        List<QuizCourseQuestion> shuffledQuestions = new ArrayList<>(allQuestions);
+        Collections.shuffle(shuffledQuestions);
+        List<QuizCourseQuestion> selectedQuestions = shuffledQuestions.subList(0, questionCount);
+
+        // 시도 생성
+        UserSectionAttempt attempt = UserSectionAttempt.builder()
+                .user(user)
+                .section(section)
+                .totalQuestions(questionCount)
+                .build();
+
+        // 문제 할당 (order_index 부여)
+        IntStream.range(0, selectedQuestions.size()).forEach(i -> {
+            UserSectionAttemptQuestion aq = UserSectionAttemptQuestion.builder()
+                    .question(selectedQuestions.get(i))
+                    .orderIndex(i + 1)  // 1부터 시작
+                    .build();
+            attempt.addAttemptQuestion(aq);
+        });
+
+        return attemptRepository.save(attempt);
+    }
+
+    /**
+     * 진행 상황을 업데이트한다.
+     *
+     * @return 다음 섹션이 새로 해금되었는지 여부
+     */
+    private boolean updateProgress(Long userId, Long courseId, Integer completedSectionNumber) {
+        Optional<UserCourseProgress> existingProgress = progressRepository
+                .findByUserIdAndCourseId(userId, courseId);
+
+        if (existingProgress.isPresent()) {
+            UserCourseProgress progress = existingProgress.get();
+            if (progress.getCurrentSection() <= completedSectionNumber) {
+                progress.advanceToSection(completedSectionNumber + 1);
+                return true;
+            }
+            return false;
+        } else {
+            // 첫 섹션 통과 시 진행 기록 생성
+            User user = userRepository.getReferenceById(userId);
+            QuizCourse course = courseRepository.getReferenceById(courseId);
+
+            UserCourseProgress progress = UserCourseProgress.builder()
+                    .user(user)
+                    .course(course)
+                    .currentSection(completedSectionNumber + 1)
+                    .build();
+            progressRepository.save(progress);
+            return true;
+        }
+    }
+
+    /**
+     * 코스 완료 여부를 확인한다.
+     */
+    private boolean isCoursCompleted(Long userId, QuizCourse course) {
+        int passedSections = attemptRepository.countPassedSections(userId, course.getId());
+        return passedSections >= course.getTotalSections();
+    }
+
+    /**
+     * 코스 완료 배지를 수여한다.
+     */
+    private BadgeInfo awardCourseBadge(Long userId, QuizCourse course) {
+        String badgeCode = course.getBadgeCode();
+        if (badgeCode == null) {
+            return null;
+        }
+
+        return badgeRepository.findByCode(badgeCode)
+                .map(badge -> {
+                    // TODO: 실제 배지 수여 로직 (UserBadge 테이블에 저장)
+                    log.info("Badge awarded: userId={}, badgeCode={}", userId, badgeCode);
+                    return new BadgeInfo(badge.getCode(), badge.getName(), badge.getDescription());
+                })
+                .orElse(null);
+    }
+
+    /**
+     * 시도 응답을 생성한다.
+     */
+    private SectionAttemptResponse buildAttemptResponse(UserSectionAttempt attempt, QuizCourseSection section) {
+        List<AttemptQuestionItem> questions = attempt.getAttemptQuestions().stream()
+                .map(aq -> new AttemptQuestionItem(
+                        aq.getOrderIndex(),
+                        aq.getQuestion().getId(),
+                        aq.getQuestion().getQuestionText(),
+                        aq.getQuestion().getQuestionType(),
+                        parseOptions(aq.getQuestion().getOptions()),
+                        aq.getUserAnswer()
+                ))
+                .toList();
+
+        int answeredCount = (int) attempt.getAttemptQuestions().stream()
+                .filter(UserSectionAttemptQuestion::isAnswered)
+                .count();
+
+        return new SectionAttemptResponse(
+                attempt.getId(),
+                section.getSectionNumber(),
+                section.getName(),
+                attempt.getStatus(),
+                attempt.getTotalQuestions(),
+                answeredCount,
+                section.getPassScore(),
+                attempt.getCreatedAt(),
+                questions
+        );
+    }
+
+    /**
+     * 채점 결과 응답을 생성한다.
+     */
+    private AttemptResultResponse buildResultResponse(
+            UserSectionAttempt attempt,
+            List<UserSectionAttemptQuestion> results,
+            boolean isNextSectionUnlocked,
+            BadgeInfo earnedBadge
+    ) {
+        List<AttemptResultResponse.QuestionResultItem> resultItems = results.stream()
+                .map(aq -> new AttemptResultResponse.QuestionResultItem(
+                        aq.getOrderIndex(),
+                        aq.getQuestion().getId(),
+                        aq.getUserAnswer(),
+                        aq.getQuestion().getCorrectAnswer(),
+                        aq.getIsCorrect(),
+                        aq.getQuestion().getExplanation()
+                ))
+                .toList();
+
+        return new AttemptResultResponse(
+                attempt.getId(),
+                attempt.getScore(),
+                attempt.getCorrectCount(),
+                attempt.getTotalQuestions(),
+                attempt.getSection().getPassScore(),
+                attempt.getIsPassed(),
+                isNextSectionUnlocked,
+                earnedBadge,
+                resultItems
+        );
+    }
+
+    /**
+     * JSON 형태의 보기를 파싱한다.
+     */
+    private List<OptionItem> parseOptions(String optionsJson) {
+        if (optionsJson == null || optionsJson.isBlank()) {
+            return Collections.emptyList();
+        }
+
+        try {
+            List<Map<String, String>> optionMaps = objectMapper.readValue(
+                    optionsJson,
+                    new TypeReference<List<Map<String, String>>>() {}
+            );
+
+            return optionMaps.stream()
+                    .map(map -> new OptionItem(map.get("id"), map.get("text")))
+                    .toList();
+        } catch (JsonProcessingException e) {
+            log.warn("Failed to parse options JSON: {}", optionsJson, e);
+            return Collections.emptyList();
+        }
+    }
+}

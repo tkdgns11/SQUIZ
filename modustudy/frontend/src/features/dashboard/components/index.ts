@@ -6,3 +6,5 @@ export { TrendingWidget } from './TrendingWidget';
 export { QuizWidget } from './QuizWidget';
 export { QuizWidget2 } from './QuizWidget2';
 export { CalendarExpandWidget } from './CalendarExpandWidget';
+export { default as GuestDashboard } from './GuestDashboard';
+export { default as CommentleHero } from './CommentleHero';

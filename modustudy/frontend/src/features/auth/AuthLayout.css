@@ -463,3 +463,66 @@
         border-radius: 0 0 var(--radius-login) var(--radius-login);
     }
 }
+
+/* 소셜 로그인 동그란 버튼 그룹 */
+.social-login-circle-group {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1.5rem;
+    margin-top: 0.5rem;
+}
+
+/* 동그란 소셜 로그인 버튼 기본 스타일 */
+.social-circle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.social-circle-btn:hover {
+    transform: translateY(-4px) scale(1.05);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.social-circle-btn:active {
+    transform: translateY(-2px) scale(1.02);
+}
+
+/* 카카오 버튼 스타일 */
+.social-circle-btn.kakao {
+    background: #FEE500;
+    color: #3C1E1E;
+}
+
+.social-circle-btn.kakao:hover {
+    background: #FADA0A;
+}
+
+/* 구글 버튼 스타일 */
+.social-circle-btn.google {
+    background: #ffffff;
+    border: 2px solid #e2e8f0;
+}
+
+.social-circle-btn.google:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+/* 네이버 버튼 스타일 */
+.social-circle-btn.naver {
+    background: #03C75A;
+    color: #ffffff;
+}
+
+.social-circle-btn.naver:hover {
+    background: #02b351;
+}

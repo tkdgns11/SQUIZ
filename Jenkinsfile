@@ -36,10 +36,8 @@ pipeline {
         // ===========================================
         stage('Deploy to EC2') {
             steps {
-                withCredentials([file(credentialsId: 'ec2-pem', variable: 'SSH_KEY')]) {
+                withCredentials([sshUserPrivateKey(credentialsId: 'ec2-ssh-key', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
                     sh '''
-                        chmod 600 $SSH_KEY
-
                         # 프로젝트 파일 EC2로 전송
                         rsync -avz --delete \
                             --exclude 'node_modules' \
@@ -47,10 +45,10 @@ pipeline {
                             --exclude 'build' \
                             --exclude '.gradle' \
                             -e "ssh -o StrictHostKeyChecking=no -i $SSH_KEY" \
-                            ./modustudy/ ${EC2_USER}@${EC2_HOST}:${DEPLOY_PATH}/
+                            ./modustudy/ ${SSH_USER}@${EC2_HOST}:${DEPLOY_PATH}/
 
                         # EC2에서 Docker Compose 실행
-                        ssh -o StrictHostKeyChecking=no -i $SSH_KEY ${EC2_USER}@${EC2_HOST} << 'ENDSSH'
+                        ssh -o StrictHostKeyChecking=no -i $SSH_KEY ${SSH_USER}@${EC2_HOST} << 'ENDSSH'
                             cd /home/ubuntu/squiz
                             docker-compose down || true
                             docker-compose build --no-cache

@@ -7,7 +7,7 @@ WORKDIR /app
 
 # 의존성 설치 (캐시)
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm install --omit=dev
 
 # 소스 복사
 COPY src ./src

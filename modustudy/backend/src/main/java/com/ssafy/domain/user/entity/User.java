@@ -53,6 +53,24 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private Boolean isSearchable = true;
 
+    // ========== 스터디장 관련 ==========
+
+    /**
+     * 스터디장 평점 (캐싱)
+     */
+    @Column(name = "leader_rating")
+    @Builder.Default
+    private Float leaderRating = 0.0f;
+
+    /**
+     * 스터디장 평가 수 (캐싱)
+     */
+    @Column(name = "leader_review_count")
+    @Builder.Default
+    private Integer leaderReviewCount = 0;
+
+    // ========== 레벨/경험치 관련 ==========
+
     @Column(nullable = false)
     private Integer totalExp = 0;
 
@@ -64,6 +82,14 @@ public class User extends BaseEntity {
 
     @Column(length = 50)
     private String levelName = "Bronze";
+
+    @Column(length = 500)
+    private String profileImage;  // 프로필 이미지 URL
+
+    // ========== 소셜 계정 연동 ==========
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<UserSocialAccount> socialAccounts = new ArrayList<>();
 
     // ======= 퀴즈 관련 =======
     /**

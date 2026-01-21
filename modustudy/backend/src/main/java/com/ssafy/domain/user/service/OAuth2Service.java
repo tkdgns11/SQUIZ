@@ -19,10 +19,14 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import com.ssafy.domain.user.entity.PasswordResetToken;
+import com.ssafy.domain.user.repository.PasswordResetTokenRepository;
+import java.util.List;
 
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -36,6 +40,9 @@ public class OAuth2Service {
     private final JwtTokenUtil jwtTokenUtil;
     private final RestTemplate restTemplate;
     private final PasswordEncoder passwordEncoder;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final EmailService emailService;
+
 
     // ==================== 카카오 ====================
 
@@ -47,6 +54,9 @@ public class OAuth2Service {
 
     @Value("${spring.security.oauth2.client.registration.kakao.redirect-uri:http://localhost:8080/login/oauth2/code/kakao}")
     private String kakaoRedirectUri;
+
+    @Value("${app.frontend.url}")
+    private String frontendUrl;
 
     /**
      * 카카오 로그인 URL 생성
@@ -525,5 +535,78 @@ public class OAuth2Service {
                 .isNewUser(false)  // 기존 회원
                 .user(userDTO)
                 .build();
+    }
+    /**
+     * 비밀번호 재설정 요청 - 이메일 전송
+     */
+    @Transactional
+    public void requestPasswordReset(String email) {
+        // 1. 이메일로 사용자 찾기
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("해당 이메일로 가입된 계정이 없습니다."));
+
+        // 2. 비밀번호가 설정되지 않은 경우 체크
+        if (user.getPassword() == null || user.getPassword().isEmpty()) {
+            throw new IllegalStateException("비밀번호가 설정되지 않은 계정입니다. 프로필 설정을 먼저 완료해주세요.");
+        }
+
+        // 3. 기존에 미사용 토큰이 있으면 삭제
+        passwordResetTokenRepository.findByUserAndUsedFalse(user)
+                .ifPresent(passwordResetTokenRepository::delete);
+
+        // 4. 새 토큰 생성 (30분 유효)
+        String token = UUID.randomUUID().toString();
+        LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(30);
+
+        PasswordResetToken resetToken = PasswordResetToken.builder()
+                .user(user)
+                .token(token)
+                .expiresAt(expiresAt)
+                .build();
+
+        passwordResetTokenRepository.save(resetToken);
+
+        // 5. 이메일 전송
+        String resetLink = frontendUrl + "/password/reset?token=" + token;
+        emailService.sendPasswordResetEmail(email, resetLink);
+    }
+
+    /**
+     * 토큰 유효성 검증
+     */
+    @Transactional(readOnly = true)
+    public boolean verifyResetToken(String token) {
+        PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
+                .orElse(null);
+
+        return resetToken != null && resetToken.isValid();
+    }
+
+    /**
+     * 비밀번호 재설정 실행
+     */
+    @Transactional
+    public void resetPassword(String token, String newPassword) {
+        // 1. 토큰 조회
+        PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
+                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 토큰입니다."));
+
+        // 2. 토큰 유효성 검증
+        if (!resetToken.isValid()) {
+            throw new IllegalStateException("만료되었거나 이미 사용된 토큰입니다.");
+        }
+
+        // 3. 비밀번호 변경
+        User user = resetToken.getUser();
+        String encodedPassword = passwordEncoder.encode(newPassword);
+        user.updatePassword(encodedPassword);
+        userRepository.save(user);
+
+        // 4. 토큰 사용 처리
+        resetToken.markAsUsed();
+        passwordResetTokenRepository.save(resetToken);
+
+        // 5. 해당 사용자의 모든 리프레시 토큰 삭제 (보안)
+        refreshTokenRepository.deleteByUserId(user.getId());
     }
 }

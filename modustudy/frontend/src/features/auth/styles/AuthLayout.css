@@ -97,7 +97,7 @@
 .auth-visual {
     flex: 1;
     position: relative;
-    background: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 100%);
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
     color: white;
     display: flex;
     align-items: center;
@@ -120,9 +120,9 @@
     position: absolute;
     inset: 0;
     background-image:
-        radial-gradient(at 40% 20%, rgba(255, 255, 255, 0.1) 0px, transparent 50%),
-        radial-gradient(at 80% 0%, rgba(255, 255, 255, 0.1) 0px, transparent 50%),
-        radial-gradient(at 0% 50%, rgba(255, 255, 255, 0.1) 0px, transparent 50%);
+        radial-gradient(at 40% 20%, rgba(255, 255, 255, 0.15) 0px, transparent 50%),
+        radial-gradient(at 80% 0%, rgba(255, 255, 255, 0.15) 0px, transparent 50%),
+        radial-gradient(at 0% 50%, rgba(255, 255, 255, 0.15) 0px, transparent 50%);
     z-index: 2;
 }
 
@@ -130,130 +130,55 @@
     position: relative;
     z-index: 10;
     padding: 3rem;
-    width: fit-content;
-    max-width: 600px;
+    max-width: 420px;
 }
 
 .visual-logo-wrapper {
-    margin-bottom: 3rem;
-    position: relative;
+    margin-bottom: 2rem;
+}
+
+.visual-logo {
+    font-size: 2.2rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    background: linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
     display: inline-block;
+    text-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.logo-glow {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 200px;
-    /* 약간 더 키움 */
-    height: 200px;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.1) 50%, transparent 75%);
-    filter: blur(50px);
-    /* 더 부드럽게 확산 */
-    z-index: 1;
-    animation: pulse-glow 3s infinite alternate;
-}
-
-@keyframes pulse-glow {
-    0% {
-        opacity: 0.5;
-        transform: translate(-50%, -50%) scale(1);
-    }
-
-    100% {
-        opacity: 0.8;
-        transform: translate(-50%, -50%) scale(1.2);
-    }
-}
-
-.visual-logo-svg {
-    position: relative;
-    z-index: 2;
-    width: auto;
-    height: 90px;
-    filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.2));
-}
-
-
-.slogan-group {
-    margin-bottom: 3rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-}
-
-.primary-slogan-wrapper {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.primary-line-1 {
-    font-size: 2.8rem !important;
-    font-weight: 900 !important;
-    line-height: 1.1 !important;
-    margin: 0 !important;
-    color: var(--color-text-inverse);
-    letter-spacing: -0.03em;
+.visual-content h2 {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(135deg, #ffffff 0%, #c7d2fe 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
     opacity: 0;
     transform: translateY(20px);
     transition: all 0.8s 0.2s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.primary-line-1 .text-highlight {
-    background: linear-gradient(135deg, #ffffff 0%, var(--color-primary-light) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    position: relative;
-    padding-right: 0.2rem;
-}
-
-
-.primary-line-2 {
-    font-size: 1.8rem !important;
-    font-weight: 400 !important;
-    /* 굵기 대비 */
-    line-height: 1.2 !important;
-    margin: 0 !important;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.6) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    letter-spacing: -0.01em;
-    opacity: 0;
-    transform: translateY(20px);
-    transition: all 0.8s 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-    font-style: italic;
-    /* 스타일 변주 */
-}
-
-.auth-page.loaded .primary-line-1,
-.auth-page.loaded .primary-line-2 {
+.auth-page.loaded .visual-content h2 {
     opacity: 1;
     transform: translateY(0);
 }
 
-.slogan-divider {
-    width: 40px;
-    height: 4px;
-    background: var(--color-primary-alpha-30);
-    border-radius: 2px;
-}
-
-.secondary-slogan {
-    font-size: 1.25rem;
-    font-weight: 500;
+.visual-description {
+    font-size: 1.125rem;
     line-height: 1.6;
-    color: rgba(255, 255, 255, 0.9);
-    margin: 0;
     opacity: 0;
+    margin-bottom: 2.5rem;
+    color: rgba(255, 255, 255, 0.9);
     transform: translateY(20px);
     transition: all 0.8s 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.auth-page.loaded .secondary-slogan {
+.auth-page.loaded .visual-description {
     opacity: 1;
     transform: translateY(0);
 }

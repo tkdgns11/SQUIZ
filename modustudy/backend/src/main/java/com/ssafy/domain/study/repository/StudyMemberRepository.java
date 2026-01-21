@@ -18,11 +18,15 @@ public interface StudyMemberRepository extends JpaRepository<StudyMember, Long> 
     List<StudyMember> findByUserId(Long userId);
 
     /**
-     * 특정 상태의 멤버십 조회
+     * 특정 상태의 멤버십 조회 (사용자별)
      */
-    List<StudyMember> findByUserIdAndStatus(Long userId, MemberStatus status);  // 👈 추가
+    List<StudyMember> findByUserIdAndStatus(Long userId, MemberStatus status);
 
     boolean existsByStudyIdAndUserId(Long studyId, Long userId);
+
+    // ============================================================
+    // ⭐ 추가된 메서드들 (멤버 목록 조회용)
+    // ============================================================
 
     /**
      * 스터디별 특정 상태의 멤버 목록 조회

@@ -45,7 +45,6 @@ public class SecurityConfig {
                         // Study - TODO: 나중에 인증 적용 필요
                         .requestMatchers("/api/v1/study/my").permitAll()
                         .requestMatchers("/api/v1/study-templates/**").permitAll()
-                        // 포스트맨 삭제 예정
                         .requestMatchers("/api/v1/study/**").permitAll()
                         // 나머지는 인증 필요
                         .anyRequest().authenticated())

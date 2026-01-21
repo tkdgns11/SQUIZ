@@ -1,4 +1,4 @@
-import { User, Mail, Calendar, Target, Edit2 } from 'lucide-react';
+import { User, Mail, Calendar, Edit2 } from 'lucide-react';
 import '../styles/ProfilePage.css';
 
 export const ProfilePage = () => {

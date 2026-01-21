@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.ssafy.domain.user.dto.request.LoginRequest;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -123,5 +125,4 @@ public class AuthController {
 
         return ResponseEntity.ok(ApiResponse.success(response));
     }
-
 }

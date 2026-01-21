@@ -120,28 +120,62 @@ CREATE TABLE `friendship` (
     `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
     `requester_id` BIGINT NOT NULL,              -- 친구 요청자
     `addressee_id` BIGINT NOT NULL,              -- 친구 요청 대상
-    `status` ENUM('PENDING', 'ACCEPTED', 'REJECTED', 'BLOCKED') DEFAULT 'PENDING',
+    `status` ENUM('PENDING', 'ACCEPTED') DEFAULT 'PENDING',
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (`requester_id`) REFERENCES `user`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`addressee_id`) REFERENCES `user`(`id`) ON DELETE CASCADE,
-    UNIQUE KEY `uk_friendship` (`requester_id`, `addressee_id`)
+    UNIQUE KEY `uk_friendship` (`requester_id`, `addressee_id`),
+    INDEX `idx_friendship_requester` (`requester_id`),
+    INDEX `idx_friendship_addressee` (`addressee_id`),
+    INDEX `idx_friendship_status` (`status`)
 );
 
--- DM (1:1 메시지)
+-- 사용자 차단
+CREATE TABLE `user_block` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `blocker_id` BIGINT NOT NULL,                -- 차단한 사용자
+    `blocked_id` BIGINT NOT NULL,                -- 차단당한 사용자
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`blocker_id`) REFERENCES `user`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`blocked_id`) REFERENCES `user`(`id`) ON DELETE CASCADE,
+    UNIQUE KEY `uk_user_block` (`blocker_id`, `blocked_id`),
+    INDEX `idx_user_block_blocker` (`blocker_id`),
+    INDEX `idx_user_block_blocked` (`blocked_id`)
+);
+
+-- DM 대화방
+CREATE TABLE `dm_conversation` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `user1_id` BIGINT NOT NULL,                  -- 참여자 1 (ID가 작은 쪽)
+    `user2_id` BIGINT NOT NULL,                  -- 참여자 2 (ID가 큰 쪽)
+    `user1_last_read_message_id` BIGINT,         -- user1의 마지막 읽은 메시지 ID
+    `user2_last_read_message_id` BIGINT,         -- user2의 마지막 읽은 메시지 ID
+    `user1_deleted` BOOLEAN DEFAULT FALSE,       -- user1이 대화를 삭제했는지
+    `user2_deleted` BOOLEAN DEFAULT FALSE,       -- user2가 대화를 삭제했는지
+    `last_message_at` TIMESTAMP,                 -- 마지막 메시지 시간
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (`user1_id`) REFERENCES `user`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`user2_id`) REFERENCES `user`(`id`) ON DELETE CASCADE,
+    UNIQUE KEY `uk_dm_conversation_users` (`user1_id`, `user2_id`),
+    INDEX `idx_dm_conversation_user1` (`user1_id`),
+    INDEX `idx_dm_conversation_user2` (`user2_id`),
+    INDEX `idx_dm_conversation_last_message` (`last_message_at` DESC)
+);
+
+-- DM 메시지
 CREATE TABLE `direct_message` (
     `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
-    `sender_id` BIGINT NOT NULL,
-    `receiver_id` BIGINT NOT NULL,
-    `content` TEXT NOT NULL,
-    `message_type` ENUM('TEXT', 'IMAGE', 'FILE') DEFAULT 'TEXT',
-    `file_url` VARCHAR(500),
-    `is_read` BOOLEAN DEFAULT FALSE,
-    `is_deleted_by_sender` BOOLEAN DEFAULT FALSE,
-    `is_deleted_by_receiver` BOOLEAN DEFAULT FALSE,
+    `conversation_id` BIGINT NOT NULL,           -- 소속 대화방 ID
+    `sender_id` BIGINT NOT NULL,                 -- 발신자 ID
+    `content` VARCHAR(2000) NOT NULL,            -- 메시지 내용
+    `is_deleted` BOOLEAN DEFAULT FALSE,          -- 삭제 여부
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (`conversation_id`) REFERENCES `dm_conversation`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`sender_id`) REFERENCES `user`(`id`) ON DELETE CASCADE,
-    FOREIGN KEY (`receiver_id`) REFERENCES `user`(`id`) ON DELETE CASCADE
+    INDEX `idx_direct_message_conversation_created` (`conversation_id`, `created_at` DESC)
 );
 
 

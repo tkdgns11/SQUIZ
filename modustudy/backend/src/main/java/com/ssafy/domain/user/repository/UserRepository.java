@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import java.time.LocalDateTime;
 
+import java.util.List;
 import java.util.Optional;
 
 
@@ -37,4 +38,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     long countByIsActive(Boolean isActive);
     long countByCreatedAtAfter(LocalDateTime dateTime);
+
+    /**
+     * 닉네임으로 사용자 검색 (검색 허용 + 본인 제외)
+     */
+    List<User> findByNicknameContainingAndIsSearchableTrueAndIdNot(String nickname, Long excludeId);
 }

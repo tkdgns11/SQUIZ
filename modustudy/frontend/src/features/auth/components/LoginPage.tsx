@@ -68,6 +68,7 @@ export const LoginPage = () => {
             login({
                 id: String(data.user.id),
                 name: data.user.name,
+                nickname: data.user.nickname || undefined,
                 email: data.user.email,
                 avatar: data.user.profileImage || undefined
             });

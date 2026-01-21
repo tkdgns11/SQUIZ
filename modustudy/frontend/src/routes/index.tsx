@@ -7,6 +7,7 @@ import { StartPage } from '../features/start/StartPage';
 import { Dashboard, CalendarExpandWidget } from '../features/dashboard';
 import { authApi } from '@/api/endpoints/authApi';
 import { useAuthStore } from '@/store/authStore';
+import ReuseTest from '../features/reuseTest';
 
 // Lazy 로드: 나머지 페이지들
 const CommentlePage = lazy(() =>
@@ -39,12 +40,7 @@ const StudyDetailPage = lazy(() =>
 const StudyManagementPage = lazy(() =>
     import('../features/study').then(m => ({ default: m.StudyManagementPage }))
 );
-const TestSidebarPage = lazy(() =>
-    import('../features/test/TestSidebarPage').then(m => ({ default: m.TestSidebarPage }))
-);
-const ProfilePage = lazy(() =>
-    import('../features/profile').then(m => ({ default: m.ProfilePage }))
-);
+const ProfilePage = lazy(() => import('@/features/profile/components/ProfilePage').then(module => ({ default: module.ProfilePage })));
 
 export const AppRouter = () => {
     const { login, logout, setInitialized } = useAuthStore();
@@ -86,6 +82,7 @@ export const AppRouter = () => {
                     <Route path="/startpage" element={<StartPage />} />
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/calendar-expand" element={<CalendarExpandWidget />} />
+                    <Route path="/reuse-test" element={<ReuseTest />} />
 
                     {/* Lazy 로드 페이지 */}
                     <Route path="/commentle" element={<CommentlePage />} />
@@ -99,7 +96,6 @@ export const AppRouter = () => {
                     <Route path="/study/manage/:id" element={<StudyManagementPage />} />
                     <Route path="/recruitment" element={<RecruitmentPage />} />
                     <Route path="/profile" element={<ProfilePage />} />
-                    <Route path="/test-sidebar" element={<TestSidebarPage />} />
                 </Routes>
             </Suspense>
         </BrowserRouter>

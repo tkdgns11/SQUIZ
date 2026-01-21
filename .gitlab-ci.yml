@@ -1,6 +1,7 @@
 stages:
   - build
   - test
+  - migrate
   - deploy
 
 variables:
@@ -37,6 +38,27 @@ test:
     - main
   tags:
     - docker
+
+# ===========================================
+# Migrate Stage (DB 마이그레이션)
+# ===========================================
+migrate:
+  stage: migrate
+  script:
+    - cd modustudy/backend
+    - chmod +x gradlew
+    # 배포 전 DB 백업 (버전 포함)
+    - ssh ubuntu@localhost "cd /home/ubuntu/squiz && ./scripts/backup-db.sh manual" || true
+    # Flyway 마이그레이션 실행
+    - source /etc/environment && ./gradlew flywayInfo
+    - source /etc/environment && ./gradlew flywayMigrate
+  only:
+    - master
+    - main
+  tags:
+    - docker
+  when: manual
+  allow_failure: false
 
 # ===========================================
 # Deploy Stage (자동 배포)

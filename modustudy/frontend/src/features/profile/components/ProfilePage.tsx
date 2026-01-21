@@ -1,19 +1,16 @@
 import { User, Mail, Calendar, Edit2 } from 'lucide-react';
 import '../styles/ProfilePage.css';
+import { useAuthStore } from '@/store/authStore';
 
 export const ProfilePage = () => {
-    // TODO: 실제 사용자 데이터는 API나 전역 상태에서 가져와야 함
-    const userData = {
-        name: '김싸피',
-        email: 'ssafy@example.com',
-        profileImage: null, // 프로필 이미지 URL
-        joinDate: '2024.01.15',
-        stats: {
-            studyCount: 5,
-            totalStudyTime: 127,
-            quizScore: 85,
-            attendance: 92,
-        }
+    const { user } = useAuthStore();
+
+    // 기본 통계 데이터 (추후 API 연동 필요)
+    const stats = {
+        studyCount: 5,
+        totalStudyTime: 127,
+        quizScore: 85,
+        attendance: 92,
     };
 
     return (
@@ -22,9 +19,9 @@ export const ProfilePage = () => {
                 {/* 프로필 헤더 */}
                 <div className="profile-header">
                     <div className="profile-avatar-wrapper">
-                        {userData.profileImage ? (
+                        {user?.avatar ? (
                             <img
-                                src={userData.profileImage}
+                                src={user.avatar}
                                 alt="프로필 이미지"
                                 className="profile-avatar"
                             />
@@ -39,15 +36,15 @@ export const ProfilePage = () => {
                     </div>
 
                     <div className="profile-info">
-                        <h1 className="profile-name">{userData.name}</h1>
+                        <h1 className="profile-name">{user?.nickname || user?.name || '사용자'}</h1>
                         <div className="profile-meta">
                             <span className="meta-item">
                                 <Mail size={16} />
-                                {userData.email}
+                                {user?.email}
                             </span>
                             <span className="meta-item">
                                 <Calendar size={16} />
-                                가입일: {userData.joinDate}
+                                SQUIZ와 함께 성장 중
                             </span>
                         </div>
                     </div>
@@ -73,7 +70,7 @@ export const ProfilePage = () => {
                                 <span className="stat-label-dashboard">참여 스터디</span>
                             </div>
                             <div className="stat-value-content-dashboard">
-                                <span className="stat-value-dashboard">{userData.stats.studyCount}</span>
+                                <span className="stat-value-dashboard">{stats.studyCount}</span>
                                 <span className="stat-unit-dashboard">개</span>
                             </div>
                         </div>
@@ -89,7 +86,7 @@ export const ProfilePage = () => {
                                 <span className="stat-label-dashboard">총 학습 시간</span>
                             </div>
                             <div className="stat-value-content-dashboard">
-                                <span className="stat-value-dashboard">{userData.stats.totalStudyTime}</span>
+                                <span className="stat-value-dashboard">{stats.totalStudyTime}</span>
                                 <span className="stat-unit-dashboard">시간</span>
                             </div>
                         </div>
@@ -105,7 +102,7 @@ export const ProfilePage = () => {
                                 <span className="stat-label-dashboard">평균 퀴즈 점수</span>
                             </div>
                             <div className="stat-value-content-dashboard">
-                                <span className="stat-value-dashboard">{userData.stats.quizScore}</span>
+                                <span className="stat-value-dashboard">{stats.quizScore}</span>
                                 <span className="stat-unit-dashboard">점</span>
                             </div>
                         </div>
@@ -121,7 +118,7 @@ export const ProfilePage = () => {
                                 <span className="stat-label-dashboard">출석률</span>
                             </div>
                             <div className="stat-value-content-dashboard">
-                                <span className="stat-value-dashboard">{userData.stats.attendance}</span>
+                                <span className="stat-value-dashboard">{stats.attendance}</span>
                                 <span className="stat-unit-dashboard">%</span>
                             </div>
                         </div>

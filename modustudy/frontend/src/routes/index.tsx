@@ -1,10 +1,12 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { LoadingFallback } from '../components';
 
 // 즉시 로드: 랜딩 및 핵심 페이지
 import { StartPage } from '../features/start/StartPage';
 import { Dashboard, CalendarExpandWidget } from '../features/dashboard';
+import { authApi } from '@/api/endpoints/authApi';
+import { useAuthStore } from '@/store/authStore';
 
 // Lazy 로드: 나머지 페이지들
 const CommentlePage = lazy(() =>
@@ -45,6 +47,36 @@ const ProfilePage = lazy(() =>
 );
 
 export const AppRouter = () => {
+    const { login, logout, setInitialized } = useAuthStore();
+
+    useEffect(() => {
+        const initAuth = async () => {
+            const token = localStorage.getItem('accessToken');
+            if (!token) {
+                setInitialized(true);
+                return;
+            }
+
+            try {
+                const user = await authApi.getMe();
+                login({
+                    id: String(user.id),
+                    name: user.name,
+                    nickname: user.nickname || undefined,
+                    email: user.email,
+                    avatar: user.profileImage || undefined
+                });
+            } catch (error) {
+                console.error('[AUTH] Session restoration failed:', error);
+                logout(); // 토큰이 만료되었거나 잘못된 경우 로그아웃 처리
+            } finally {
+                setInitialized(true);
+            }
+        };
+
+        initAuth();
+    }, [login, logout, setInitialized]);
+
     return (
         <BrowserRouter>
             <Suspense fallback={<LoadingFallback />}>

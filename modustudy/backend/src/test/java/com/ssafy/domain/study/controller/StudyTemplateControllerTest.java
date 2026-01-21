@@ -8,6 +8,9 @@ import com.ssafy.domain.study.entity.MeetingType;
 import com.ssafy.domain.study.entity.PenaltyPolicy;
 import com.ssafy.domain.study.entity.StudyTemplate;
 import com.ssafy.domain.study.repository.StudyTemplateRepository;
+import com.ssafy.domain.user.entity.Role;
+import com.ssafy.domain.user.entity.User;
+import com.ssafy.domain.user.repository.UserRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -41,17 +44,57 @@ class StudyTemplateControllerTest {
     @Autowired
     private StudyTemplateRepository studyTemplateRepository;
 
-    private static final Long USER_ID = 1L;
-    private static final Long OTHER_USER_ID = 2L;
+    @Autowired
+    private UserRepository userRepository;
+
+    private Long testUserId;
+    private Long otherUserId;
 
     @BeforeEach
     void setUp() {
         studyTemplateRepository.deleteAll();
+        userRepository.deleteAll();
+
+        // 테스트용 사용자 생성
+        User testUser = User.builder()
+                .userId("testuser1")
+                .email("testuser@test.com")
+                .nickname("testuser")
+                .name("Test User")
+                .role(Role.USER)
+                .isActive(true)
+                .isOnline(false)
+                .isSearchable(true)
+                .totalExp(0)
+                .currentPoints(0)
+                .currentLevel(1)
+                .levelName("Bronze")
+                .build();
+        testUser = userRepository.save(testUser);
+        testUserId = testUser.getId();
+
+        User otherUser = User.builder()
+                .userId("testuser2")
+                .email("otheruser@test.com")
+                .nickname("otheruser")
+                .name("Other User")
+                .role(Role.USER)
+                .isActive(true)
+                .isOnline(false)
+                .isSearchable(true)
+                .totalExp(0)
+                .currentPoints(0)
+                .currentLevel(1)
+                .levelName("Bronze")
+                .build();
+        otherUser = userRepository.save(otherUser);
+        otherUserId = otherUser.getId();
     }
 
     @AfterEach
     void tearDown() {
         studyTemplateRepository.deleteAll();
+        userRepository.deleteAll();
     }
 
     // ============================================================
@@ -79,7 +122,7 @@ class StudyTemplateControllerTest {
 
         // when & then
         mockMvc.perform(post("/api/v1/study-templates")
-                        .header("user-id", USER_ID)
+                        .header("user-id", testUserId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andDo(print())
@@ -98,7 +141,7 @@ class StudyTemplateControllerTest {
 
         // when & then
         mockMvc.perform(post("/api/v1/study-templates")
-                        .header("user-id", USER_ID)
+                        .header("user-id", testUserId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andDo(print())
@@ -113,12 +156,12 @@ class StudyTemplateControllerTest {
     @DisplayName("내 템플릿 목록 조회 성공")
     void getMyTemplates_Success() throws Exception {
         // given
-        saveTemplate(USER_ID, "템플릿 1", false);
-        saveTemplate(USER_ID, "템플릿 2", false);
+        saveTemplate(testUserId, "템플릿 1", false);
+        saveTemplate(testUserId, "템플릿 2", false);
 
         // when & then
         mockMvc.perform(get("/api/v1/study-templates/my")
-                        .header("user-id", USER_ID))
+                        .header("user-id", testUserId))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)));
@@ -129,7 +172,7 @@ class StudyTemplateControllerTest {
     void getMyTemplates_Empty() throws Exception {
         // when & then
         mockMvc.perform(get("/api/v1/study-templates/my")
-                        .header("user-id", USER_ID))
+                        .header("user-id", testUserId))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(0)));
@@ -172,11 +215,11 @@ class StudyTemplateControllerTest {
     @DisplayName("템플릿 상세 조회 성공 - 본인 템플릿")
     void getTemplate_Success_OwnTemplate() throws Exception {
         // given
-        StudyTemplate template = saveTemplate(USER_ID, "내 템플릿", false);
+        StudyTemplate template = saveTemplate(testUserId, "내 템플릿", false);
 
         // when & then
         mockMvc.perform(get("/api/v1/study-templates/{templateId}", template.getId())
-                        .header("user-id", USER_ID))
+                        .header("user-id", testUserId))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("내 템플릿"));
@@ -190,7 +233,7 @@ class StudyTemplateControllerTest {
 
         // when & then
         mockMvc.perform(get("/api/v1/study-templates/{templateId}", template.getId())
-                        .header("user-id", USER_ID))
+                        .header("user-id", testUserId))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("시스템 템플릿"));
@@ -204,7 +247,7 @@ class StudyTemplateControllerTest {
     @DisplayName("템플릿 수정 성공")
     void updateTemplate_Success() throws Exception {
         // given
-        StudyTemplate template = saveTemplate(USER_ID, "기존 템플릿", false);
+        StudyTemplate template = saveTemplate(testUserId, "기존 템플릿", false);
 
         UpdateTemplateRequest request = UpdateTemplateRequest.builder()
                 .name("수정된 템플릿")
@@ -214,7 +257,7 @@ class StudyTemplateControllerTest {
 
         // when & then
         mockMvc.perform(put("/api/v1/study-templates/{templateId}", template.getId())
-                        .header("user-id", USER_ID)
+                        .header("user-id", testUserId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andDo(print())
@@ -230,11 +273,11 @@ class StudyTemplateControllerTest {
     @DisplayName("템플릿 삭제 성공")
     void deleteTemplate_Success() throws Exception {
         // given
-        StudyTemplate template = saveTemplate(USER_ID, "삭제할 템플릿", false);
+        StudyTemplate template = saveTemplate(testUserId, "삭제할 템플릿", false);
 
         // when & then
         mockMvc.perform(delete("/api/v1/study-templates/{templateId}", template.getId())
-                        .header("user-id", USER_ID))
+                        .header("user-id", testUserId))
                 .andDo(print())
                 .andExpect(status().isNoContent());
     }

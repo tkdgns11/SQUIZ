@@ -1,62 +1,83 @@
-import { User, Mail, Calendar, Target, Edit2 } from 'lucide-react';
+import { useRef, useState } from 'react';
 import '../styles/ProfilePage.css';
+import { useAuthStore } from '@/store/authStore';
+import { EditProfileModal } from './EditProfileModal';
+import { userApi } from '@/api/endpoints/userApi';
+import { ProfileHeader } from './ProfileHeader';
 
 export const ProfilePage = () => {
-    // TODO: 실제 사용자 데이터는 API나 전역 상태에서 가져와야 함
-    const userData = {
-        name: '김싸피',
-        email: 'ssafy@example.com',
-        profileImage: null, // 프로필 이미지 URL
-        joinDate: '2024.01.15',
-        stats: {
-            studyCount: 5,
-            totalStudyTime: 127,
-            quizScore: 85,
-            attendance: 92,
+    const { user, updateUser } = useAuthStore();
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isImageUploading, setIsImageUploading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // 기본 통계 데이터 (추후 API 연동 필요)
+    const stats = {
+        studyCount: 5,
+        totalStudyTime: 127,
+        quizScore: 85,
+        attendance: 92,
+    };
+
+    const handleImageClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // 파일 타입 검사
+        if (!file.type.startsWith('image/')) {
+            alert('이미지 파일만 업로드 가능합니다.');
+            return;
+        }
+
+        setIsImageUploading(true);
+        try {
+            const updatedUser = await userApi.updateProfileImage(file);
+            updateUser({ avatar: updatedUser.profileImage || undefined });
+            alert('프로필 이미지가 변경되었습니다.');
+        } catch (error) {
+            console.error('Image upload error:', error);
+            alert('이미지 업로드 중 오류가 발생했습니다.');
+        } finally {
+            setIsImageUploading(false);
         }
     };
 
     return (
         <div className="profile-page">
             <div className="profile-container">
-                {/* 프로필 헤더 */}
-                <div className="profile-header">
-                    <div className="profile-avatar-wrapper">
-                        {userData.profileImage ? (
-                            <img
-                                src={userData.profileImage}
-                                alt="프로필 이미지"
-                                className="profile-avatar"
-                            />
-                        ) : (
-                            <div className="profile-avatar-placeholder">
-                                <User size={48} />
-                            </div>
-                        )}
-                        <button className="avatar-edit-btn" title="프로필 사진 변경">
-                            <Edit2 size={16} />
-                        </button>
-                    </div>
+                {/* 분리된 프로필 헤더 컴포넌트 사용 */}
+                <ProfileHeader
+                    userData={{
+                        name: user?.name || '',
+                        nickname: user?.nickname,
+                        email: user?.email || '',
+                        avatar: user?.avatar,
+                        bio: user?.bio
+                    }}
+                    isEditable={true}
+                    onEditClick={() => setIsEditModalOpen(true)}
+                    onImageEditClick={handleImageClick}
+                    isImageUploading={isImageUploading}
+                />
 
-                    <div className="profile-info">
-                        <h1 className="profile-name">{userData.name}</h1>
-                        <div className="profile-meta">
-                            <span className="meta-item">
-                                <Mail size={16} />
-                                {userData.email}
-                            </span>
-                            <span className="meta-item">
-                                <Calendar size={16} />
-                                가입일: {userData.joinDate}
-                            </span>
-                        </div>
-                    </div>
+                {/* 숨겨진 파일 입력창 */}
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleImageChange}
+                    accept="image/*"
+                    className="hidden"
+                />
 
-                    <button className="btn-edit-profile">
-                        <Edit2 size={18} />
-                        프로필 편집
-                    </button>
-                </div>
+                {/* 편집 모달 */}
+                <EditProfileModal
+                    isOpen={isEditModalOpen}
+                    onClose={() => setIsEditModalOpen(false)}
+                />
 
                 {/* 학습 통계 - 8개 칩 (기존 4개 + Dashboard 4개) */}
                 <div className="stats-section">
@@ -73,7 +94,7 @@ export const ProfilePage = () => {
                                 <span className="stat-label-dashboard">참여 스터디</span>
                             </div>
                             <div className="stat-value-content-dashboard">
-                                <span className="stat-value-dashboard">{userData.stats.studyCount}</span>
+                                <span className="stat-value-dashboard">{stats.studyCount}</span>
                                 <span className="stat-unit-dashboard">개</span>
                             </div>
                         </div>
@@ -89,7 +110,7 @@ export const ProfilePage = () => {
                                 <span className="stat-label-dashboard">총 학습 시간</span>
                             </div>
                             <div className="stat-value-content-dashboard">
-                                <span className="stat-value-dashboard">{userData.stats.totalStudyTime}</span>
+                                <span className="stat-value-dashboard">{stats.totalStudyTime}</span>
                                 <span className="stat-unit-dashboard">시간</span>
                             </div>
                         </div>
@@ -105,7 +126,7 @@ export const ProfilePage = () => {
                                 <span className="stat-label-dashboard">평균 퀴즈 점수</span>
                             </div>
                             <div className="stat-value-content-dashboard">
-                                <span className="stat-value-dashboard">{userData.stats.quizScore}</span>
+                                <span className="stat-value-dashboard">{stats.quizScore}</span>
                                 <span className="stat-unit-dashboard">점</span>
                             </div>
                         </div>
@@ -121,7 +142,7 @@ export const ProfilePage = () => {
                                 <span className="stat-label-dashboard">출석률</span>
                             </div>
                             <div className="stat-value-content-dashboard">
-                                <span className="stat-value-dashboard">{userData.stats.attendance}</span>
+                                <span className="stat-value-dashboard">{stats.attendance}</span>
                                 <span className="stat-unit-dashboard">%</span>
                             </div>
                         </div>

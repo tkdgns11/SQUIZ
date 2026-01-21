@@ -32,8 +32,8 @@ test:
   script:
     - cd modustudy/backend
     - chmod +x gradlew
-    # 테스트 DB 초기화 (Docker 컨테이너 내에서 실행)
-    - source /etc/environment && docker exec squiz-mysql mysql -u${DB_USERNAME} -p${DB_PASSWORD} -e "DROP DATABASE IF EXISTS ssafy_test_db; CREATE DATABASE ssafy_test_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" || echo "DB reset skipped - container may not be running"
+    # 테스트 DB 초기화 (Docker 컨테이너 내에서 root 권한으로 실행)
+    - source /etc/environment && docker exec squiz-mysql mysql -uroot -p${DB_ROOT_PASSWORD:-$DB_PASSWORD} -e "DROP DATABASE IF EXISTS ssafy_test_db; CREATE DATABASE ssafy_test_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; GRANT ALL PRIVILEGES ON ssafy_test_db.* TO '${DB_USERNAME}'@'%'; FLUSH PRIVILEGES;" || echo "DB reset skipped - container may not be running"
     - source /etc/environment && export SPRING_PROFILES_ACTIVE=test && ./gradlew test
   only:
     - master

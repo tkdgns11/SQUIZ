@@ -1,9 +1,338 @@
 package com.ssafy.domain.meeting.controller;
 
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.ssafy.common.auth.SsafyUserDetails;
+import com.ssafy.common.response.ApiResponse;
+import com.ssafy.common.response.MessageResponse;
+import com.ssafy.common.response.PageResponse;
+import com.ssafy.domain.meeting.dto.request.MeetingActionItemRequest;
+import com.ssafy.domain.meeting.dto.request.MeetingKeywordUpdateRequest;
+import com.ssafy.domain.meeting.dto.request.MeetingMuteRequest;
+import com.ssafy.domain.meeting.dto.request.MeetingRecordingRequest;
+import com.ssafy.domain.meeting.dto.request.MeetingRequest;
+import com.ssafy.domain.meeting.dto.request.MeetingSummaryUpdateRequest;
+import com.ssafy.domain.meeting.dto.response.*;
+import com.ssafy.domain.meeting.entity.MeetingType;
+import com.ssafy.domain.meeting.service.MeetingService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.time.LocalDate;
+import java.util.List;
 
 @RestController
-@RequestMapping("/api/meetings")
+@RequiredArgsConstructor
+@RequestMapping("/api/v1/studies/{studyId}/meetings")
+@Tag(name = "Meeting", description = "미팅 API")
 public class MeetingController {
+
+    private final MeetingService meetingService;
+
+    @GetMapping
+    public ResponseEntity<PageResponse<MeetingListItemResponse>> list(
+            @PathVariable Long studyId,
+            @RequestParam(required = false) MeetingType meetingType,
+            @RequestParam(required = false) LocalDate startDate,
+            @RequestParam(required = false) LocalDate endDate,
+            Pageable pageable
+    ) {
+        Page<MeetingListItemResponse> page = meetingService.listMeetings(studyId, meetingType, startDate, endDate, pageable);
+        return ResponseEntity.ok(PageResponse.of(page));
+    }
+
+    @GetMapping("/{meetingId}")
+    public ResponseEntity<ApiResponse<MeetingDetailResponse>> detail(
+            @PathVariable Long studyId,
+            @PathVariable Long meetingId
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(meetingService.getMeetingDetail(studyId, meetingId)));
+    }
+
+    @PostMapping
+    public ResponseEntity<ApiResponse<MeetingResponse>> start(
+            @PathVariable Long studyId,
+            @Valid @RequestBody MeetingRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(meetingService.startMeeting(studyId, request)));
+    }
+
+    @PutMapping("/{meetingId}/end")
+    public ResponseEntity<ApiResponse<MeetingEndResponse>> end(
+            @PathVariable Long studyId,
+            @PathVariable Long meetingId
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(meetingService.endMeeting(studyId, meetingId)));
+    }
+
+    @PostMapping("/{meetingId}/join")
+    public ResponseEntity<ApiResponse<MeetingJoinResponse>> join(
+            @PathVariable Long studyId,
+            @PathVariable Long meetingId,
+            @AuthenticationPrincipal SsafyUserDetails userDetails
+    ) {
+        Long userId = userDetails == null ? null : userDetails.getUser().getId();
+        return ResponseEntity.ok(ApiResponse.success(meetingService.joinMeeting(studyId, meetingId, requireUserId(userId))));
+    }
+
+    @PostMapping("/{meetingId}/leave")
+    public ResponseEntity<ApiResponse<MessageResponse>> leave(
+            @PathVariable Long studyId,
+            @PathVariable Long meetingId,
+            @AuthenticationPrincipal SsafyUserDetails userDetails
+    ) {
+        Long userId = userDetails == null ? null : userDetails.getUser().getId();
+        meetingService.leaveMeeting(studyId, meetingId, requireUserId(userId));
+        return ResponseEntity.ok(ApiResponse.success("Left meeting"));
+    }
+
+    @GetMapping("/{meetingId}/summary")
+    public ResponseEntity<ApiResponse<MeetingSummaryResponse>> summary(
+            @PathVariable Long studyId,
+            @PathVariable Long meetingId
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(meetingService.getSummary(studyId, meetingId)));
+    }
+
+    @PutMapping("/{meetingId}/summary")
+    public ResponseEntity<ApiResponse<MeetingSummaryResponse>> upsertSummary(
+            @PathVariable Long studyId,
+            @PathVariable Long meetingId,
+            @RequestBody MeetingSummaryUpdateRequest request
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(meetingService.upsertSummary(studyId, meetingId, request)));
+    }
+
+ 
+
+    @GetMapping("/{meetingId}/chat")
+    @Operation(summary = "미팅 채팅 조회", description = "미팅 채팅 히스토리를 페이지 형태로 조회합니다.")
+    public ResponseEntity<ApiResponse<MeetingChatMessagePageResponse>> chatHistory(
+            @PathVariable Long studyId,
+            @PathVariable Long meetingId,
+            Pageable pageable
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(meetingService.getChatMessages(studyId, meetingId, pageable)));
+    }
+
+    @GetMapping("/{meetingId}/recording")
+    public ResponseEntity<ApiResponse<MeetingRecordingResponse>> getRecording(
+            @PathVariable Long studyId,
+            @PathVariable Long meetingId
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(meetingService.getRecording(studyId, meetingId)));
+    }
+
+    @PutMapping("/{meetingId}/recording")
+    public ResponseEntity<ApiResponse<MeetingRecordingResponse>> upsertRecording(
+            @PathVariable Long studyId,
+            @PathVariable Long meetingId,
+            @RequestBody MeetingRecordingRequest request
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(meetingService.upsertRecording(studyId, meetingId, request)));
+    }
+
+    @PostMapping("/{meetingId}/recording/video")
+    @Operation(summary = "Meeting recording video upload", description = "Upload meeting recording video file.")
+    public ResponseEntity<ApiResponse<MeetingRecordingResponse>> uploadRecordingVideo(
+            @PathVariable Long studyId,
+            @PathVariable Long meetingId,
+            @RequestPart("video") MultipartFile video
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(meetingService.uploadRecordingVideo(studyId, meetingId, video)));
+    }
+
+    @PostMapping("/{meetingId}/recording/audio")
+    @Operation(summary = "Meeting recording audio upload", description = "Upload meeting recording audio file.")
+    public ResponseEntity<ApiResponse<MeetingAudioRecordingResponse>> uploadRecordingAudio(
+            @PathVariable Long studyId,
+            @PathVariable Long meetingId,
+            @RequestParam("trackType") com.ssafy.domain.meeting.entity.MeetingAudioTrackType trackType,
+            @RequestParam(value = "userId", required = false) Long userId,
+            @RequestPart("audio") MultipartFile audio
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(
+                        meetingService.uploadRecordingAudio(studyId, meetingId, trackType, userId, audio)));
+    }
+
+    @GetMapping("/{meetingId}/recording/audio")
+    @Operation(summary = "Meeting recording audio list", description = "List uploaded audio recordings.")
+    public ResponseEntity<ApiResponse<List<MeetingAudioRecordingResponse>>> getAudioRecordings(
+            @PathVariable Long studyId,
+            @PathVariable Long meetingId,
+            @RequestParam(value = "trackType", required = false)
+            com.ssafy.domain.meeting.entity.MeetingAudioTrackType trackType,
+            @RequestParam(value = "userId", required = false) Long userId
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(
+                meetingService.getAudioRecordings(studyId, meetingId, trackType, userId)));
+    }
+
+    @PostMapping("/{meetingId}/stt/file")
+    @Operation(summary = "Meeting STT text upload", description = "Upload STT text file (stt.txt).")
+    public ResponseEntity<ApiResponse<MeetingSttFileResponse>> uploadSttTextFile(
+            @PathVariable Long studyId,
+            @PathVariable Long meetingId,
+            @RequestParam("trackType") com.ssafy.domain.meeting.entity.MeetingTextTrackType trackType,
+            @RequestParam(value = "userId", required = false) Long userId,
+            @RequestPart("file") MultipartFile file
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(
+                        meetingService.uploadSttTextFile(studyId, meetingId, trackType, userId, file)));
+    }
+
+    @PostMapping("/{meetingId}/summary/file")
+    @Operation(summary = "Meeting summary text upload", description = "Upload summary text file (summary.txt).")
+    public ResponseEntity<ApiResponse<MeetingSttSummaryResponse>> uploadSummaryTextFile(
+            @PathVariable Long studyId,
+            @PathVariable Long meetingId,
+            @RequestParam("trackType") com.ssafy.domain.meeting.entity.MeetingTextTrackType trackType,
+            @RequestParam(value = "userId", required = false) Long userId,
+            @RequestPart("file") MultipartFile file
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(
+                        meetingService.uploadSummaryTextFile(studyId, meetingId, trackType, userId, file)));
+    }
+
+    @GetMapping("/{meetingId}/stt/file")
+    @Operation(summary = "Meeting STT text file info", description = "Get STT text file metadata.")
+    public ResponseEntity<ApiResponse<MeetingSttFileResponse>> getSttTextFile(
+            @PathVariable Long studyId,
+            @PathVariable Long meetingId,
+            @RequestParam("trackType") com.ssafy.domain.meeting.entity.MeetingTextTrackType trackType,
+            @RequestParam(value = "userId", required = false) Long userId
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(
+                meetingService.getMeetingSttFile(studyId, meetingId, trackType, userId)));
+    }
+
+    @GetMapping("/{meetingId}/summary/file")
+    @Operation(summary = "Meeting summary text file info", description = "Get summary text file metadata.")
+    public ResponseEntity<ApiResponse<MeetingSttSummaryResponse>> getSummaryTextFile(
+            @PathVariable Long studyId,
+            @PathVariable Long meetingId,
+            @RequestParam("trackType") com.ssafy.domain.meeting.entity.MeetingTextTrackType trackType,
+            @RequestParam(value = "userId", required = false) Long userId
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(
+                meetingService.getMeetingSttSummary(studyId, meetingId, trackType, userId)));
+    }
+
+    @GetMapping("/{meetingId}/photos")
+    public ResponseEntity<ApiResponse<List<MeetingPhotoResponse>>> photos(
+            @PathVariable Long studyId,
+            @PathVariable Long meetingId
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(meetingService.getPhotos(studyId, meetingId)));
+    }
+
+    @PostMapping("/{meetingId}/photos")
+    public ResponseEntity<ApiResponse<MeetingPhotoResponse>> addPhoto(
+            @PathVariable Long studyId,
+            @PathVariable Long meetingId,
+            @RequestPart("image") MultipartFile image
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(meetingService.addPhoto(studyId, meetingId, image)));
+    }
+
+    @PutMapping("/{meetingId}/keywords")
+    public ResponseEntity<ApiResponse<MessageResponse>> updateKeywords(
+            @PathVariable Long studyId,
+            @PathVariable Long meetingId,
+            @Valid @RequestBody MeetingKeywordUpdateRequest request
+    ) {
+        meetingService.updateKeywords(studyId, meetingId, request);
+        return ResponseEntity.ok(ApiResponse.success("Keywords updated"));
+    }
+
+    @PutMapping("/{meetingId}/participants/{userId}/mute")
+    @Operation(summary = "참여자 음소거 변경", description = "미팅 참여자의 음소거 상태를 변경합니다.")
+    public ResponseEntity<ApiResponse<MessageResponse>> muteParticipant(
+            @PathVariable Long studyId,
+            @PathVariable Long meetingId,
+            @PathVariable Long userId,
+            @Valid @RequestBody MeetingMuteRequest request
+    ) {
+        meetingService.updateParticipantMute(studyId, meetingId, userId, request.muted());
+        return ResponseEntity.ok(ApiResponse.success("Participant updated"));
+    }
+
+    @GetMapping("/{meetingId}/action-items")
+    @Operation(summary = "액션아이템 조회", description = "미팅 액션아이템 목록을 조회합니다.")
+    public ResponseEntity<ApiResponse<List<MeetingActionItemResponse>>> actionItems(
+            @PathVariable Long studyId,
+            @PathVariable Long meetingId
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(meetingService.getActionItems(studyId, meetingId)));
+    }
+
+    @PostMapping("/{meetingId}/action-items")
+    @Operation(summary = "액션아이템 추가", description = "미팅 액션아이템을 추가합니다.")
+    public ResponseEntity<ApiResponse<MeetingActionItemResponse>> addActionItem(
+            @PathVariable Long studyId,
+            @PathVariable Long meetingId,
+            @RequestBody MeetingActionItemRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(meetingService.addActionItem(studyId, meetingId, request)));
+    }
+
+    @PutMapping("/{meetingId}/action-items/{actionItemId}")
+    @Operation(summary = "액션아이템 수정", description = "액션아이템 내용을 수정합니다.")
+    public ResponseEntity<ApiResponse<MeetingActionItemResponse>> updateActionItem(
+            @PathVariable Long studyId,
+            @PathVariable Long meetingId,
+            @PathVariable Long actionItemId,
+            @RequestBody MeetingActionItemRequest request
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(
+                meetingService.updateActionItem(studyId, meetingId, actionItemId, request)));
+    }
+
+    @GetMapping("/{meetingId}/export")
+    public ResponseEntity<byte[]> export(
+            @PathVariable Long studyId,
+            @PathVariable Long meetingId,
+            @RequestParam(defaultValue = "MARKDOWN") String format
+    ) {
+        String normalized = format.toUpperCase();
+        if ("MARKDOWN".equals(normalized)) {
+            byte[] bytes = meetingService.exportMeetingMarkdown(studyId, meetingId).getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            return ResponseEntity.ok()
+                    .contentType(MediaType.valueOf("text/markdown"))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=meeting-" + meetingId + ".md")
+                    .body(bytes);
+        }
+        if ("PDF".equals(normalized)) {
+            byte[] bytes = meetingService.exportMeetingPdf(studyId, meetingId);
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=meeting-" + meetingId + ".pdf")
+                    .body(bytes);
+        }
+        throw new org.springframework.web.server.ResponseStatusException(HttpStatus.BAD_REQUEST, "UNSUPPORTED_EXPORT_FORMAT");
+    }
+
+    private Long requireUserId(Long userId) {
+        if (userId == null) {
+            throw new org.springframework.web.server.ResponseStatusException(HttpStatus.UNAUTHORIZED, "AUTH_REQUIRED");
+        }
+        return userId;
+    }
 }
+

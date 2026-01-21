@@ -347,6 +347,11 @@ CREATE TABLE `meeting` (
     `duration_seconds` INT,
     `participant_count` INT DEFAULT 0,
     `status` ENUM('WAITING', 'IN_PROGRESS', 'ENDED') DEFAULT 'WAITING',
+    `recording_status`	ENUM('WAITING', 'RECORDING', 'READY', 'FAILED')  ENUM('PENDING', 'PROCESSING', 'DONE', 'FAILED') DEFAULT 'PENDING',
+	`stt_status`	ENUM('PENDING', 'PROCESSING', 'DONE', 'FAILED') DEFAULT 'PENDING',
+	`summary_status`	ENUM('PENDING', 'PROCESSING', 'DONE', 'FAILED') DEFAULT 'PENDING',
+	`auto_share_summary`	BOOLEAN DEFAULT FALSE,
+	`share_channel_id`	BIGINT	NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`study_id`) REFERENCES `study`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`session_id`) REFERENCES `study_session`(`id`),
@@ -361,6 +366,16 @@ CREATE TABLE `meeting_participant` (
     `left_at` TIMESTAMP,
     `is_muted` BOOLEAN DEFAULT FALSE,
     `is_camera_on` BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (`meeting_id`) REFERENCES `meeting`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`user_id`) REFERENCES `user`(`id`)
+);
+
+CREATE TABLE `meeting_participant_summary` (
+	`id`	VARCHAR(255)	NOT NULL,
+	`meeting_id`	BIGINT	NULL,
+	`user_id`	BIGINT	NOT NULL,
+	`summary`	TEXT	NULL,
+	`created_at`	TIMESTAMP,
     FOREIGN KEY (`meeting_id`) REFERENCES `meeting`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`user_id`) REFERENCES `user`(`id`)
 );
@@ -396,6 +411,86 @@ CREATE TABLE `meeting_photo` (
     FOREIGN KEY (`meeting_id`) REFERENCES `meeting`(`id`) ON DELETE CASCADE
 );
 
+CREATE TABLE `meeting_recording` (
+	`meeting_recording_id`	BIGINT	NOT NULL,
+	`meeting_id`	BIGINT	NULL,
+	`recording_url`	VARCHAR(500)	NULL,
+	`format`	VARCHAR(20)	NULL,
+	`duration_seconds`	INT	NULL,
+	`started_at`	TIMESTAMP	NULL,
+	`ended_at`	TIMESTAMP	NULL,
+	`file_size`	BIGINT	NULL,
+	`status`	ENUM('UPLOADING', 'READY', 'FAILED') DEFAULT 'UPLOADING'	NULL,
+	`created_at`	TIMESTAMP DEFAULT CURRENT_TIMESTAMP	NULL,
+    FOREIGN KEY (`meeting_id`) REFERENCES `meeting`(`id`) ON DELETE CASCADE    
+);
+
+CREATE TABLE `meeting_action_item` (
+	`id`	BIGINT	NOT NULL,
+	`meeting_id`	BIGINT	NULL,
+	`user_id`	BIGINT	NOT NULL,
+	`content`	TEXT	NULL,
+	`status`	ENUM('TODO', 'DONE') DEFAULT 'TODO'	NULL,
+	`created_at`	TIMESTAMP	NULL,
+    FOREIGN KEY (`meeting_id`) REFERENCES `meeting`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`user_id`) REFERENCES `user`(`id`)    
+);
+
+CREATE TABLE `meeting_chat_message` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `meeting_id` BIGINT NOT NULL,
+    `user_id` BIGINT NULL,
+    `sender_name` VARCHAR(100) NOT NULL,
+    `content` TEXT NOT NULL,
+    `sent_at` DATETIME NOT NULL,
+    `created_at` DATETIME DEFAULT NULL,
+    `updated_at` DATETIME ON UPDATE CURRENT_TIMESTAMP,
+      FOREIGN KEY (`meeting_id`) REFERENCES `meeting`(`id`) ON DELETE CASCADE,
+      FOREIGN KEY (`user_id`) REFERENCES `user`(`id`),
+    INDEX idx_meeting_chat_message_meeting_id_sent_at (meeting_id, sent_at)
+  );
+  
+  CREATE TABLE `meeting_audio_recording` (
+      `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+      `meeting_id` BIGINT NOT NULL,
+      `user_id` BIGINT NULL,
+      `track_type` ENUM('MIXED', 'INDIVIDUAL') NOT NULL,
+      `recording_url` VARCHAR(500) NOT NULL,
+      `format` VARCHAR(20) NULL,
+      `file_size` BIGINT NULL,
+      `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      FOREIGN KEY (`meeting_id`) REFERENCES `meeting`(`id`) ON DELETE CASCADE,
+      FOREIGN KEY (`user_id`) REFERENCES `user`(`id`)
+  );
+  
+  CREATE TABLE `meeting_stt_file` (
+      `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+      `meeting_id` BIGINT NOT NULL,
+      `user_id` BIGINT NULL,
+      `track_type` ENUM('MIXED', 'INDIVIDUAL') NOT NULL,
+      `file_url` VARCHAR(500) NOT NULL,
+      `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      FOREIGN KEY (`meeting_id`) REFERENCES `meeting`(`id`) ON DELETE CASCADE,
+      FOREIGN KEY (`user_id`) REFERENCES `user`(`id`),
+      UNIQUE KEY `uk_meeting_stt_file` (`meeting_id`, `track_type`, `user_id`)
+  );
+
+  CREATE TABLE `meeting_stt_summary` (
+      `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+      `meeting_id` BIGINT NOT NULL,
+      `user_id` BIGINT NULL,
+      `track_type` ENUM('MIXED', 'INDIVIDUAL') NOT NULL,
+      `file_url` VARCHAR(500) NOT NULL,
+      `action_items` JSON NULL,
+      `keywords` JSON NULL,
+      `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      FOREIGN KEY (`meeting_id`) REFERENCES `meeting`(`id`) ON DELETE CASCADE,
+      FOREIGN KEY (`user_id`) REFERENCES `user`(`id`),
+      UNIQUE KEY `uk_meeting_stt_summary` (`meeting_id`, `track_type`, `user_id`)
+  );
 -- =============================================
 -- 5. 출석
 -- =============================================

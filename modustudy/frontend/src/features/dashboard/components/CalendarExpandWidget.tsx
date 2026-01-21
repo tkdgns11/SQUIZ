@@ -22,6 +22,13 @@ export const CalendarExpandWidget = () => {
     const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
     const [currentDate] = useState(new Date(2026, 0, 18));
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     useEffect(() => {
         const unsubscribe = scheduleStore.subscribe((newState) => {
@@ -60,6 +67,8 @@ export const CalendarExpandWidget = () => {
         }
     };
 
+    const isMobile = windowWidth <= 768;
+
     const getDaysInMonth = (year: number, month: number) => {
         const date = new Date(year, month, 1);
         const days = [];
@@ -72,10 +81,31 @@ export const CalendarExpandWidget = () => {
             days.push({ day: date.getDate(), month: 'current', fullDate: new Date(date).toISOString().split('T')[0] });
             date.setDate(date.getDate() + 1);
         }
+
+        // 다음 달 일자 추가 (항상 6주를 채우거나 7의 배수를 맞춤)
+        const totalCells = Math.ceil(days.length / 7) * 7;
+        const remaining = totalCells - days.length;
+        for (let i = 1; i <= remaining; i++) {
+            const nextDate = new Date(year, month + 1, i);
+            days.push({ day: nextDate.getDate(), month: 'next', fullDate: nextDate.toISOString().split('T')[0] });
+        }
+
         return days;
     };
 
-    const calendarDays = getDaysInMonth(currentDate.getFullYear(), currentDate.getMonth());
+    const allCalendarDays = getDaysInMonth(currentDate.getFullYear(), currentDate.getMonth());
+
+    // 모바일(768px 이하)일 경우 현재 주(Today가 포함된 주)만 필터링
+    const getWeeklyDays = () => {
+        const todayStr = '2026-01-18'; // 기준일
+        const todayIndex = allCalendarDays.findIndex(d => d.fullDate === todayStr);
+        if (todayIndex === -1) return allCalendarDays.slice(0, 7);
+
+        const startOfWeekIndex = Math.floor(todayIndex / 7) * 7;
+        return allCalendarDays.slice(startOfWeekIndex, startOfWeekIndex + 7);
+    };
+
+    const calendarDays = isMobile ? getWeeklyDays() : allCalendarDays;
     const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const selectedSchedules = selectedDate ? schedules.filter(s => s.date === selectedDate) : [];
 

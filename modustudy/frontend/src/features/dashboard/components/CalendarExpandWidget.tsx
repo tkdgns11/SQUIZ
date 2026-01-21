@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { scheduleStore } from '../services/scheduleStore';
+import { Calendar } from './Calendar';
 import './CalendarExpandWidget.css';
 import './ActivitySection.css';
 
+// 캘린더 확장 위젯 - 대시보드 플래너 페이지
 export const CalendarExpandWidget = () => {
     const navigate = useNavigate();
     const [isAdding, setIsAdding] = useState(false);
@@ -22,14 +24,8 @@ export const CalendarExpandWidget = () => {
     const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
     const [currentDate] = useState(new Date(2026, 0, 18));
-    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
-    useEffect(() => {
-        const handleResize = () => setWindowWidth(window.innerWidth);
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
+    // 스토어 구독
     useEffect(() => {
         const unsubscribe = scheduleStore.subscribe((newState) => {
             setPlannerState(newState);
@@ -39,6 +35,7 @@ export const CalendarExpandWidget = () => {
         };
     }, []);
 
+    // 일정 추가 모달 열기
     const handleOpenAddModal = (date?: string) => {
         setModalDate(date || new Date().toISOString().split('T')[0]);
         setModalTitle('');
@@ -46,6 +43,7 @@ export const CalendarExpandWidget = () => {
         setIsAdding(true);
     };
 
+    // 일정 저장
     const handleConfirmAddSchedule = (e: React.FormEvent) => {
         e.preventDefault();
         if (!modalTitle.trim()) return;
@@ -53,6 +51,7 @@ export const CalendarExpandWidget = () => {
         setIsAdding(false);
     };
 
+    // 목표 추가
     const handleAddGoal = (e: React.FormEvent) => {
         e.preventDefault();
         if (!newGoal.trim()) return;
@@ -60,6 +59,7 @@ export const CalendarExpandWidget = () => {
         setNewGoal('');
     };
 
+    // 태그 추가
     const handleAddTag = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && tagInput.trim()) {
             scheduleStore.addTag(tagInput.trim());
@@ -67,50 +67,11 @@ export const CalendarExpandWidget = () => {
         }
     };
 
-    const isMobile = windowWidth <= 768;
-
-    const getDaysInMonth = (year: number, month: number) => {
-        const date = new Date(year, month, 1);
-        const days = [];
-        const firstDayIndex = date.getDay();
-        for (let i = firstDayIndex; i > 0; i--) {
-            const prevDate = new Date(year, month, 1 - i);
-            days.push({ day: prevDate.getDate(), month: 'prev', fullDate: prevDate.toISOString().split('T')[0] });
-        }
-        while (date.getMonth() === month) {
-            days.push({ day: date.getDate(), month: 'current', fullDate: new Date(date).toISOString().split('T')[0] });
-            date.setDate(date.getDate() + 1);
-        }
-
-        // 다음 달 일자 추가 (항상 6주를 채우거나 7의 배수를 맞춤)
-        const totalCells = Math.ceil(days.length / 7) * 7;
-        const remaining = totalCells - days.length;
-        for (let i = 1; i <= remaining; i++) {
-            const nextDate = new Date(year, month + 1, i);
-            days.push({ day: nextDate.getDate(), month: 'next', fullDate: nextDate.toISOString().split('T')[0] });
-        }
-
-        return days;
-    };
-
-    const allCalendarDays = getDaysInMonth(currentDate.getFullYear(), currentDate.getMonth());
-
-    // 모바일(768px 이하)일 경우 현재 주(Today가 포함된 주)만 필터링
-    const getWeeklyDays = () => {
-        const todayStr = '2026-01-18'; // 기준일
-        const todayIndex = allCalendarDays.findIndex(d => d.fullDate === todayStr);
-        if (todayIndex === -1) return allCalendarDays.slice(0, 7);
-
-        const startOfWeekIndex = Math.floor(todayIndex / 7) * 7;
-        return allCalendarDays.slice(startOfWeekIndex, startOfWeekIndex + 7);
-    };
-
-    const calendarDays = isMobile ? getWeeklyDays() : allCalendarDays;
-    const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const selectedSchedules = selectedDate ? schedules.filter(s => s.date === selectedDate) : [];
 
     return (
         <div className="planner-page">
+            {/* 페이지 헤더 */}
             <header className="planner-header">
                 <div className="header-left">
                     <button className="back-btn-transparent" onClick={() => navigate(-1)} title="대시보드로 돌아가기">
@@ -139,57 +100,21 @@ export const CalendarExpandWidget = () => {
                 </div>
             </header>
 
+            {/* 메인 콘텐츠 그리드 */}
             <main className="planner-content-grid">
-                {/* 왼쪽 2: 달력 */}
+                {/* 왼쪽: 캘린더 영역 */}
                 <section className="planner-calendar-area">
-                    <div className="expanded-calendar-wrapper">
-                        <div className="calendar-weekdays">
-                            {weekDays.map((day, idx) => (
-                                <div key={day} className={`weekday large ${idx === 0 ? 'is-sun' : idx === 6 ? 'is-sat' : ''}`}>
-                                    {day}
-                                </div>
-                            ))}
-                        </div>
-                        <div className="calendar-grid large">
-                            {calendarDays.map((item, index) => {
-                                const daySchedules = schedules.filter(s => s.date === item.fullDate);
-                                const isToday = item.fullDate === '2026-01-18';
-                                const dayOfWeek = new Date(item.fullDate).getDay();
-
-                                return (
-                                    <div
-                                        key={index}
-                                        className={`calendar-day large ${item.month !== 'current' ? 'other-month' : ''} ${isToday ? 'today' : ''} ${dayOfWeek === 0 ? 'is-sun' : dayOfWeek === 6 ? 'is-sat' : ''}`}
-                                        onClick={() => setSelectedDate(item.fullDate)}
-                                    >
-                                        <div className="day-header-box">
-                                            <span className="day-number">{item.day}</span>
-                                            {/* 날짜 위 플러스 버튼 (빠른 추가) */}
-                                            <button
-                                                className="quick-add-btn"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleOpenAddModal(item.fullDate);
-                                                }}
-                                            >
-                                                +
-                                            </button>
-                                        </div>
-                                        <div className="day-schedules">
-                                            {daySchedules.map(schedule => (
-                                                <div key={schedule.id} className={`schedule-item ${schedule.type} large`}>
-                                                    {schedule.title}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
+                    <Calendar
+                        currentDate={currentDate}
+                        schedules={schedules}
+                        onDateClick={(date) => setSelectedDate(date)}
+                        onQuickAdd={(date) => handleOpenAddModal(date)}
+                    />
                 </section>
 
+                {/* 오른쪽: 사이드바 위젯 */}
                 <aside className="planner-sidebar-area">
+                    {/* 학습 목표 위젯 */}
                     <div className="sidebar-widget goals-widget">
                         <div className="goals-header">
                             <h3>오늘의 학습 목표</h3>
@@ -240,6 +165,7 @@ export const CalendarExpandWidget = () => {
                         </div>
                     </div>
 
+                    {/* 학습 메모 위젯 */}
                     <div className="sidebar-widget memo-widget">
                         <div className="memo-header">
                             <h3>학습 메모</h3>
@@ -268,7 +194,7 @@ export const CalendarExpandWidget = () => {
                 </aside>
             </main>
 
-            {/* 정식 일정 추가 모달 (Google 캘린더 스타일) */}
+            {/* 일정 추가 모달 */}
             {isAdding && (
                 <div className="day-select-overlay" onClick={() => setIsAdding(false)}>
                     <div className="schedule-modal animate-modal-pop" onClick={e => e.stopPropagation()}>
@@ -324,7 +250,7 @@ export const CalendarExpandWidget = () => {
                 </div>
             )}
 
-            {/* 일자 클릭 상세 모달 (기존 유지하되 '추가' 버튼 로직 수정) */}
+            {/* 날짜 상세 모달 */}
             {selectedDate && !isAdding && (
                 <div className="day-select-overlay" onClick={() => setSelectedDate(null)}>
                     <div className="day-select-modal animate-modal-pop" onClick={e => e.stopPropagation()}>

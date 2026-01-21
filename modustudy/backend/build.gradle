@@ -19,7 +19,7 @@ plugins {
 
 // Flyway CLI 설정 (gradle flywayMigrate 등 명령어용)
 flyway {
-    url = System.getenv('SPRING_DATASOURCE_URL') ?: 'jdbc:mysql://localhost:3306/ssafy_web_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul'
+    url = System.getenv('SPRING_DATASOURCE_URL') ?: 'jdbc:mysql://localhost:3306/squiz?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul'
     user = System.getenv('SPRING_DATASOURCE_USERNAME') ?: System.getenv('DB_USERNAME') ?: 'ssafy'
     password = System.getenv('SPRING_DATASOURCE_PASSWORD') ?: System.getenv('DB_PASSWORD') ?: 'ssafy'
     locations = ['classpath:db/migration']

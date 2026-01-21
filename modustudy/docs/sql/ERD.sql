@@ -100,6 +100,17 @@ CREATE TABLE `refresh_token` (
     UNIQUE KEY `uk_refresh_token` (`token`)
 );
 
+-- 비밀번호 재설정
+CREATE TABLE password_reset_token (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NOT NULL,
+    token VARCHAR(255) NOT NULL UNIQUE,
+    expires_at DATETIME NOT NULL,
+    used BOOLEAN DEFAULT FALSE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES user(id)
+);
+
 -- =============================================
 -- 1-1. 친구/DM
 -- =============================================
@@ -132,6 +143,7 @@ CREATE TABLE `direct_message` (
     FOREIGN KEY (`sender_id`) REFERENCES `user`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`receiver_id`) REFERENCES `user`(`id`) ON DELETE CASCADE
 );
+
 
 -- =============================================
 -- 2. 스터디

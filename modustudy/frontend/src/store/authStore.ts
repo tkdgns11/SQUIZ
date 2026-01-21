@@ -7,6 +7,7 @@ interface User {
     nickname?: string;
     email: string;
     avatar?: string;
+    bio?: string;
 }
 
 interface AuthState {
@@ -15,6 +16,7 @@ interface AuthState {
     isInitialized: boolean;
     login: (user: User) => void;
     logout: () => void;
+    updateUser: (data: Partial<User>) => void;
     setInitialized: (val: boolean) => void;
 }
 
@@ -30,6 +32,9 @@ export const useAuthStore = create<AuthState>()(
                 localStorage.removeItem('refreshToken');
                 set({ isLoggedIn: false, user: null });
             },
+            updateUser: (data) => set((state) => ({
+                user: state.user ? { ...state.user, ...data } : null
+            })),
             setInitialized: (val) => set({ isInitialized: val }),
         }),
         {

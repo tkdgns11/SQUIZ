@@ -1,6 +1,7 @@
 // 헤더 + 사이드바 포함 기본 레이아웃
 
 import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { RightSideBar } from './components/RightSideBar';
 import { useUIStore } from '@/store/uiStore';
@@ -13,8 +14,32 @@ interface MainLayoutProps {
 }
 
 export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
-    const { isSidebarOpen, toggleSidebar, activeRightTab } = useUIStore();
+    const { isSidebarOpen, toggleSidebar, activeRightTab, setActiveRightTab } = useUIStore();
     const { isLoggedIn, user, logout } = useAuthStore();
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+    // 윈도우 리사이즈 감지
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    // 반응형: 1000px 이하에서 사이드바 자동 닫기
+    useEffect(() => {
+        if (windowWidth <= 1000 && isSidebarOpen) {
+            toggleSidebar();
+        }
+    }, [windowWidth]);
+
+    // 반응형: 600px 이하에서 우측 사이드바 자동 닫기
+    useEffect(() => {
+        if (windowWidth <= 600 && activeRightTab) {
+            setActiveRightTab(null);
+        }
+    }, [windowWidth]);
+
+    const isCompactMode = windowWidth <= 600;
 
     return (
         <div className="flex flex-col h-screen bg-study-bg overflow-hidden">
@@ -81,14 +106,14 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 >
                     {/* 페이지 콘텐츠 */}
                     <div className={`flex-1 overflow-auto pt-2 pb-6 bg-study-bg transition-all duration-300 ${isSidebarOpen ? 'pl-6' : 'pl-0'
-                        } ${activeRightTab ? 'pr-80' : 'pr-14'
+                        } ${isCompactMode ? 'pr-2' : (activeRightTab ? 'pr-80' : 'pr-14')
                         }`}>
                         {children}
                     </div>
                 </motion.main>
 
-                {/* 우측 사이드바 (아이콘바 + 패널) */}
-                <RightSideBar />
+                {/* 우측 사이드바 (600px 이하에서 숨김) */}
+                {!isCompactMode && <RightSideBar />}
             </div>
         </div>
     );

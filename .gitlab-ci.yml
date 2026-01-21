@@ -32,6 +32,8 @@ test:
   script:
     - cd modustudy/backend
     - chmod +x gradlew
+    # 테스트 DB 초기화 (이전 스키마/제약조건 제거)
+    - source /etc/environment && mysql -h${DB_HOST:-localhost} -u${DB_USERNAME} -p${DB_PASSWORD} -e "DROP DATABASE IF EXISTS ssafy_test_db; CREATE DATABASE ssafy_test_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" || echo "DB reset skipped"
     - source /etc/environment && export SPRING_PROFILES_ACTIVE=test && ./gradlew test
   only:
     - master

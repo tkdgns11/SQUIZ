@@ -9,6 +9,12 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import com.ssafy.domain.quiz.entity.enums.QuestionType;
 
 /**
  * 사용자 섹션 시도별 문제 엔티티.
@@ -109,8 +115,36 @@ public class UserSectionAttemptQuestion extends BaseEntity {
             this.isCorrect = false;
             return;
         }
-        // 대소문자 무시, 앞뒤 공백 제거 후 비교
-        this.isCorrect = this.userAnswer.trim().equalsIgnoreCase(correctAnswer.trim());
+
+        boolean isMultiValue = false;
+        // Check QuestionType to support multiple answers
+        // Note: Assuming question is loaded or accessible in the current session
+        if (this.question != null && this.question.getQuestionType() == QuestionType.MULTIPLE_CHOICE_MULTIPLE) {
+            isMultiValue = true;
+        }
+
+        if (isMultiValue) {
+            Set<String> userSet = parseAnswerToSet(this.userAnswer);
+            // 매개변수로 들어온 correctAnswer를 파싱하여 Set에 넣기
+            Set<String> correctSet = parseAnswerToSet(correctAnswer);
+            this.isCorrect = userSet.equals(correctSet);
+        } else {
+            // 대소문자 무시, 앞뒤 공백 제거 후 비교
+            this.isCorrect = this.userAnswer.trim().equalsIgnoreCase(correctAnswer.trim());
+        }
+    }
+
+    private Set<String> parseAnswerToSet(String answer) {
+        if (answer == null || answer.isBlank()) {
+            return Collections.emptySet();
+        }
+        // Remove JSON brackets and quotes to handle ["A", "B"] or "A, B"
+        String cleaned = answer.replaceAll("[\\[\\]\"]", "");
+        return Arrays.stream(cleaned.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .map(String::toUpperCase)
+                .collect(Collectors.toSet());
     }
 
     /**

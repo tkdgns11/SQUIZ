@@ -23,6 +23,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -71,7 +72,16 @@ class QuizSectionAttemptServiceTest {
     @Mock
     private BadgeRepository badgeRepository;
 
-    @Mock
+    // 기존 코드
+        // @Mock
+        // private ObjectMapper objectMapper;
+    // [원인]
+    // QuizSectionAttemptServiceTest에서 ObjectMapper가 @Mock이라
+    // parseOptions()의 objectMapper.readValue()가 null 반환
+    // → optionMaps.stream() NPE
+    // [해결]
+    // @Spy로 실제 ObjectMapper 동작 보장 → 테스트 데이터 JSON이 정상 파싱됨.
+    @Spy
     private ObjectMapper objectMapper;
 
     // ========== 테스트 대상 ==========

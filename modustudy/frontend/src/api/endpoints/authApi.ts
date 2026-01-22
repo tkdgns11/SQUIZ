@@ -3,6 +3,7 @@ import { AuthResponse, AuthUrlResponse, OAuth2CallbackRequest, UserDTO } from '@
 
 // 프로필 설정 요청 타입
 interface ProfileSetupRequest {
+    name: string;
     nickname: string;
     password: string;
 }
@@ -85,9 +86,19 @@ export const authApi = {
      * OAuth 회원가입 완료 (추가 정보 입력)
      * POST /api/v1/users/me/profile
      */
-    setupProfile: async (nickname: string, password: string) => {
-        const request: ProfileSetupRequest = { nickname, password };
+    setupProfile: async (name: string, nickname: string, password: string) => {
+        const request: ProfileSetupRequest = { name, nickname, password };
         const response = await api.post<any>('/api/v1/users/me/profile', request);
+        // 백엔드에서 ApiResponse<UserDTO> 반환함
+        return response.data.data as UserDTO;
+    },
+
+    /**
+     * 현재 로그인된 사용자 정보 조회 (세션 복구용)
+     * GET /api/v1/users/me
+     */
+    getMe: async () => {
+        const response = await api.get<any>('/api/v1/users/me');
         // 백엔드에서 ApiResponse<UserDTO> 반환함
         return response.data.data as UserDTO;
     },

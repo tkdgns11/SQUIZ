@@ -36,9 +36,14 @@ const MeetingRoomPage: React.FC = () => {
     const numericStudyId = Number(studyId);
     const numericMeetingId = Number(meetingId);
     const navigate = useNavigate();
-    const { user } = useAuthStore();
+    const { user, isLoggedIn } = useAuthStore();
 
-    const displayNameRef = useRef(user?.name || '게스트');
+    const getDisplayName = useCallback(() => {
+        if (!isLoggedIn) return '게스트';
+        return user?.nickname || user?.name || '게스트';
+    }, [isLoggedIn, user?.nickname, user?.name]);
+
+    const displayNameRef = useRef(getDisplayName());
     const selfParticipantIdRef = useRef<number | null>(null);
     const wsClientRef = useRef<ReturnType<typeof createMeetingWebsocket> | null>(null);
     const sfuClientRef = useRef<ReturnType<typeof createSfuClient> | null>(null);
@@ -70,14 +75,15 @@ const MeetingRoomPage: React.FC = () => {
     const [isRecording, setIsRecording] = useState(false);
 
     const aiVideoRef = useRef<HTMLVideoElement | null>(null);
-    const ownerKey = user?.id ?? user?.name ?? 'guest';
+    const ownerKey = user?.id ?? user?.nickname ?? user?.name ?? 'guest';
     const micEnabledRef = useRef(micEnabled);
+    const speakingRef = useRef(false);
     const recordingRef = useRef(false);
     const prevPresenterRef = useRef(false);
 
     useEffect(() => {
-        displayNameRef.current = user?.name || '게스트';
-    }, [user?.name]);
+        displayNameRef.current = getDisplayName();
+    }, [getDisplayName]);
 
     useEffect(() => {
         micEnabledRef.current = micEnabled;
@@ -244,7 +250,12 @@ const MeetingRoomPage: React.FC = () => {
             }
             audioDetectionActiveRef.current = Boolean(
                 await audioDetection.startDetection(stream, (isSpeaking) => {
+                    if (speakingRef.current === isSpeaking) return;
+                    speakingRef.current = isSpeaking;
                     updateSelfParticipant({ isSpeaking });
+                    if (wsClientRef.current && roomIdRef.current) {
+                        wsClientRef.current.setSpeaking(roomIdRef.current, { speaking: isSpeaking });
+                    }
                 })
             );
         } catch (error) {
@@ -256,7 +267,11 @@ const MeetingRoomPage: React.FC = () => {
     const stopMicrophone = useCallback(async () => {
         audioDetection.stopDetection();
         audioDetectionActiveRef.current = false;
+        speakingRef.current = false;
         updateSelfParticipant({ isSpeaking: false });
+        if (wsClientRef.current && roomIdRef.current) {
+            wsClientRef.current.setSpeaking(roomIdRef.current, { speaking: false });
+        }
         stopTracks(localMicStreamRef.current);
         localMicStreamRef.current = null;
         setMicEnabled(false);
@@ -430,6 +445,10 @@ const MeetingRoomPage: React.FC = () => {
 
     const handleRoomEvent = useCallback(
         (event: MeetingRoomEvent) => {
+            if (event.type === 'MEETING_ENDED') {
+                navigate(`/study/${numericStudyId}/meetings/${numericMeetingId}`);
+                return;
+            }
             if (event.participants && event.participants.length > 0) {
                 mergeParticipants(event.participants);
             }
@@ -463,7 +482,7 @@ const MeetingRoomPage: React.FC = () => {
                 }
             }
         },
-        [appendChatMessage, mergeParticipants]
+        [appendChatMessage, mergeParticipants, navigate, numericStudyId, numericMeetingId]
     );
 
     const handleNewConsumer = useCallback(

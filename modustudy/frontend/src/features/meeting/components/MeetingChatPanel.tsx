@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { MeetingRoomChatMessage } from '../types';
 import '../styles/MeetingRoom.css';
 
@@ -9,6 +9,12 @@ interface MeetingChatPanelProps {
 
 const MeetingChatPanel: React.FC<MeetingChatPanelProps> = ({ messages, onSend }) => {
     const [text, setText] = useState('');
+    const messagesRef = useRef<HTMLDivElement | null>(null);
+
+    useEffect(() => {
+        if (!messagesRef.current) return;
+        messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
+    }, [messages.length]);
 
     const handleSubmit = (event: React.FormEvent) => {
         event.preventDefault();
@@ -24,7 +30,7 @@ const MeetingChatPanel: React.FC<MeetingChatPanelProps> = ({ messages, onSend })
                 <h3>채팅</h3>
             </div>
             <div className="meeting-chat">
-                <div className="meeting-chat__messages">
+                <div className="meeting-chat__messages" ref={messagesRef}>
                     {messages.map((message, index) => (
                         <div key={`${message.sentAt}-${index}`} className="meeting-chat__message">
                             <div className="meeting-chat__meta">

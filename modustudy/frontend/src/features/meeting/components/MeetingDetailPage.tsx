@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { MainLayout } from '@/layouts/MainLayout';
 import { meetingApi } from '../services/meetingApi';
 import {
@@ -22,6 +22,7 @@ const MeetingDetailPage: React.FC = () => {
     const { studyId, meetingId } = useParams();
     const numericStudyId = Number(studyId);
     const numericMeetingId = Number(meetingId);
+    const navigate = useNavigate();
     const [detail, setDetail] = useState<MeetingDetailResponse | null>(null);
     const [actionItems, setActionItems] = useState<MeetingActionItemResponse[]>([]);
     const [recording, setRecording] = useState<MeetingRecordingResponse | null>(null);
@@ -93,6 +94,12 @@ const MeetingDetailPage: React.FC = () => {
                         </p>
                     </div>
                     <div className="meeting-detail__exports">
+                        <button
+                            className="meeting-btn ghost"
+                            onClick={() => navigate(`/study/${numericStudyId}/meetings`)}
+                        >
+                            목록으로
+                        </button>
                         <button className="meeting-btn ghost" onClick={() => handleExport('MARKDOWN')}>
                             Markdown 내보내기
                         </button>

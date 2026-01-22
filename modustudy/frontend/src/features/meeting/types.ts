@@ -217,7 +217,14 @@ export interface MeetingRoomChatMessage {
     sentAt: string;
 }
 
-export type MeetingRoomEventType = 'JOIN' | 'LEAVE' | 'CHAT' | 'CHAT_HISTORY' | 'PRESENTER';
+export type MeetingRoomEventType =
+    | 'JOIN'
+    | 'LEAVE'
+    | 'CHAT'
+    | 'CHAT_HISTORY'
+    | 'PRESENTER'
+    | 'SPEAKING'
+    | 'MEETING_ENDED';
 
 export interface MeetingRoomEvent {
     type: MeetingRoomEventType;

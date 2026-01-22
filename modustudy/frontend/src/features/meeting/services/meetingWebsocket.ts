@@ -10,6 +10,7 @@ export interface MeetingWebsocketClient {
     joinRoom: (roomId: string, payload: { displayName: string; roomTitle?: string }) => void;
     sendChat: (roomId: string, payload: MeetingRoomChatMessage) => void;
     setPresenter: (roomId: string, payload: { displayName: string; action?: 'claim' | 'release' }) => void;
+    setSpeaking: (roomId: string, payload: { speaking: boolean }) => void;
     isConnected: () => boolean;
 }
 
@@ -93,6 +94,14 @@ export const createMeetingWebsocket = (baseUrl?: string): MeetingWebsocketClient
         });
     };
 
+    const setSpeaking = (roomId: string, payload: { speaking: boolean }) => {
+        if (!client) return;
+        client.publish({
+            destination: `/app/rooms/${roomId}/speaking`,
+            body: JSON.stringify(payload),
+        });
+    };
+
     return {
         connect,
         disconnect,
@@ -101,6 +110,7 @@ export const createMeetingWebsocket = (baseUrl?: string): MeetingWebsocketClient
         joinRoom,
         sendChat,
         setPresenter,
+        setSpeaking,
         isConnected: () => Boolean(client && client.connected),
     };
 };

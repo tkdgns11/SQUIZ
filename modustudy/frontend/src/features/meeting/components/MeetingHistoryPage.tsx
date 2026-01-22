@@ -120,12 +120,14 @@ const MeetingHistoryPage: React.FC = () => {
                                     </div>
                                 </div>
                                 <div className="meeting-history__actions">
-                                    <button
-                                        className="meeting-btn ghost"
-                                        onClick={() => navigate(`/study/${numericStudyId}/meetings/${meeting.id}`)}
-                                    >
-                                        기록 보기
-                                    </button>
+                                    {meeting.endedAt && (
+                                        <button
+                                            className="meeting-btn ghost"
+                                            onClick={() => navigate(`/study/${numericStudyId}/meetings/${meeting.id}`)}
+                                        >
+                                            기록 보기
+                                        </button>
+                                    )}
                                     <button
                                         className="meeting-btn primary"
                                         onClick={() => navigate(`/study/${numericStudyId}/meetings/${meeting.id}/room`)}

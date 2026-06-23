@@ -194,7 +194,9 @@
 > 회원·인증 · 스터디 · 세션·출석 · 미팅 AI · 퀴즈 · 복습 · 게이미피케이션 · 채팅 · 알림·일정 · AI 추천
 
 <div align="center">
-  <img src="career/SQUIZ_개발중.png" width="900" alt="SQUIZ ERD"/>
+  <img src="ERD/SQUIZ_ERD.png" width="900" alt="SQUIZ ERD"/>
+  <br/>
+  <a href="https://www.erdcloud.com/d/XPFCDQve26qSEvr6A">🔗 ERDCloud에서 전체 보기</a>
 </div>
 
 <br>

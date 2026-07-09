@@ -6,6 +6,7 @@ import com.ssafy.domain.dm.dto.response.DirectMessageResponse;
 import com.ssafy.domain.dm.dto.response.DmConversationResponse;
 import com.ssafy.domain.dm.entity.DirectMessage;
 import com.ssafy.domain.dm.entity.DmConversation;
+import com.ssafy.domain.dm.event.DmMessageSentEvent;
 import com.ssafy.domain.dm.mapper.DirectMessageMapper;
 import com.ssafy.domain.dm.mapper.DmConversationMapper;
 import com.ssafy.domain.friend.service.FriendService;
@@ -102,6 +103,9 @@ class DirectMessageServiceTest {
             assertThat(response.isMine()).isTrue();
             verify(directMessageMapper, times(1)).insert(any(DirectMessage.class));
             verify(dmConversationMapper, times(1)).updateLastMessageAt(eq(1L), any(LocalDateTime.class));
+            // 실시간 푸시는 트랜잭션 커밋 이후에 수행되도록 DM 이벤트로 발행된다
+            // (실제 Redis 발행은 @TransactionalEventListener(AFTER_COMMIT)에서 처리)
+            verify(eventPublisher, times(1)).publishEvent(any(DmMessageSentEvent.class));
         }
 
         @Test

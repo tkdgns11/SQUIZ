@@ -6,9 +6,9 @@ import com.ssafy.domain.dm.dto.response.DirectMessageResponse;
 import com.ssafy.domain.dm.dto.response.DmConversationResponse;
 import com.ssafy.domain.dm.entity.DirectMessage;
 import com.ssafy.domain.dm.entity.DmConversation;
+import com.ssafy.domain.dm.event.DmMessageSentEvent;
 import com.ssafy.domain.dm.mapper.DirectMessageMapper;
 import com.ssafy.domain.dm.mapper.DmConversationMapper;
-import com.ssafy.domain.dm.websocket.DmRedisPublisher;
 import com.ssafy.domain.dm.websocket.DmWebSocketEvent;
 import com.ssafy.domain.friend.service.FriendService;
 import com.ssafy.domain.gamification.event.FirstFriendChatEvent;
@@ -34,7 +34,6 @@ public class DirectMessageService {
     private final DmConversationMapper dmConversationMapper;
     private final FriendService friendService;
     private final ApplicationEventPublisher eventPublisher;
-    private final DmRedisPublisher dmRedisPublisher;
 
     /**
      * DM 전송
@@ -93,23 +92,24 @@ public class DirectMessageService {
         DirectMessage saved = directMessageMapper.findById(message.getId());
         DirectMessageResponse senderResponse = DirectMessageResponse.from(saved, senderId);
 
-        // WebSocket으로 수신자에게 실시간 알림 (REST API 호출 시에도 실시간 전달)
-        try {
-            DirectMessageResponse receiverResponse = new DirectMessageResponse(
-                    senderResponse.messageId(),
-                    senderResponse.conversationId(),
-                    senderResponse.senderId(),
-                    senderResponse.senderNickname(),
-                    senderResponse.senderProfileImage(),
-                    senderResponse.content(),
-                    senderResponse.isDeleted(),
-                    false,  // 수신자 입장에서는 isMine = false
-                    senderResponse.createdAt()
-            );
-            DmWebSocketEvent receiverEvent = DmWebSocketEvent.newMessage(receiverResponse);
-            dmRedisPublisher.publishToUser(receiverId, "/queue/dm", receiverEvent);
-} catch (Exception e) {
-}
+        // 수신자에게 전달할 실시간 이벤트 구성
+        DirectMessageResponse receiverResponse = new DirectMessageResponse(
+                senderResponse.messageId(),
+                senderResponse.conversationId(),
+                senderResponse.senderId(),
+                senderResponse.senderNickname(),
+                senderResponse.senderProfileImage(),
+                senderResponse.content(),
+                senderResponse.isDeleted(),
+                false,  // 수신자 입장에서는 isMine = false
+                senderResponse.createdAt()
+        );
+        DmWebSocketEvent receiverEvent = DmWebSocketEvent.newMessage(receiverResponse);
+
+        // 트랜잭션 커밋 이후에 실시간 푸시한다.
+        // 커밋 전에 발행하면 이후 롤백 시 "저장되지 않은 메시지"가 푸시될 수 있으므로,
+        // 이벤트로 분리해 @TransactionalEventListener(AFTER_COMMIT)에서 발행한다.
+        eventPublisher.publishEvent(new DmMessageSentEvent(receiverId, receiverEvent));
 
         return senderResponse;
     }

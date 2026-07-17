@@ -13,6 +13,7 @@
 - [👤 담당 역할 및 기여](#-담당-역할-및-기여)
 - [💡 기획 배경](#-기획-배경)
 - [✨ 서비스 주요 기능](#-서비스-주요-기능)
+- [🖥️ 화면](#screens)
 - [🛠️ 프로젝트 핵심 기술](#core-tech)
 - [💡 핵심 문제 해결](#core-problem)
 - [🗂️ ERD](#erd)
@@ -155,6 +156,23 @@
 
 - Kakao · Naver · Google 소셜 로그인(OAuth2)
 - 프로필·레벨·뱃지·활동 기록 관리
+
+<br>
+
+<a name="screens"></a>
+
+# 🖥️ 화면
+
+<div align="center">
+  <img src="img/screens/live-meeting.png" width="800" alt="실시간 화상 미팅 — 발표 자료 공유와 참가자 목록"/>
+  <p><b>실시간 화상 미팅</b> — WebRTC 기반 다자 화상 회의, 발표 자료 공유, 실시간 자막</p>
+  <br/>
+  <img src="img/screens/auto-summary.png" width="800" alt="AI 자동 대화 요약 — 미팅 리포트"/>
+  <p><b>AI 자동 대화 요약</b> — 모임이 끝나면 핵심 내용·할일을 자동 정리</p>
+  <br/>
+  <img src="img/screens/review-quiz.png" width="800" alt="스터디 복습 퀴즈 — AI 생성 문제"/>
+  <p><b>스터디 복습 퀴즈</b> — 모임 내용 기반으로 AI가 문제를 생성, 망각 곡선에 맞춰 재출제</p>
+</div>
 
 <br>
 

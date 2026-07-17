@@ -220,7 +220,9 @@ def main():
     args = parser.parse_args()
 
     # 환경변수에서 설정 읽기 (없으면 기본값 사용)
-    api_key = os.environ.get('OPENAI_API_KEY', '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')
+    api_key = os.environ.get('OPENAI_API_KEY')
+    if not api_key:
+        parser.error('환경변수 OPENAI_API_KEY가 필요합니다. (예: export OPENAI_API_KEY=sk-...)')
 
     db_config = {
         'host': os.environ.get('DB_HOST', 'localhost'),

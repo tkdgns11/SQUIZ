@@ -133,3 +133,8 @@ migration_backup/
 nul
 
 career/
+# 로컬 개발용 인증서 (mkcert로 각자 생성 — docs/meetings/local_https_setup_summary.md 참고)
+*.pem
+*.p12
+*.jks
+.cert-backup/
